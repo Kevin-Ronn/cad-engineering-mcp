@@ -1,0 +1,109 @@
+schema_version: 1
+
+assembly: glasses_main_frame
+units: mm
+
+design_intent:
+  preserve_wayfarer_outer_silhouette: true
+  preserve_frame_curvature: true
+  minimum_structural_thickness: true
+  localized_reinforcement_only: true
+  uniform_thickening_forbidden: true
+
+camera_mount:
+  component: camthink_ov5640_8p5
+  quantity: 1
+
+  location:
+    region: center_nose_bridge
+    coordinates: geometry_derived
+    coordinate_source_required: true
+
+  orientation:
+    direction: forward
+    optical_axis: geometry_derived
+    follow_frame_curvature: true
+
+  envelope_mm:
+    x: 8.5
+    y: 8.5
+    z: 6.5
+
+  mounting:
+    attached_to: main_frame
+    removable_front_interference: forbidden
+    lens_aperture_clear: true
+    fpc_exit_clear: true
+
+  reinforcement:
+    strategy: localized_ribs
+    rib_required: true
+    avoid_uniform_thickening: true
+
+forward_led_mounts:
+  quantity: 2
+  component: vsma1094750x02
+
+  orientation:
+    direction: same_as_camera
+    optical_axis: geometry_derived
+    beam_angle_deg: 60
+
+  envelope_mm:
+    x: 3.4
+    y: 3.4
+    z: 1.5
+
+  placement:
+    coordinates: geometry_derived
+    source_required: true
+    minimum_camera_clearance: geometry_derived
+
+  optical_window:
+    required: true
+    shape: circular
+    mounting: recessed_flush
+    external_surface_offset_mm: 0.0
+
+temple_led_mounts:
+  quantity: 4
+  component: vsma1094750x02
+
+  distribution:
+    left_temple: 2
+    right_temple: 2
+
+  orientation:
+    direction: outward
+    optical_axis: geometry_derived
+    beam_angle_deg: 60
+
+  envelope_mm:
+    x: 3.4
+    y: 3.4
+    z: 1.5
+
+  placement:
+    coordinates: geometry_derived
+    source_required: true
+
+  optical_window:
+    required: true
+    shape: circular
+    mounting: recessed_flush
+    external_surface_offset_mm: 0.0
+
+pcb_mounts:
+  attached_to: main_frame
+  geometry: geometry_derived
+  localized_reinforcement: true
+
+forbidden_intersections:
+  - camera_keepout
+  - camera_lens_aperture
+  - camera_fpc_exit
+  - led_optical_envelope
+  - led_optical_window
+  - pcb_keepout
+  - cable_routes
+  - removable_front_clip_motion

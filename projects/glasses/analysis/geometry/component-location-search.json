@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "camera_envelope_mm": [
+    8.5,
+    8.5,
+    6.5
+  ],
+  "led_envelope_mm": [
+    3.4,
+    3.4,
+    1.5
+  ],
+  "camera_surface_search": {
+    "+X": {
+      "count": 4957,
+      "mean_alignment": 0.96772004584283,
+      "max_alignment": 0.9999980330467224
+    },
+    "-X": {
+      "count": 4108,
+      "mean_alignment": 0.9659438040234446,
+      "max_alignment": 0.9999646544456482
+    },
+    "+Y": {
+      "count": 1366,
+      "mean_alignment": 0.9362048887229071,
+      "max_alignment": 0.999975323677063
+    },
+    "-Y": {
+      "count": 1366,
+      "mean_alignment": 0.9362058390373715,
+      "max_alignment": 0.999975323677063
+    },
+    "+Z": {
+      "count": 3553,
+      "mean_alignment": 0.9641507326667489,
+      "max_alignment": 0.9999715685844421
+    },
+    "-Z": {
+      "count": 2084,
+      "mean_alignment": 0.9559769506589465,
+      "max_alignment": 0.9999690651893616
+    }
+  },
+  "source_geometry": {
+    "main_frame": "projects/glasses/references/silhouette/wayfarer/ray-ban-frame.stl",
+    "left_temple": "projects/glasses/references/silhouette/wayfarer/ray-ban-frame-side-left.stl",
+    "right_temple": "projects/glasses/references/silhouette/wayfarer/ray-ban-frameside-right.stl"
+  },
+  "status": {
+    "surface_candidates_derived": true,
+    "component_coordinates_assigned": false,
+    "manual_coordinates_forbidden": true
+  }
+}

@@ -1,0 +1,74 @@
+schema_version: 1
+
+system:
+  id: glasses_ir_led_system
+  units: mm
+
+component:
+  id: vsma1094750x02
+  quantity: 6
+
+placements:
+
+  front_left:
+    count: 1
+    mounting: custom_pcb
+    region: front_frame
+    side: left
+    optical_aperture_required: true
+
+  front_right:
+    count: 1
+    mounting: custom_pcb
+    region: front_frame
+    side: right
+    optical_aperture_required: true
+
+  front_left_aux:
+    count: 1
+    mounting: custom_pcb
+    region: front_frame
+    side: left
+    optical_aperture_required: true
+
+  front_right_aux:
+    count: 1
+    mounting: custom_pcb
+    region: front_frame
+    side: right
+    optical_aperture_required: true
+
+  left_temple:
+    count: 1
+    mounting: custom_pcb
+    region: left_temple
+    side: left
+    optical_aperture_required: true
+
+  right_temple:
+    count: 1
+    mounting: custom_pcb
+    region: right_temple
+    side: right
+    optical_aperture_required: true
+
+placement_policy:
+  coordinates_defined: false
+  orientation_defined: false
+  final_coordinates_source: pcb_geometry
+  final_orientation_source: pcb_geometry
+
+thermal_policy:
+  pcb_thermal_path_required: true
+  thermal_vias_allowed: true
+  structural_ribs_must_not_block_thermal_path: true
+
+optical_policy:
+  coating_must_not_cover_apertures: true
+  aperture_coordinates_defined: false
+  aperture_dimensions_defined: false
+  optical_keepout_required: true
+
+structural_policy:
+  local_reinforcement_allowed: true
+  uniform_frame_thickening_forbidden: true

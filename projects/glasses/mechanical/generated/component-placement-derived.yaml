@@ -1,0 +1,72 @@
+schema_version: 1
+source_geometry:
+  frame: projects/glasses/references/silhouette/wayfarer/ray-ban-frame.stl
+  left_temple: projects/glasses/references/silhouette/wayfarer/ray-ban-frame-side-left.stl
+  right_temple: projects/glasses/references/silhouette/wayfarer/ray-ban-frameside-right.stl
+  authoritative: true
+component_geometry:
+  camera:
+    id: camthink_ov5640_8p5
+    envelope_mm:
+    - 8.5
+    - 8.5
+    - 6.5
+    position: center_nose_bridge
+    axis: forward
+    placement_status: pending_geometry_solver
+  leds:
+    part: vsma1094750x02
+    envelope_mm:
+    - 3.4
+    - 3.4
+    - 1.5
+    beam_angle_deg: 60
+    total_quantity: 6
+    placement_status: pending_geometry_solver
+placement_rules:
+  camera:
+    count: 1
+    region: center_nose_bridge
+    axis: forward
+    geometry_derived: true
+  forward_leds:
+    count: 2
+    regions:
+    - front_left
+    - front_right
+    axis: same_as_camera
+    beam_angle_deg: 60
+    geometry_derived: true
+  temple_leds:
+    count: 4
+    regions:
+    - left_temple_front
+    - left_temple_rear
+    - right_temple_front
+    - right_temple_rear
+    axis: outward
+    beam_angle_deg: 60
+    geometry_derived: true
+optical_windows:
+  shape: circular
+  mounting: recessed_flush
+  surface_offset_mm: 0.0
+  diameter: geometry_derived
+  thickness: geometry_derived
+  count: 6
+keepouts:
+  camera:
+    required: true
+    source: locked_camera_envelope
+  led:
+    required: true
+    source: locked_led_envelope
+  camera_led_clearance:
+    required: true
+    minimum_mm: geometry_derived
+constraints:
+  frame_curvature_preserved: true
+  outer_silhouette_preserved: true
+  uniform_thickening_forbidden: true
+  manual_coordinates_forbidden: true
+  coordinates_must_be_geometry_derived: true

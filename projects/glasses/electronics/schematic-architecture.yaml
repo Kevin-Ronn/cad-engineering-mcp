@@ -1,0 +1,287 @@
+schema_version: 2
+project: glasses_pcb
+units: mm
+board_revision: A
+date: 2026-08-31
+status: ARCHITECTURE_READY_FOR_FOOTPRINT_SELECTION
+
+source_geometry:
+  frame_bbox_mm:
+    x: [156.81, 174.54]
+    y: [78.50, 221.50]
+    z: [0.00, 42.85]
+  lens_cavity:
+    y_range_mm: [89.10, 210.90]
+    depth_mm: 121.81
+    x_range_mm: [156.81, 174.54]
+    z_range_mm: [0.00, 42.85]
+  validated_component_poses:
+    source: projects/glasses/analysis/geometry/component-pose-validation.json
+    camera: [167.10, 94.35, 25.50]
+    forward_led_top: [167.10, 91.30, 30.50]
+    forward_led_bottom: [167.10, 91.30, 20.50]
+    left_temple_led_front: [148.61, 119.76, 19.43]
+    left_temple_led_rear: [149.87, 187.09, 23.12]
+    right_temple_led_front: [126.98, 122.92, 23.41]
+    right_temple_led_rear: [125.65, 188.22, 19.54]
+
+schematic_architecture:
+
+  rails:
+    - VBAT: "Li-Po cell (TBD capacity), range 3.0 to 4.2 V"
+    - VBUS: "USB-C VBUS, 5 V"
+    - +3V3: "LDO output from VBAT, ESP32-S3 + sensors"
+    - GND: "Common ground"
+
+  power_section:
+    battery:
+      type: LiPo_pouch
+      cells: 1
+      nominal_voltage: 3.7
+      voltage_range: [3.0, 4.2]
+      capacity_mah: TBD_FROM_BATTERY_DATASHEET
+      pcm_required: true
+      mounting: bonded_to_frame_back_wall_with_thermal_pad
+    charger:
+      ic: TBD_FROM_DASHBOARD
+      interface: USB_C_VBUS_to_VBAT
+      charge_current_a: TBD_FROM_DASHBOARD
+      ts_input: 10k_NTC_to_GND
+      status_led: 1
+      input_protection: TVS_diode_on_VBUS
+    ldo_3v3:
+      ic: TBD
+      input: VBAT
+      output: +3V3
+      quiescent_current_ua_target: < 30
+      dropout_v_max: 0.3
+      package: SOT-23-5_or_DFN
+
+  compute:
+    mcu:
+      part: ESP32-S3
+      variant: TBD_MODULE_SELECTION (XIAO_ESP3S | ESP32-S3-WROOM-1 | custom)
+      interface_to_host: USB_C_native
+      wifi_2_4ghz: yes
+      ble_5: yes
+      gpio_used: ~10
+      antenna: onboard_or_u.FL
+
+  camera_interface:
+    sensor: OV5640
+    module: CamThink 8.5x8.5x6.5mm
+    host: ESP32-S3
+    bus: DVP_8bit
+    control: SCCB_I2C_like
+    clocks:
+      mclk: 24_MHz_from_ESP32_S3
+      pclk: from_sensor_to_ESP32_S3
+    data_lines: D0_to_D7
+    sync_lines: HSYNC, VSYNC
+    fpc:
+      connector: TBD_FROM_MODULE_DATASHEET
+      pin_pitch_mm: TBD
+      length_mm_min: 122
+      bend_radius_mm_min: 1.0
+      exit_face: camera_rear (Y=+98.6)
+
+  infrared_led_subsystem:
+    led:
+      part: VSMA1094750X02
+      count: 6
+      wavelength_nm: 940
+      beam_angle_deg: 60
+      envelope_mm: [3.4, 3.4, 1.5]
+    driver:
+      topology: 6_channel_constant_current_sink
+      fet_per_led: 1
+      fet_part: TBD (2N7002 or N-channel MOSFET in SOT-23)
+      current_set_resistor_per_channel: TBD_FROM_DASHBOARD
+      enable: GPIO_high_to_enable
+      pwm_capable: yes_for_brightness_control
+      leds_grouped:
+        forward_top: 1
+        forward_bottom: 1
+        left_temple_front: 1
+        left_temple_rear: 1
+        right_temple_front: 1
+        right_temple_rear: 1
+    wiring:
+      forward_leds: on_main_pcb
+      temple_leds: 4_wires_total (2 per temple, VCC and PWM-controlled sink)
+
+  connectors:
+
+    camera_fpc:
+      type: FPC_ZIF_or_board_to_board
+      pitch_mm: TBD
+      pin_count: TBD (typically 24-pin for OV5640 + DVP)
+      location_mm: Y_in_cavity, behind camera
+      keepout_radius_mm: 5.0
+
+    usb_c_receptacle:
+      type: USB_C_receptacle_2.0
+      part: TBD_FROM_DASHBOARD
+      mount: surface_mount_on_one_temple_exterior
+      cutout_mm: ~9.0 x 3.0
+      location: left_or_right_temple_near_hinge
+      cc_pull_down_resistors: 5.1k_to_GND_on_CC1_CC2
+      esd_protection: TVS_array
+
+    battery:
+      type: JST_PH_2_pin (or direct solder)
+      pitch_mm: 2.0
+      location: inside_cavity
+      polarity_protected: yes
+
+    pcb_to_frame:
+      type: M1.6_screws_through_PCB_into_frame_bosses
+      count_min: 4
+      pattern: distributed_to_balance_camera_mass
+      keepout_diameter_mm: 2.5
+
+  sensors:
+    accelerometer_lis3dh_or_lsm6ds: TBD
+    ambient_light_apds9960: TBD
+
+  status_indicators:
+    power_led: 1 (green, on +3V3 rail)
+    status_led_charger: 1 (per charger IC recommendation)
+    user_button: 1 (reset / pairing)
+
+  esd_protection:
+    usb_cc_lines: TVS_array
+    camera_fpc: optional_TVS_if_exposed
+    vbat: TVS_diode_to_GND
+
+  thermal:
+    led_driver_mosfets: thermal_via_array_under_each_pad
+    esp32_module: per_module_datasheet
+    battery: keep_away_from_camera_and_LED_heatsinking_zones
+
+pcb_stackup:
+  layers: 2
+  min: 2
+  preferred: 4_if_USB_HS_or_MIPI_DVP_impedance_controlled
+  copper_oz: 1.0_signal_inner, 1.0_signal_outer
+  finish: ENIG (gold over nickel)
+  silkscreen: white
+  soldermask: green
+
+board_outline:
+  shape: rectangular
+  dimensions_mm:
+    width: 17.0      # <= frame X span 17.73 mm
+    height: 32.0     # <= frame Z range minus margins
+    thickness: 1.6   # standard FR-4 thickness
+  outline_keepout:
+    left_to_frame_X_min_mm: 0.5
+    right_to_frame_X_max_mm: 0.5
+    top_to_frame_Z_max_mm: 1.0
+    bottom_to_frame_Z_min_mm: 1.0
+  corners:
+    rounded_radius_mm: 1.5
+  mounting_holes: 4
+  mounting_hole_pattern:
+    hole_locations_mm:
+      - [X_corner_1, Y_corner_1]
+      - [X_corner_2, Y_corner_2]
+      - [X_corner_3, Y_corner_3]
+      - [X_corner_4, Y_corner_4]
+    hole_diameter_mm: 1.7  # for M1.6 self-tapping screw
+    annular_ring_mm: 0.5
+    copper_pour_keepout_radius_mm: 1.0
+
+keepouts:
+
+  camera_keepout:
+    shape: spherical
+    center_mm: [167.10, 94.35, 25.50]
+    radius_mm: 4.5  # camera envelope half-diagonal + 1mm clearance
+    no_traces: yes
+    no_vias: yes
+    no_copper_pour: yes
+
+  camera_aperture:
+    location_mm: [167.10, 89.10, 25.50]
+    diameter_mm: 10.7  # computed from 30-deg half-angle at 20 mm range
+    on_frame_front_wall: true
+    no_obstruction_above_plane: yes
+
+  led_keepouts:
+    forward_led_top:
+      center_mm: [167.10, 91.30, 30.50]
+      radius_mm: 1.7
+    forward_led_bottom:
+      center_mm: [167.10, 91.30, 20.50]
+      radius_mm: 1.7
+    left_temple_led_front:
+      center_mm: [148.61, 119.76, 19.43]
+      radius_mm: 1.7
+    left_temple_led_rear:
+      center_mm: [149.87, 187.09, 23.12]
+      radius_mm: 1.7
+    right_temple_led_front:
+      center_mm: [126.98, 122.92, 23.41]
+      radius_mm: 1.7
+    right_temple_led_rear:
+      center_mm: [125.65, 188.22, 19.54]
+      radius_mm: 1.7
+
+  antenna_keepout:
+    type: ESP32-S3 onboard antenna copper-free zone
+    shape: rectangular
+    dimensions_mm: [10.0, 10.0]
+    location: TBD_based_on_module_selection
+    no_traces: yes
+    no_copper_pour: yes
+    no_ground_pour_under: yes
+
+  fpc_keepout:
+    shape: linear_band
+    from_mm: [167.10, 98.60, 25.50]  # camera rear
+    to_mm: [TBD_PCB_LOCATION]
+    width_mm: 5.0
+    no_obstruction: yes
+
+  cable_routes:
+    temple_led_wires:
+      left_temple: 2_wires_from_PCB_through_temple_to_LED_sites
+      right_temple: 2_wires_from_PCB_through_temple_to_LED_sites
+      gauge_awg: TBD_FROM_CURRENT_DATASHEET
+      bundle_diameter_mm_max: 1.5
+    usb_c_cable:
+      from: usb_c_receptacle_on_temple_exterior
+      to: PCB_connector_at_cavity_back
+      wires: 5 (VBUS, GND, D+, D-, CC)
+      bundle_diameter_mm_max: 1.5
+    battery_cable:
+      from: PCB_connector
+      to: battery_cell
+      wires: 2 (B+, B-)
+      gauge_awg: TBD
+
+manufacturing:
+  pcb_material: FR4 (default) OR flex_Polyimide (if 4-layer or impedance-controlled)
+  silkscreen: required_on_top
+  edge_plating: not_required
+  controlled_impedance: required_if_USB_2.0_HighSpeed
+  assembly: reflow_SMT + selective_through_hole_for_mounting_screws
+  conformal_coat: optional (acrylic, on temple-side components)
+
+tolerances:
+  pcb_outline_tolerance_mm: +/- 0.1
+  hole_diameter_tolerance_mm: +0.1 / -0.0
+  silkscreen_registration_mm: +/- 0.15
+  copper_trace_width_mm_min: 0.1
+  copper_trace_clearance_mm_min: 0.1
+  via_drill_mm_min: 0.2
+  via_pad_mm_min: 0.4
+
+unknowns_TBD:
+  ESP32-S3_module_variant: "XIAO_ESP3S | WROOM-1 | WROOM-1U | custom"
+  camera_fpc_connector_part: "MUST come from CamThink datasheet"
+  usb_c_receptacle_part: "MUST come from preferred connector series"
+  battery_cell_dimensions: "MUST come from battery vendor datasheet"
+  led_driver_fet_part: "MUST come from current/voltage requirements"
+  battery_capacity_mah: "Trade study: runtime vs volume in cavity"

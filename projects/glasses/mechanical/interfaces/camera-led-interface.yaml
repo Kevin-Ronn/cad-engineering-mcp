@@ -1,0 +1,79 @@
+schema_version: 1
+interface:
+  id: camera_led_interface
+  units: mm
+camera:
+  id: camthink_ov5640_8p5
+  quantity: 1
+  placement:
+    region: center_nose_bridge
+    mounting: main_frame
+    orientation: forward
+    optical_axis: geometry_derived
+  envelope_mm:
+    x: 8.5
+    y: 8.5
+    z: 6.5
+  keepout:
+    required: true
+    include_full_module_envelope: true
+    include_lens_protrusion: true
+    include_fpc_exit: true
+    geometry_derived: true
+forward_leds:
+  component: vsma1094750x02
+  quantity: 2
+  placement:
+    regions:
+    - front_left
+    - front_right
+  orientation:
+    direction: same_as_camera
+    beam_angle_deg: 60
+    optical_axis: geometry_derived
+  mounting:
+    custom_pcb: true
+    main_frame: true
+led_camera_relationship:
+  minimum_clearance_mm: TBD
+  clearance_source: geometry_analysis
+  rules:
+    led_must_not_intersect_camera_keepout: true
+    camera_must_not_intersect_led_envelope: true
+    optical_axes_must_remain_clear: true
+    clearance_must_be_geometry_verified: true
+structural:
+  camera_mount_attached_to_main_frame: true
+  pcb_mount_attached_to_main_frame: true
+  local_ribs_allowed: true
+  uniform_frame_thickening_forbidden: true
+removable_front:
+  camera_mount_must_remain_on_main_frame: true
+  led_mount_must_remain_on_main_frame: true
+  front_must_not_capture_camera: true
+leds:
+  forward:
+    quantity: 2
+    orientation: same_as_camera
+    beam_angle_deg: 60
+    mounting: custom_pcb
+    optical_window: required
+  temple:
+    quantity: 4
+    orientation: outward
+    beam_angle_deg: 60
+    mounting: custom_pcb
+    optical_window: required
+  total: 6
+clearance_policy:
+  camera_led_clearance_mm: GEOMETRY_DERIVED
+  minimum_clearance_is_not_guessed: true
+  led_optical_envelope_must_not_intersect_camera_keepout: true
+  camera_lens_must_remain_clear: true
+  forward_leds_must_remain_separated_from_camera: true
+  temple_leds_must_not_enter_camera_keepout: true
+frame_policy:
+  frame_curvature_preserved: true
+  thin_shell_baseline: true
+  localized_ribs_allowed: true
+  uniform_thickening_forbidden: true

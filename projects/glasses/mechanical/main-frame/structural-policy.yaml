@@ -1,0 +1,83 @@
+schema_version: 1
+
+part: glasses_main_frame
+units: mm
+
+design_intent:
+  objective:
+    - minimum_structural_mass
+    - minimum_wall_thickness
+    - maximum_required_stiffness
+    - maintain_serviceability
+
+  structural_strategy:
+    baseline_geometry: thin_shell
+    reinforcement: localized_ribs
+    rib_policy: reinforce_only_where_structurally_required
+
+  forbidden_strategy:
+    - uniform_thickening
+    - arbitrary_material_fill
+    - electronics_volume_as_structural_geometry
+
+load_interfaces:
+  - left_hinge
+  - right_hinge
+  - pcb_mounts
+  - camera_mounts
+  - front_clip_receivers
+
+rib_rules:
+
+  left_hinge:
+    priority: critical
+    reinforcement: required
+    purpose:
+      - hinge_load_transfer
+      - prevent_local_wall_failure
+
+  right_hinge:
+    priority: critical
+    reinforcement: required
+    purpose:
+      - hinge_load_transfer
+      - prevent_local_wall_failure
+
+  pcb_mounts:
+    priority: high
+    reinforcement: required
+    purpose:
+      - distribute_fastener_load
+      - prevent_mount_flex
+
+  camera_mounts:
+    priority: high
+    reinforcement: required
+    purpose:
+      - maintain_camera_alignment
+      - distribute_mount_load
+
+  front_clip_receivers:
+    priority: high
+    reinforcement: required
+    purpose:
+      - distribute_clip_load
+      - prevent_local_cracking
+
+  long_span:
+    priority: medium
+    reinforcement: conditional
+    purpose:
+      - increase_bending_stiffness
+
+  unsupported_wall:
+    priority: medium
+    reinforcement: conditional
+    purpose:
+      - prevent_wall_buckling
+
+rib_geometry:
+  direction: derived_from_load_path
+  intersection_with_keepouts: forbidden
+  minimum_transition_radius_required: true
+  isolated_ribs_forbidden: true

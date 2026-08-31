@@ -1,0 +1,36 @@
+schema_version: 1
+
+geometry_interface:
+  id: ir_optical_window_geometry
+  units: mm
+
+construction:
+  type: recessed_circular_insert
+  reference_surface: main_frame_exterior
+
+  parameters:
+    window_diameter_mm: TBD
+    window_thickness_mm: TBD
+    recess_diameter_mm: TBD
+    recess_depth_mm: TBD
+    retention_lip_width_mm: TBD
+    frame_surface_offset_mm: 0.0
+
+surface_relationship:
+  frame_exterior_z: 0.0
+  window_exterior_z: 0.0
+  condition: coincident
+
+clearance:
+  window_to_led: TBD
+  window_to_rib: TBD
+  window_to_fastener: TBD
+  window_to_coating_boundary: TBD
+
+forbidden:
+  - through_hole
+  - protruding_window
+  - recessed_window_below_frame_surface
+  - rib_intersection
+  - fastener_intersection
+  - pcb_intersection

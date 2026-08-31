@@ -1,0 +1,32 @@
+schema_version: 1
+
+analysis: structural_geometry_analysis
+units: mm
+
+frame_strategy:
+  baseline: thin_shell
+  outer_silhouette: authoritative
+  internal_volume: hollow
+  reinforcement: localized_ribs
+
+critical_zones:
+  - left_hinge
+  - right_hinge
+  - camera_mount
+  - pcb_mounts
+  - front_clip_receivers
+
+rib_strategy:
+  generate_only_at_load_paths: true
+  preserve_component_keepouts: true
+  preserve_cable_routes: true
+  preserve_battery_volume: true
+  uniform_thickening: forbidden
+
+removable_front:
+  separate_body: true
+  clip_on: true
+  clip_receivers_on_main_frame: true
+  front_must_not_carry_pcb: true
+  front_must_not_carry_camera: true
+  front_must_not_carry_leds: true

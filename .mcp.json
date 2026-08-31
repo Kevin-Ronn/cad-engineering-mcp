@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cad-engineering": {
+      "type": "stdio",
+      "command": "/home/hackerman/cad-engineering-mcp/.venv/bin/python",
+      "args": [
+        "/home/hackerman/cad-engineering-mcp/src/cad_engineering_mcp/server.py"
+      ],
+      "env": {}
+    }
+  }
+}

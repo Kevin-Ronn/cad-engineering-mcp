@@ -1,0 +1,39 @@
+schema_version: 1
+
+part: removable_front
+units: mm
+
+design_intent:
+  function: cosmetic_and_protective_front
+  detachable_from_main_frame: true
+  clip_on: true
+  tool_free_removal: true
+
+hardware_policy:
+  camera_mounting: main_frame
+  pcb_mounting: main_frame
+  led_mounting: main_frame
+  electronics_on_removable_front: false
+
+clip_interface:
+  receivers:
+    quantity: geometry_derived
+    location: geometry_derived
+
+  engagement:
+    direction: geometry_derived
+    travel: geometry_derived
+    retention: mechanical_clip
+
+  clearances:
+    camera_keepout: forbidden
+    led_keepout: forbidden
+    pcb_keepout: forbidden
+    cable_routes: forbidden
+
+frame_policy:
+  preserve_wayfarer_silhouette: true
+  preserve_curvature: true
+  front_shell_may_be_thinned: true
+  structural_ribs_allowed: true
+  uniform_thickening_forbidden: true

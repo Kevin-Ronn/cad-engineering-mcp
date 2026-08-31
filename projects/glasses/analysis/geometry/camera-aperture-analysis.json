@@ -1,0 +1,75 @@
+{
+  "schema_version": 2,
+  "units": "mm",
+  "camera": {
+    "component": "camthink_ov5640_8p5",
+    "centre_mm": [
+      167.0975311430375,
+      94.34657232830386,
+      25.501723299561572
+    ],
+    "optical_axis_world": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "envelope_mm": [
+      8.5,
+      8.5,
+      6.5
+    ],
+    "lens_apex_mm": [
+      167.0975311430375,
+      90.09657232830386,
+      25.501723299561572
+    ],
+    "beam_full_angle_deg": 60.0,
+    "beam_half_angle_deg": 30.0
+  },
+  "host_surface": "frame_inner_front_face",
+  "aperture_plane_y_mm": 89.09657232830386,
+  "aperture": {
+    "shape": "circular",
+    "centre_mm": [
+      166.09188321524195,
+      89.09657232830386,
+      25.405154572599248
+    ],
+    "centre_on_host_surface_mm": [
+      166.09188321524195,
+      89.09657232830386,
+      25.405154572599248
+    ],
+    "min_enclosing_diameter_mm": 4.545851417833365,
+    "recommended_diameter_mm": 5.545851417833365,
+    "outer_plane_min_diameter_mm": 4.545851417833365,
+    "recess_depth_mm": 0.0,
+    "mounting": "flush_with_host_surface",
+    "preserves_outer_silhouette": true,
+    "preserves_frame_curvature": true,
+    "hole_geometry": "circular_perpendicular_to_optical_axis"
+  },
+  "cone_raycast": {
+    "rays_total": 361,
+    "rays_with_hits": 205,
+    "cone_axis": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "cone_apex_mm": [
+      167.0975311430375,
+      90.09657232830386,
+      25.501723299561572
+    ],
+    "half_angle_deg": 30.0,
+    "max_distance_to_hit_mm": 3.6998015687768127,
+    "min_distance_to_hit_mm": 3.6821854398448064
+  },
+  "derivation": "Minimum enclosing circle of 60-degree optical cone ray-cast intersection points projected onto the frame's inner front-face plane (Y = frame_front_face_inner_y_mm). The aperture sits flush with the inner surface; the outer silhouette is preserved because the cut is on the inner side. Frame curvature is preserved because no flattening was applied.",
+  "frame_modifications_required": [
+    "Hollow out lens cavity (Y = front_inner to back_inner) within cavity X/Z span",
+    "Cut camera aperture at the recorded position on the inner front face",
+    "Cut two LED apertures at the forward LED positions"
+  ]
+}

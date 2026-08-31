@@ -1,0 +1,97 @@
+{
+  "schema_version": 2,
+  "units": "mm",
+  "beam_full_angle_deg": 60.0,
+  "beam_half_angle_deg": 30.0,
+  "led_part": "vsma1094750x02",
+  "host_meshes_used": {
+    "frame_modified": "projects/glasses/analysis/geometry/frame-modified.stl",
+    "left_temple": "projects/glasses/references/silhouette/wayfarer/ray-ban-frame-side-left.stl",
+    "right_temple": "projects/glasses/references/silhouette/wayfarer/ray-ban-frameside-right.stl"
+  },
+  "windows": [
+    {
+      "label": "forward_led_bottom",
+      "role": "forward_led",
+      "component": "vsma1094750x02",
+      "centre_mm": [
+        167.0975311430375,
+        91.29657232830387,
+        20.501723299561572
+      ],
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "emitter_apex_mm": [
+        167.0975311430375,
+        89.59657232830386,
+        20.501723299561572
+      ],
+      "host_surface": "frame_inner_front_face",
+      "host_plane_y_mm": 89.097,
+      "window": {
+        "shape": "circular",
+        "centre_mm": [
+          167.1048681545669,
+          89.097,
+          20.456927602209785
+        ],
+        "min_enclosing_diameter_mm": 3.5880944111368644,
+        "recommended_diameter_mm": 4.088094411136865,
+        "recess_depth_mm": 0.0,
+        "mounting": "flush_with_host_surface",
+        "preserves_outer_silhouette": true,
+        "preserves_frame_curvature": true
+      },
+      "cone_raycast": {
+        "rays_total": 361,
+        "rays_with_hits": 234,
+        "max_distance_mm": 3.4998124029572355
+      }
+    },
+    {
+      "label": "forward_led_top",
+      "role": "forward_led",
+      "component": "vsma1094750x02",
+      "centre_mm": [
+        167.0975311430375,
+        91.29657232830387,
+        30.501723299561572
+      ],
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "emitter_apex_mm": [
+        167.0975311430375,
+        89.59657232830386,
+        30.501723299561572
+      ],
+      "host_surface": "frame_inner_front_face",
+      "host_plane_y_mm": 89.097,
+      "window": {
+        "shape": "circular",
+        "centre_mm": [
+          166.92734459896315,
+          89.097,
+          30.44239784839479
+        ],
+        "min_enclosing_diameter_mm": 3.5680899819163265,
+        "recommended_diameter_mm": 4.0680899819163265,
+        "recess_depth_mm": 0.0,
+        "mounting": "flush_with_host_surface",
+        "preserves_outer_silhouette": true,
+        "preserves_frame_curvature": true
+      },
+      "cone_raycast": {
+        "rays_total": 361,
+        "rays_with_hits": 170,
+        "max_distance_mm": 3.4996284765170667
+      }
+    }
+  ],
+  "derivation": "Each LED's 60-degree cone is ray-cast from the emitter apex. The minimum enclosing circle on the host surface (frame inner front face for forward LEDs, temple outer surface for temple LEDs) is computed. Recommended diameter includes a 0.5 mm margin. Windows are flush with the host surface; outer silhouette and curvature are preserved."
+}

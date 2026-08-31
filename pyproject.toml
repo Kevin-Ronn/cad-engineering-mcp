@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cad-engineering-mcp"
+version = "0.1.0"
+description = "Persistent CAD, PCB and product engineering MCP"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]",
+    "pydantic",
+    "pyyaml",
+    "numpy",
+    "scipy",
+    "trimesh",
+    "shapely",
+    "lxml",
+    "networkx"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

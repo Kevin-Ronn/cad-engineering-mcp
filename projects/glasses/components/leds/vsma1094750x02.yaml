@@ -1,0 +1,43 @@
+schema_version: 1
+
+component:
+  id: vsma1094750x02
+  manufacturer: Vishay
+  part_number: VSMA1094750X02
+  category: infrared_led
+  technology: smd
+  wavelength_nm: 940
+
+mechanical:
+  envelope_mm:
+    x: 3.4
+    y: 3.4
+    z: 1.5
+  dimensions_source: manufacturer_datasheet
+
+electrical:
+  drive:
+    controlled_current_required: true
+    switching_device: mosfet
+    current_limit_required: true
+
+thermal:
+  thermal_management_required: true
+  pcb_thermal_path_required: true
+  heatsink_geometry:
+    defined: false
+
+optical:
+  optical_axis:
+    defined: true
+    source: manufacturer_datasheet
+
+  frame_aperture:
+    required: true
+    coating_clearance_required: true
+
+design_policy:
+  package_geometry_is_authoritative: true
+  drive_current_must_not_be_guessed: true
+  aperture_geometry_must_not_be_guessed: true
+  optical_orientation_must_be_defined_before_final_cad: true

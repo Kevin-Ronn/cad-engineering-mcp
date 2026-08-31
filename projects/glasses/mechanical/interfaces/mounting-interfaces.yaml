@@ -1,0 +1,36 @@
+schema_version: 1
+
+units: mm
+
+interfaces:
+
+  pcb_to_main_frame:
+    type: mechanical_mount
+    parent: glasses_main_frame
+    component: main_pcb
+    retention: fastener
+    structural: true
+
+  camera_to_main_frame:
+    type: mechanical_mount
+    parent: glasses_main_frame
+    component: camera_module
+    retention: fastener
+    structural: true
+
+  left_hinge:
+    type: hinge
+    parent: glasses_main_frame
+    structural: critical
+
+  right_hinge:
+    type: hinge
+    parent: glasses_main_frame
+    structural: critical
+
+  removable_front:
+    type: clip
+    parent: glasses_main_frame
+    child: removable_wayfarer_front
+    removable: true
+    structural: secondary

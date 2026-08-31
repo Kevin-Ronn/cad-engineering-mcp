@@ -1,0 +1,111 @@
+schema_version: 1
+
+assembly: glasses
+units: mm
+
+placement_policy:
+
+  coordinate_policy:
+    coordinates_are_geometry_derived: true
+    manual_coordinates_require_source: true
+    unknown_coordinates_must_not_be_guessed: true
+
+  frame:
+    reference: wayfarer_silhouette
+    strategy: thin_shell
+    interior_gutted: true
+    structural_ribs_local_only: true
+    uniform_thickening_forbidden: true
+
+  front:
+    removable: true
+    attachment: clip_on
+    serviceable: true
+
+  pcb:
+    mounting: mechanical
+    mounting_features_required: true
+    board_geometry_defines_final_footprint: true
+
+  camera:
+    mechanical_mount_required: true
+    lens_aperture_must_remain_clear: true
+    camera_keepout_required: true
+
+  infrared_leds:
+    component: vsma1094750x02
+    quantity: 6
+    mounting: custom_pcb
+    optical_window_required: true
+    optical_window_mounting: recessed_flush
+
+placements:
+
+  front_left_led:
+    type: infrared_led
+    region: front_frame
+    side: left
+    orientation: forward
+    coordinates: TBD
+
+  front_right_led:
+    type: infrared_led
+    region: front_frame
+    side: right
+    orientation: forward
+    coordinates: TBD
+
+  left_temple_led_front:
+    type: infrared_led
+    region: left_temple
+    side: left
+    orientation: outward
+    coordinates: TBD
+
+  left_temple_led_rear:
+    type: infrared_led
+    region: left_temple
+    side: left
+    orientation: outward
+    coordinates: TBD
+
+  right_temple_led_front:
+    type: infrared_led
+    region: right_temple
+    side: right
+    orientation: outward
+    coordinates: TBD
+
+  right_temple_led_rear:
+    type: infrared_led
+    region: right_temple
+    side: right
+    orientation: outward
+    coordinates: TBD
+
+cameras:
+
+  left_camera_front:
+    region: left_front
+    coordinates: TBD
+
+  left_camera_rear:
+    region: left_rear
+    coordinates: TBD
+
+  right_camera_front:
+    region: right_front
+    coordinates: TBD
+
+  right_camera_rear:
+    region: right_rear
+    coordinates: TBD
+
+constraints:
+
+  minimum_led_camera_clearance_mm: TBD
+  camera_lens_keepout_mm: TBD
+  led_window_recess_depth_mm: TBD
+  optical_window_diameter_mm: TBD
+  optical_window_thickness_mm: TBD
+

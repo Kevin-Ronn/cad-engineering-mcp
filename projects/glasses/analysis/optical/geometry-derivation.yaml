@@ -1,0 +1,88 @@
+schema_version: 1
+
+analysis: optical_geometry_derivation
+units: mm
+
+components:
+
+  camera:
+    id: camthink_ov5640_8p5
+    envelope_mm:
+      x: 8.5
+      y: 8.5
+      z: 6.5
+    region: center_nose_bridge
+    direction: forward
+    position: geometry_derived
+
+  forward_led_left:
+    id: vsma1094750x02
+    envelope_mm:
+      x: 3.4
+      y: 3.4
+      z: 1.5
+    direction: same_as_camera
+    beam_angle_deg: 60
+    position: geometry_derived
+
+  forward_led_right:
+    id: vsma1094750x02
+    envelope_mm:
+      x: 3.4
+      y: 3.4
+      z: 1.5
+    direction: same_as_camera
+    beam_angle_deg: 60
+    position: geometry_derived
+
+  left_temple_led_1:
+    id: vsma1094750x02
+    direction: outward
+    beam_angle_deg: 60
+    position: geometry_derived
+
+  left_temple_led_2:
+    id: vsma1094750x02
+    direction: outward
+    beam_angle_deg: 60
+    position: geometry_derived
+
+  right_temple_led_1:
+    id: vsma1094750x02
+    direction: outward
+    beam_angle_deg: 60
+    position: geometry_derived
+
+  right_temple_led_2:
+    id: vsma1094750x02
+    direction: outward
+    beam_angle_deg: 60
+    position: geometry_derived
+
+clearance_rules:
+
+  camera_to_forward_led:
+    minimum_mm: geometry_derived
+    measurement: closest_surface_distance
+    zero_clearance_forbidden: true
+
+  camera_to_temple_led:
+    minimum_mm: geometry_derived
+    measurement: closest_surface_distance
+    zero_clearance_forbidden: true
+
+  lens:
+    keep_clear: true
+
+  optical_windows:
+    keep_clear: true
+
+  frame:
+    intersection: forbidden
+
+  removable_front:
+    intersection: forbidden
+
+output:
+  coordinates: derived_only
+  final_cad_requires_successful_validation: true

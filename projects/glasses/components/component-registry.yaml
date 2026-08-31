@@ -1,0 +1,9 @@
+schema_version: 1
+project: glasses
+units: mm
+component_policy:
+  source_geometry_is_immutable: true
+  dimensions_from_geometry_preferred: true
+  manually_entered_dimensions_require_source: true
+  unknown_values_must_not_be_guessed: true
+components: {}

@@ -1,0 +1,105 @@
+{
+  "schema_version": 2,
+  "units": "mm",
+  "source": {
+    "frame": "projects/glasses/references/silhouette/wayfarer/ray-ban-frame.stl",
+    "left_temple": "projects/glasses/references/silhouette/wayfarer/ray-ban-frame-side-left.stl",
+    "right_temple": "projects/glasses/references/silhouette/wayfarer/ray-ban-frame-side-right.stl",
+    "watertight": true,
+    "frame_volume_mm3": 6067.699124627805
+  },
+  "coordinate_system": {
+    "X_axis": "lateral across the front of the frame (wearer right = +X)",
+    "Y_axis": "wrap-around axis (front of frame at smaller Y, back at larger Y)",
+    "Z_axis": "vertical (Z=0 bottom of frame, Z=42.85 top)",
+    "forward_axis": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "forward_axis_meaning": "Away from wearer = decreasing Y",
+    "frame_front_face_y_mm": 84.45951877591708,
+    "frame_front_face_inner_y_mm": 89.09657232830386,
+    "frame_front_face_thickness_mm": 4.637053552386789,
+    "frame_back_face_y_mm": 215.54088803310037,
+    "frame_back_face_inner_y_mm": 210.90383800598684,
+    "lens_cavity_thickness_mm": 131.0813692571833,
+    "lens_cavity_internal_y_min_mm": 89.09657232830386
+  },
+  "frame_bbox_mm": {
+    "min": [
+      156.8119354248047,
+      78.50041198730469,
+      0.0
+    ],
+    "max": [
+      174.53895568847656,
+      221.5,
+      42.846126556396484
+    ],
+    "size": [
+      17.727020263671875,
+      142.9995880126953,
+      42.846126556396484
+    ]
+  },
+  "nose_bridge_region_mm": {
+    "triangles": 1010,
+    "bbox_min": [
+      164.18801879882812,
+      141.5013631184896,
+      16.983965237935383
+    ],
+    "bbox_max": [
+      169.66708374023438,
+      158.4990488688151,
+      32.0931142171224
+    ],
+    "bbox_size": [
+      5.47906494140625,
+      16.997685750325502,
+      15.109148979187015
+    ],
+    "centroid": [
+      167.0975311430375,
+      150.0002048605737,
+      25.501723299561572
+    ]
+  },
+  "temples": {
+    "left": {
+      "bbox_min_mm": [
+        140.75938415527344,
+        87.53056335449219,
+        0.0
+      ],
+      "bbox_max_mm": [
+        155.8328094482422,
+        221.5004119873047,
+        39.4015007019043
+      ],
+      "outward_axis": [
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    "right": {
+      "bbox_min_mm": [
+        125.46105194091797,
+        87.52318572998047,
+        0.0
+      ],
+      "bbox_max_mm": [
+        140.53448486328125,
+        221.4930419921875,
+        39.4015007019043
+      ],
+      "outward_axis": [
+        -1.0,
+        0.0,
+        0.0
+      ]
+    }
+  }
+}

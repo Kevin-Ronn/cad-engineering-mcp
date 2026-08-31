@@ -1,0 +1,55 @@
+schema_version: 1
+
+interface:
+  id: led_optical_apertures
+  units: mm
+
+purpose:
+  - expose_led_optical_path
+  - preserve_ir_reflective_coating
+  - prevent_structural_interference
+
+led_count: 6
+
+apertures:
+
+  front_left:
+    led: front_left
+    required: true
+    geometry_defined: false
+
+  front_right:
+    led: front_right
+    required: true
+    geometry_defined: false
+
+  front_left_aux:
+    led: front_left_aux
+    required: true
+    geometry_defined: false
+
+  front_right_aux:
+    led: front_right_aux
+    required: true
+    geometry_defined: false
+
+  left_temple:
+    led: left_temple
+    required: true
+    geometry_defined: false
+
+  right_temple:
+    led: right_temple
+    required: true
+    geometry_defined: false
+
+coating:
+  type: ir_reflective
+  coverage: exterior_frame
+  aperture_exclusions_required: true
+
+keepout:
+  optical_path_required: true
+  structural_ribs_must_not_intersect: true
+  pcb_mounts_must_not_intersect: true
+  fasteners_must_not_intersect: true

@@ -1,0 +1,40 @@
+schema_version: 1
+
+component:
+  id: glasses_main_pcb
+  category: custom_pcb
+  units: mm
+
+design_intent:
+  mounting: frame_fixed
+  geometry_required_before_frame_cutouts: true
+  dimensions_must_be_source_derived: true
+  unknown_dimensions_must_not_be_guessed: true
+
+electronics:
+  compute:
+    platform: ESP32-S3
+    mounting: onboard_pcb
+
+  accelerator:
+    type: TBD
+    mounting: onboard_pcb
+
+  cameras:
+    count: 4
+    interface: TBD
+
+  infrared_leds:
+    count: 6
+    switching: MOSFET
+
+  power:
+    battery: TBD
+    charging: USB-C
+    charger_ic: TBD
+
+mechanical:
+  pcb_outline: TBD
+  thickness_mm: TBD
+  mounting_holes: TBD
+  connectors: TBD

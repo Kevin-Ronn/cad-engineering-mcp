@@ -1,0 +1,49 @@
+schema_version: 1
+
+assembly: glasses_main_frame
+units: mm
+
+source_geometry:
+  frame:
+    file: projects/glasses/references/silhouette/wayfarer/ray-ban-frame.stl
+    authoritative: true
+    role: outer_silhouette
+
+  left_temple:
+    file: projects/glasses/references/silhouette/wayfarer/ray-ban-frame-side-left.stl
+    authoritative: true
+    role: left_temple_geometry
+
+  right_temple:
+    file: projects/glasses/references/silhouette/wayfarer/ray-ban-frameside-right.stl
+    authoritative: true
+    role: right_temple_geometry
+
+derivation:
+  scale:
+    source: geometry
+    target_units: mm
+    manual_scale_guess: false
+
+  coordinate_system:
+    source: frame_geometry
+    origin: geometry_derived
+    axes: geometry_derived
+
+  curvature:
+    preserve: true
+    flattening: forbidden
+
+  component_placement:
+    camera: geometry_derived
+    forward_leds: geometry_derived
+    temple_leds: geometry_derived
+    pcb: geometry_derived
+    clip_receivers: geometry_derived
+    ribs: geometry_derived
+
+validation:
+  missing_source_geometry: error
+  guessed_coordinates: error
+  guessed_scale: error
+  frame_intersection: error

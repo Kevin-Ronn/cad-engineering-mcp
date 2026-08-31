@@ -1,0 +1,122 @@
+schema_version: 1
+system: glasses_optical_layout
+units: mm
+purpose:
+- define_optical_component_interfaces
+- preserve_camera_clearance
+- preserve_led_optical_paths
+- support_flush_optical_windows
+- account_for_curved_frame_geometry
+frame:
+  curvature_preserved: true
+  geometry_derived: true
+  uniform_flattening_forbidden: true
+  optical_components_follow_frame_surface: true
+led_optical_rules:
+  forward_leds:
+    count: 2
+    orientation: forward
+    beam_angle_deg: 60
+    orientation_offset_deg: 0
+    window_required: true
+    axis:
+      direction: same_as_camera
+      geometry_derived: true
+  temple_leds:
+    count: 4
+    orientation: outward
+    beam_angle_deg: 60
+    window_required: true
+    axis:
+      direction: outward
+      geometry_derived: true
+camera_rules:
+  count: 1
+  arrangement: single_forward
+  placement:
+  - center_nose_bridge
+  orientation:
+    direction: forward
+    optical_axis: geometry_derived
+    follow_frame_curvature: true
+  envelope_mm:
+    x: 8.5
+    y: 8.5
+    z: 6.5
+  keepout:
+    required: true
+    geometry_derived: true
+    full_module_envelope: true
+optical_geometry:
+  forward_leds:
+    axis:
+      direction: same_as_camera
+      geometry_derived: true
+  temple_leds:
+    axis:
+      direction: outward_from_wearer
+      geometry_derived: true
+  beam_model:
+    type: conical
+    full_angle_deg: 60
+    half_angle_deg: 30
+  frame:
+    curved_surface_following: true
+    coating_surface_preserved: true
+  windows:
+    type: flat_circular
+    mounting: recessed_flush
+    exterior_surface_offset_mm: 0.0
+    open_hole_forbidden: true
+placement_constraints:
+  forward_camera_led:
+    relationship: same_direction
+    clearance_required: true
+  temple_camera_led:
+    relationship: outward_led_camera_separation
+    clearance_required: true
+  all_optical_components:
+    coordinates_require_component_geometry: true
+    orientation_requires_component_geometry: true
+    manual_coordinates_require_source: true
+forbidden:
+- guessing_component_coordinates
+- guessing_component_orientation
+- intersecting_camera_keepout
+- intersecting_led_envelope
+- blocking_optical_window
+- flattening_curved_frame
+- placing_led_directly_against_camera
+- placing_camera_inside_led_keepout
+geometry_rules:
+  frame_curvature_is_preserved: true
+  optical_axes_are_geometry_derived: true
+  final_axes_require_component_geometry: true
+  camera_and_led_coordinates_require_component_geometry: true
+  camera_position_is_geometry_derived: true
+  led_camera_clearance_is_geometry_verified: true
+  forbidden:
+  - guessing_component_coordinates
+  - guessing_camera_dimensions
+  - guessing_led_dimensions
+  - intersecting_camera_keepout
+  - intersecting_led_envelope
+  - blocking_optical_window
+camera_led_isolation:
+  camera_center: center_nose_bridge
+  forward_leds:
+    quantity: 2
+    direction: same_as_camera
+    beam_angle_deg: 60
+    clearance: geometry_derived
+  temple_leds:
+    quantity: 4
+    direction: outward
+    beam_angle_deg: 60
+    clearance_from_camera: geometry_derived
+  forbidden:
+  - led_envelope_intersecting_camera_keepout
+  - led_window_blocking_camera
+  - camera_lens_obstruction
+  - guessing_component_coordinates
+  - uniform_frame_thickening

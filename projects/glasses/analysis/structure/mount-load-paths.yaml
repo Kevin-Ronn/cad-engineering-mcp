@@ -1,0 +1,62 @@
+schema_version: 1
+
+assembly: glasses
+units: mm
+
+load_paths:
+
+  camera_mount:
+    source: camera
+    destination: main_frame
+    reinforcement: localized_ribs
+    direct_load_path: required
+
+  pcb_mounts:
+    source: main_pcb
+    destination: main_frame
+    reinforcement: localized_ribs
+    direct_load_path: required
+
+  left_hinge:
+    source: left_temple
+    destination: main_frame
+    reinforcement: localized_ribs
+    critical: true
+
+  right_hinge:
+    source: right_temple
+    destination: main_frame
+    reinforcement: localized_ribs
+    critical: true
+
+  removable_front:
+    source: clip_interface
+    destination: main_frame
+    reinforcement: localized_ribs
+    clip_motion_clear: true
+
+rib_policy:
+  baseline: thin_shell
+  reinforcement: localized
+  avoid_uniform_thickening: true
+  geometry_derived: true
+
+rib_zones:
+  camera_mount:
+    required: true
+  pcb_mounts:
+    required: true
+  left_hinge:
+    required: true
+  right_hinge:
+    required: true
+  front_clip_receivers:
+    required: true
+
+keepouts:
+  camera: forbidden
+  leds: forbidden
+  pcb: forbidden
+  battery: forbidden
+  cable_routes: forbidden
+  removable_front_motion: forbidden

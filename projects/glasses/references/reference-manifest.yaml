@@ -1,0 +1,72 @@
+schema_version: 1
+
+project: glasses
+units: mm
+
+reference_policy:
+  mutable: false
+  originals_are_authoritative: true
+  manufacturing_source: false
+  purpose: reference_geometry_only
+
+references:
+
+  wayfarer_frame:
+    file: silhouette/wayfarer/ray-ban-frame.stl
+    source: /home/hackerman/Pictures/rayban-wayfarer-model_files/ray-ban-frame.stl
+    type: silhouette
+    role:
+      - overall_silhouette
+      - front_frame_geometry
+      - frame_proportions
+      - structural_reference
+    geometry_constraint: true
+    volume_constraint: false
+    collision_constraint: false
+    sha256: deeae94db79ccd3a3b7ea470fa60ef17277d4044dfc1606f67efb1d63825d153
+
+  wayfarer_left_temple:
+    file: silhouette/wayfarer/ray-ban-frame-side-left.stl
+    source: /home/hackerman/Pictures/rayban-wayfarer-model_files/ray-ban-frame-side-left.stl
+    type: silhouette
+    role:
+      - left_temple_silhouette
+      - left_temple_reference
+      - ergonomic_form
+      - structural_reference
+    geometry_constraint: true
+    volume_constraint: false
+    collision_constraint: false
+    sha256: 38c851f462c1f3d753e8fa305f613d587d89294127d12a56303ba4c38757300b
+
+  wayfarer_right_temple:
+    file: silhouette/wayfarer/ray-ban-frameside-right.stl
+    source: /home/hackerman/Pictures/rayban-wayfarer-model_files/ray-ban-frameside-right.stl
+    type: silhouette
+    role:
+      - right_temple_silhouette
+      - right_temple_reference
+      - ergonomic_form
+      - structural_reference
+    geometry_constraint: true
+    volume_constraint: false
+    collision_constraint: false
+    sha256: d1f8722cea5caf1af327fed98ca2ba3bb0257663f24a5cbc5ead2c5d30e264d2
+
+  meta_rayban_display:
+    file: silhouette/meta/obj_1_MetaRayBanDisplay.stl
+    source: /home/hackerman/Downloads/MetaRayBanDisplay_stls/obj_1_MetaRayBanDisplay.stl
+    type: functional_reference
+    role:
+      - display_architecture
+      - display_placement_reference
+      - camera_placement_reference
+      - electronics_architecture_reference
+      - charging_architecture_reference
+      - sensor_architecture_reference
+    geometry_constraint: false
+    volume_constraint: false
+    collision_constraint: false
+    manufacturing_source: false
+    functional_only: true
+    sha256: d2f4a4fcfe4ddbaeb736039effc8714b9eca5d8bf6f731a7a6f1f866b21c2460

@@ -1,0 +1,32 @@
+schema_version: 1
+
+rib_system: main_frame
+
+units: mm
+
+purpose:
+  - localized_reinforcement
+  - load_transfer
+  - stiffness_increase
+  - avoid_uniform_thickening
+
+rib_generation:
+  source:
+    - structural_interfaces
+    - load_paths
+    - unsupported_spans
+
+  exclusions:
+    - pcb_keepout
+    - camera_keepout
+    - battery_keepout
+    - cable_routes
+    - removable_front_clip_motion
+
+  requirements:
+    - ribs_must_connect_to_structural_geometry
+    - ribs_must_have_fillet_transitions
+    - ribs_must_not_create_unserviceable_electronics_cavities
+    - ribs_must_not_interfere_with_removable_front
+
+rib_zones: {}

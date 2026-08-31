@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "units": "mm",
+  "source_geometry": {
+    "main_frame": {
+      "triangle_count": 21882,
+      "bbox_min_mm": [
+        156.8119354248047,
+        78.50041198730469,
+        0.0
+      ],
+      "bbox_max_mm": [
+        174.53895568847656,
+        221.5,
+        42.846126556396484
+      ],
+      "surface_normal_statistics": {
+        "x": {
+          "triangle_count": 8468,
+          "max_alignment": 0.9999980330467224
+        },
+        "y": {
+          "triangle_count": 2094,
+          "max_alignment": 0.999975323677063
+        },
+        "z": {
+          "triangle_count": 5098,
+          "max_alignment": 0.9999715685844421
+        }
+      }
+    },
+    "left_temple": {
+      "triangle_count": 4032,
+      "bbox_min_mm": [
+        140.75938415527344,
+        87.53056335449219,
+        0.0
+      ],
+      "bbox_max_mm": [
+        155.8328094482422,
+        221.5004119873047,
+        39.4015007019043
+      ],
+      "surface_normal_statistics": {
+        "x": {
+          "triangle_count": 1867,
+          "max_alignment": 0.9999871850013733
+        },
+        "y": {
+          "triangle_count": 356,
+          "max_alignment": 0.9998328685760498
+        },
+        "z": {
+          "triangle_count": 983,
+          "max_alignment": 0.9999831914901733
+        }
+      }
+    },
+    "right_temple": {
+      "triangle_count": 4032,
+      "bbox_min_mm": [
+        125.46105194091797,
+        87.52318572998047,
+        0.0
+      ],
+      "bbox_max_mm": [
+        140.53448486328125,
+        221.4930419921875,
+        39.4015007019043
+      ],
+      "surface_normal_statistics": {
+        "x": {
+          "triangle_count": 1867,
+          "max_alignment": 0.9999871850013733
+        },
+        "y": {
+          "triangle_count": 356,
+          "max_alignment": 0.9998328685760498
+        },
+        "z": {
+          "triangle_count": 983,
+          "max_alignment": 0.9999831914901733
+        }
+      }
+    }
+  },
+  "mounting_targets": {
+    "camera": {
+      "component": "camthink_ov5640_8p5",
+      "region": "center_nose_bridge",
+      "envelope_mm": [
+        8.5,
+        8.5,
+        6.5
+      ],
+      "orientation": "forward",
+      "placement": "surface_derived",
+      "status": "candidate_surface_search_required"
+    },
+    "forward_led_left": {
+      "component": "vsma1094750x02",
+      "region": "front_left",
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "orientation": "same_as_camera",
+      "beam_angle_deg": 60,
+      "placement": "surface_derived",
+      "window": "flush_circular"
+    },
+    "forward_led_right": {
+      "component": "vsma1094750x02",
+      "region": "front_right",
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "orientation": "same_as_camera",
+      "beam_angle_deg": 60,
+      "placement": "surface_derived",
+      "window": "flush_circular"
+    },
+    "left_temple_leds": {
+      "component": "vsma1094750x02",
+      "quantity": 2,
+      "region": "left_temple",
+      "orientation": "outward",
+      "beam_angle_deg": 60,
+      "placement": "temple_surface_derived",
+      "window": "flush_circular"
+    },
+    "right_temple_leds": {
+      "component": "vsma1094750x02",
+      "quantity": 2,
+      "region": "right_temple",
+      "orientation": "outward",
+      "beam_angle_deg": 60,
+      "placement": "temple_surface_derived",
+      "window": "flush_circular"
+    }
+  },
+  "constraints": {
+    "camera_keepout_required": true,
+    "led_keepout_required": true,
+    "camera_led_clearance_geometry_derived": true,
+    "frame_curvature_preserved": true,
+    "optical_axes_geometry_derived": true,
+    "manual_component_coordinates_forbidden": true
+  }
+}

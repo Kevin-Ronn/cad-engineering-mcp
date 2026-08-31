@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "units": "mm",
+  "camera": {
+    "centre_mm": [
+      167.0975311430375,
+      94.34657232830386,
+      25.501723299561572
+    ],
+    "optical_axis": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "envelope_mm": [
+      8.5,
+      8.5,
+      6.5
+    ],
+    "lens_apex_mm": [
+      167.0975311430375,
+      90.09657232830386,
+      25.501723299561572
+    ],
+    "beam_half_angle_deg": 30.0,
+    "beam_full_angle_deg": 60.0
+  },
+  "aperture": {
+    "centre_mm": [
+      166.76164146392279,
+      89.09657232830386,
+      25.470705056160817
+    ],
+    "centre_on_inner_surface_mm": [
+      166.76164146392279,
+      89.09657232830386,
+      25.470705056160817
+    ],
+    "centre_on_outer_surface_mm": [
+      166.76164146392279,
+      84.45951877591708,
+      25.470705056160817
+    ],
+    "min_diameter_inner_mm": 2.6903317541091463,
+    "min_diameter_outer_mm": 2.6903317541091463,
+    "recommended_diameter_mm": 3.6903317541091463,
+    "shape": "circular",
+    "mounting": "recessed_flush_with_inner_surface",
+    "preserves_outer_silhouette": true,
+    "preserves_frame_curvature": true
+  },
+  "cone_ray_cast": {
+    "rays_total": 361,
+    "rays_with_hits": 241,
+    "max_cone_distance_mm": 2.3026287853124523,
+    "min_cone_distance_mm": 1.6459965707382123
+  }
+}

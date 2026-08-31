@@ -1,0 +1,77 @@
+schema_version: 1
+interface:
+  id: ir_optical_window_system
+  units: mm
+  purpose:
+  - provide_flush_external_ir_transmission
+  - preserve_continuous_frame_surface
+  - maintain_ir_reflective_coating
+  - protect_led_optical_path
+  - permit_window_replacement
+  design_intent:
+    mounting: recessed_flush
+    exterior_surface_continuous: true
+    window_replaceable: true
+    open_hole_forbidden: true
+    structural_ribs_may_not_cross_optical_path: true
+  optical_requirements:
+    wavelength_nm: 940
+    transmission_requirement: TBD_FROM_SELECTED_WINDOW_MATERIAL
+    optical_axis: defined_by_led_pcb_geometry
+  mechanical_interface:
+    shape: circular
+    diameter_mm: TBD
+    thickness_mm: TBD
+    recess:
+      depth_mm: TBD
+      bottom_type: flat
+      perimeter_retention: required
+    installed_surface:
+      target: frame_exterior
+      offset_mm: 0.0
+      tolerance_mm: TBD
+    coating:
+      frame_coating_continuous_around_window: true
+      coating_may_not_cover_optical_area: true
+  placements:
+    front_left:
+      quantity: 1
+      led_id: front_left
+      mounting_region: front_frame
+      window_required: true
+    front_right:
+      quantity: 1
+      led_id: front_right
+      mounting_region: front_frame
+      window_required: true
+    left_temple:
+      quantity: 1
+      led_id: left_temple
+      mounting_region: left_temple
+      window_required: true
+    right_temple:
+      quantity: 1
+      led_id: right_temple
+      mounting_region: right_temple
+      window_required: true
+    auxiliary_left:
+      quantity: 1
+      led_id: auxiliary_left
+      mounting_region: front_frame
+      window_required: true
+    auxiliary_right:
+      quantity: 1
+      led_id: auxiliary_right
+      mounting_region: front_frame
+      window_required: true
+  manufacturing:
+    window_insert: separate_part
+    frame_pocket: machined_or_printed
+    adhesive: TBD
+    mechanical_retention_preferred: true
+  validation:
+    window_surface_must_be_flush: true
+    window_must_not_project_outward: true
+    window_must_not_extend_into_frame_cavity: true
+    led_must_have_clear_optical_path: true
+    coating_must_not_obstruct_window: true

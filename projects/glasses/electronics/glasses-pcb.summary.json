@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "units": "mm",
+  "board": {
+    "outline_width_mm": 15.727020263671875,
+    "outline_height_mm": 40.846126556396484,
+    "origin_stl_mm": [
+      157.8119354248047,
+      209.30383800598685,
+      1.0
+    ],
+    "thickness_mm": 1.6,
+    "mounting_holes": [
+      {
+        "position_mm": [
+          159.8119354248047,
+          3.0
+        ],
+        "diameter_mm": 1.7,
+        "screw": "M1.6"
+      },
+      {
+        "position_mm": [
+          171.53895568847656,
+          3.0
+        ],
+        "diameter_mm": 1.7,
+        "screw": "M1.6"
+      },
+      {
+        "position_mm": [
+          159.8119354248047,
+          39.846126556396484
+        ],
+        "diameter_mm": 1.7,
+        "screw": "M1.6"
+      },
+      {
+        "position_mm": [
+          171.53895568847656,
+          39.846126556396484
+        ],
+        "diameter_mm": 1.7,
+        "screw": "M1.6"
+      }
+    ],
+    "module_placeholders": [
+      {
+        "reference": "J1",
+        "footprint": "Connector_FPC:FPC_24_P0.5mm",
+        "position_mm": [
+          9.285595718232798,
+          -110.70726567768298
+        ]
+      },
+      {
+        "reference": "U1",
+        "footprint": "Module:ESP32-S3-WROOM-1",
+        "position_mm": [
+          2.0,
+          6.0
+        ]
+      },
+      {
+        "reference": "J2",
+        "footprint": "Connector_USB:USB_C_Receptacle",
+        "position_mm": [
+          10.727020263671875,
+          35.846126556396484
+        ]
+      },
+      {
+        "reference": "BT1",
+        "footprint": "Battery_Cell:Lipo_Pouch",
+        "position_mm": [
+          7.8635101318359375,
+          20.423063278198242
+        ]
+      },
+      {
+        "reference": "U2",
+        "footprint": "Package_TO_SOT_SMD:SOT-23-5",
+        "position_mm": [
+          3.0,
+          35.846126556396484
+        ]
+      },
+      {
+        "reference": "U3",
+        "footprint": "Package_TO_SOT_SMD:SOT-23-5",
+        "position_mm": [
+          6.0,
+          35.846126556396484
+        ]
+      },
+      {
+        "reference": "U4",
+        "footprint": "Package_TO_SOT_SMD:SOT-23",
+        "position_mm": [
+          7.8635101318359375,
+          37.846126556396484
+        ]
+      }
+    ]
+  },
+  "cavity_reference": {
+    "y_min_mm": 89.09657232830386,
+    "y_max_mm": 210.90383800598684,
+    "x_min_mm": 156.8119354248047,
+    "x_max_mm": 174.53895568847656,
+    "z_min_mm": 0.0,
+    "z_max_mm": 42.846126556396484
+  },
+  "keepouts": {
+    "camera_keepout": {
+      "shape": "spherical",
+      "center_mm": [
+        167.1,
+        94.35,
+        25.5
+      ],
+      "radius_mm": 4.5,
+      "no_traces": true,
+      "no_vias": true,
+      "no_copper_pour": true
+    },
+    "camera_aperture": {
+      "location_mm": [
+        167.1,
+        89.1,
+        25.5
+      ],
+      "diameter_mm": 10.7,
+      "on_frame_front_wall": true,
+      "no_obstruction_above_plane": true
+    },
+    "led_keepouts": {
+      "forward_led_top": {
+        "center_mm": [
+          167.1,
+          91.3,
+          30.5
+        ],
+        "radius_mm": 1.7
+      },
+      "forward_led_bottom": {
+        "center_mm": [
+          167.1,
+          91.3,
+          20.5
+        ],
+        "radius_mm": 1.7
+      },
+      "left_temple_led_front": {
+        "center_mm": [
+          148.61,
+          119.76,
+          19.43
+        ],
+        "radius_mm": 1.7
+      },
+      "left_temple_led_rear": {
+        "center_mm": [
+          149.87,
+          187.09,
+          23.12
+        ],
+        "radius_mm": 1.7
+      },
+      "right_temple_led_front": {
+        "center_mm": [
+          126.98,
+          122.92,
+          23.41
+        ],
+        "radius_mm": 1.7
+      },
+      "right_temple_led_rear": {
+        "center_mm": [
+          125.65,
+          188.22,
+          19.54
+        ],
+        "radius_mm": 1.7
+      }
+    },
+    "antenna_keepout": {
+      "type": "ESP32-S3 onboard antenna copper-free zone",
+      "shape": "rectangular",
+      "dimensions_mm": [
+        10.0,
+        10.0
+      ],
+      "location": "TBD_based_on_module_selection",
+      "no_traces": true,
+      "no_copper_pour": true,
+      "no_ground_pour_under": true
+    },
+    "fpc_keepout": {
+      "shape": "linear_band",
+      "from_mm": [
+        167.1,
+        98.6,
+        25.5
+      ],
+      "to_mm": [
+        "TBD_PCB_LOCATION"
+      ],
+      "width_mm": 5.0,
+      "no_obstruction": true
+    },
+    "cable_routes": {
+      "temple_led_wires": {
+        "left_temple": "2_wires_from_PCB_through_temple_to_LED_sites",
+        "right_temple": "2_wires_from_PCB_through_temple_to_LED_sites",
+        "gauge_awg": "TBD_FROM_CURRENT_DATASHEET",
+        "bundle_diameter_mm_max": 1.5
+      },
+      "usb_c_cable": {
+        "from": "usb_c_receptacle_on_temple_exterior",
+        "to": "PCB_connector_at_cavity_back",
+        "wires": "5 (VBUS, GND, D+, D-, CC)",
+        "bundle_diameter_mm_max": 1.5
+      },
+      "battery_cable": {
+        "from": "PCB_connector",
+        "to": "battery_cell",
+        "wires": "2 (B+, B-)",
+        "gauge_awg": "TBD"
+      }
+    }
+  }
+}

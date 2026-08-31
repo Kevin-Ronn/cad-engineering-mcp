@@ -1,0 +1,368 @@
+{
+  "schema_version": 2,
+  "units": "mm",
+  "frame_coordinate_source": "frame-coordinate-system.json",
+  "camera": {
+    "quantity": 1,
+    "envelope_mm": [
+      8.5,
+      8.5,
+      6.5
+    ],
+    "clearance_mm": 1.0,
+    "region": "center_nose_bridge",
+    "axis": "forward",
+    "candidates": [
+      {
+        "component": "camthink_ov5640_8p5",
+        "region": "center_nose_bridge",
+        "role": "camera",
+        "axis": "forward",
+        "center_mm": [
+          167.0975311430375,
+          94.34657232830386,
+          25.501723299561572
+        ],
+        "rotation_deg": {
+          "x": 90.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "optical_axis_world": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "surface_point_mm": [
+          167.0975311430375,
+          89.09657232830386,
+          25.501723299561572
+        ],
+        "surface_normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "mounting_face": "lens",
+        "envelope_mm": [
+          8.5,
+          8.5,
+          6.5
+        ],
+        "clearance_mm": 1.0,
+        "axis_alignment": 0.0,
+        "derivation": "anchored at nose-bridge centroid; Y placed 5.250 mm behind cavity front wall (cavity Y range 89.097 -> 210.904)",
+        "collision_targets": [
+          "frame",
+          "left_temple",
+          "right_temple"
+        ]
+      }
+    ]
+  },
+  "forward_leds": {
+    "quantity": 2,
+    "envelope_mm": [
+      3.4,
+      3.4,
+      1.5
+    ],
+    "clearance_mm": 0.5,
+    "beam_angle_deg": 60,
+    "axis": "same_as_camera",
+    "candidates": [
+      {
+        "component": "vsma1094750x02",
+        "region": "front_frame",
+        "role": "forward_led",
+        "axis": "same_as_camera",
+        "label": "forward_led_bottom",
+        "center_mm": [
+          167.0975311430375,
+          91.29657232830387,
+          20.501723299561572
+        ],
+        "rotation_deg": {
+          "x": 90.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "optical_axis_world": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "surface_point_mm": [
+          167.0975311430375,
+          89.09657232830386,
+          20.501723299561572
+        ],
+        "surface_normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "mounting_face": "lens",
+        "envelope_mm": [
+          3.4,
+          3.4,
+          1.5
+        ],
+        "clearance_mm": 0.5,
+        "axis_alignment": 0.0,
+        "derivation": "anchored at nose-bridge centroid (X), -5.0 mm Z (vertical stack), cavity_y + 2.200 mm",
+        "collision_targets": [
+          "frame",
+          "left_temple",
+          "right_temple"
+        ]
+      },
+      {
+        "component": "vsma1094750x02",
+        "region": "front_frame",
+        "role": "forward_led",
+        "axis": "same_as_camera",
+        "label": "forward_led_top",
+        "center_mm": [
+          167.0975311430375,
+          91.29657232830387,
+          30.501723299561572
+        ],
+        "rotation_deg": {
+          "x": 90.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "optical_axis_world": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "surface_point_mm": [
+          167.0975311430375,
+          89.09657232830386,
+          30.501723299561572
+        ],
+        "surface_normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "mounting_face": "lens",
+        "envelope_mm": [
+          3.4,
+          3.4,
+          1.5
+        ],
+        "clearance_mm": 0.5,
+        "axis_alignment": 0.0,
+        "derivation": "anchored at nose-bridge centroid (X), +5.0 mm Z (vertical stack), cavity_y + 2.200 mm",
+        "collision_targets": [
+          "frame",
+          "left_temple",
+          "right_temple"
+        ]
+      }
+    ]
+  },
+  "temple_leds": {
+    "quantity": 4,
+    "envelope_mm": [
+      3.4,
+      3.4,
+      1.5
+    ],
+    "clearance_mm": 0.5,
+    "beam_angle_deg": 60,
+    "axis": "outward",
+    "left_candidates": [
+      {
+        "component": "vsma1094750x02",
+        "region": "left_temple",
+        "role": "temple_led",
+        "axis": "outward",
+        "label": "left_temple_led_front",
+        "center_mm": [
+          148.6085511999444,
+          119.7631414674636,
+          19.43162674147714
+        ],
+        "rotation_deg": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "optical_axis_world": [
+          0.9701347538328952,
+          0.23251180737999166,
+          0.06911453417681115
+        ],
+        "surface_point_mm": [
+          146.04124959309897,
+          119.14783732096355,
+          19.24872652689616
+        ],
+        "surface_normal": [
+          0.9701347538328952,
+          0.23251180737999166,
+          0.06911453417681115
+        ],
+        "envelope_mm": [
+          3.4,
+          3.4,
+          1.5
+        ],
+        "clearance_mm": 0.5,
+        "axis_alignment": 0.9701347538328952,
+        "derivation": "anchored on outward face of left temple at Y=121.0, offset 2.65 mm along outward normal",
+        "collision_targets": [
+          "left_temple",
+          "frame"
+        ]
+      },
+      {
+        "component": "vsma1094750x02",
+        "region": "left_temple",
+        "role": "temple_led",
+        "axis": "outward",
+        "label": "left_temple_led_rear",
+        "center_mm": [
+          149.86869897413038,
+          187.08518578945484,
+          23.120788946099346
+        ],
+        "rotation_deg": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "optical_axis_world": [
+          0.9055843569197296,
+          -0.06375433982029542,
+          -0.4193475368430797
+        ],
+        "surface_point_mm": [
+          147.59352111816406,
+          187.245361328125,
+          24.174352010091145
+        ],
+        "surface_normal": [
+          0.9055843569197296,
+          -0.06375433982029542,
+          -0.4193475368430797
+        ],
+        "envelope_mm": [
+          3.4,
+          3.4,
+          1.5
+        ],
+        "clearance_mm": 0.5,
+        "axis_alignment": 0.9055843569197296,
+        "derivation": "anchored on outward face of left temple at Y=188.0, offset 2.51 mm along outward normal",
+        "collision_targets": [
+          "left_temple",
+          "frame"
+        ]
+      }
+    ],
+    "right_candidates": [
+      {
+        "component": "vsma1094750x02",
+        "region": "right_temple",
+        "role": "temple_led",
+        "axis": "outward",
+        "label": "right_temple_led_front",
+        "center_mm": [
+          126.97709013216274,
+          122.92072043873291,
+          23.41435886595588
+        ],
+        "rotation_deg": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "optical_axis_world": [
+          -0.9592381224443915,
+          -0.19257840724412462,
+          -0.20682306813475768
+        ],
+        "surface_point_mm": [
+          129.53173828125,
+          123.43359629313152,
+          23.965171178181965
+        ],
+        "surface_normal": [
+          -0.9592381224443915,
+          -0.19257840724412462,
+          -0.20682306813475768
+        ],
+        "envelope_mm": [
+          3.4,
+          3.4,
+          1.5
+        ],
+        "clearance_mm": 0.5,
+        "axis_alignment": 0.9592381224443915,
+        "derivation": "anchored on outward face of right temple at Y=121.0, offset 2.66 mm along outward normal",
+        "collision_targets": [
+          "right_temple",
+          "frame"
+        ]
+      },
+      {
+        "component": "vsma1094750x02",
+        "region": "right_temple",
+        "role": "temple_led",
+        "axis": "outward",
+        "label": "right_temple_led_rear",
+        "center_mm": [
+          125.64546737178573,
+          188.21665558860707,
+          19.53530798819883
+        ],
+        "rotation_deg": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "optical_axis_world": [
+          -0.9773625735134639,
+          0.20334792144774308,
+          -0.05841252209947306
+        ],
+        "surface_point_mm": [
+          128.18760426839194,
+          187.687744140625,
+          19.68723996480306
+        ],
+        "surface_normal": [
+          -0.9773625735134639,
+          0.20334792144774308,
+          -0.05841252209947306
+        ],
+        "envelope_mm": [
+          3.4,
+          3.4,
+          1.5
+        ],
+        "clearance_mm": 0.5,
+        "axis_alignment": 0.9773625735134639,
+        "derivation": "anchored on outward face of right temple at Y=188.0, offset 2.60 mm along outward normal",
+        "collision_targets": [
+          "right_temple",
+          "frame"
+        ]
+      }
+    ]
+  },
+  "constraints": {
+    "coordinates_geometry_derived": true,
+    "manual_coordinates_forbidden": true,
+    "frame_curvature_preserved": true,
+    "camera_keepout_required": true,
+    "led_keepout_required": true,
+    "flush_optical_windows_required": true
+  },
+  "status": "CANDIDATES_GENERATED"
+}

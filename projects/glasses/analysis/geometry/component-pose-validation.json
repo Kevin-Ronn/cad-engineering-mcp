@@ -1,0 +1,742 @@
+{
+  "schema_version": 3,
+  "validation": {
+    "camera_envelope_mm": [
+      8.5,
+      8.5,
+      6.5
+    ],
+    "led_envelope_mm": [
+      3.4,
+      3.4,
+      1.5
+    ],
+    "camera_clearance_mm": 1.0,
+    "led_clearance_mm": 0.5,
+    "beam_half_angle_deg": 30.0,
+    "min_optical_axis_alignment": 0.85,
+    "coordinates_manual": false,
+    "frame_curvature_preserved": true,
+    "validation_method": "shell_aware_cavity_plus_solid_temple_proximity",
+    "forward_axis_world": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "frame_front_face_y_mm": 84.45951877591708,
+    "frame_back_face_y_mm": 215.54088803310037,
+    "lens_cavity_depth_mm": 131.0813692571833,
+    "frame_treated_as": "thin_shell_bounding_cavity",
+    "overall_status": "PASS"
+  },
+  "accepted": [
+    {
+      "component": "camthink_ov5640_8p5",
+      "region": "center_nose_bridge",
+      "label": null,
+      "center_mm": [
+        167.0975311430375,
+        94.34657232830386,
+        25.501723299561572
+      ],
+      "envelope_mm": [
+        8.5,
+        8.5,
+        6.5
+      ],
+      "clearance_mm": 1.0,
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "checks": {
+        "optical_axis_alignment": 1.0,
+        "cavity_clearance": {
+          "front_clearance_mm": 9.5,
+          "back_clearance_mm": 120.80726567768298,
+          "top_clearance_mm": 14.094403256834912,
+          "bottom_clearance_mm": 22.251723299561572,
+          "left_clearance_mm": 6.035595718232798,
+          "right_clearance_mm": 3.1914245454390766
+        },
+        "obb_intersection": {
+          "target": "right_temple",
+          "intersects": false,
+          "distance_mm": 23.983611298442312,
+          "contact_mm": null
+        },
+        "mounting_face": "lens",
+        "mounting_face_to_surface_mm": 1.0,
+        "mounting_face_projection_mm": 1.0,
+        "optical_cone_clear": false,
+        "optical_cone_obstruction_mm": 1.633341052279306,
+        "aperture_required": true,
+        "aperture_location_mm": [
+          167.0975311430375,
+          90.09657232830386,
+          25.501723299561572
+        ],
+        "camera_aperture_diameter_recommendation_mm": 23.09401076758503
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "front_frame",
+      "label": "forward_led_bottom",
+      "center_mm": [
+        167.0975311430375,
+        91.29657232830387,
+        20.501723299561572
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "checks": {
+        "optical_axis_alignment": 1.0,
+        "cavity_clearance": {
+          "front_clearance_mm": 3.9000000000000057,
+          "back_clearance_mm": 121.30726567768298,
+          "top_clearance_mm": 21.594403256834912,
+          "bottom_clearance_mm": 19.751723299561572,
+          "left_clearance_mm": 8.58559571823281,
+          "right_clearance_mm": 5.741424545439088
+        },
+        "obb_intersection": {
+          "target": "right_temple",
+          "intersects": false,
+          "distance_mm": 27.748494233232694,
+          "contact_mm": null
+        },
+        "mounting_face": "lens",
+        "mounting_face_to_surface_mm": 0.5,
+        "mounting_face_projection_mm": 0.5,
+        "optical_cone_clear": false,
+        "optical_cone_obstruction_mm": 0.7083303275111348,
+        "aperture_required": true,
+        "aperture_location_mm": [
+          167.0975311430375,
+          89.59657232830386,
+          20.501723299561572
+        ]
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "front_frame",
+      "label": "forward_led_top",
+      "center_mm": [
+        167.0975311430375,
+        91.29657232830387,
+        30.501723299561572
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "checks": {
+        "optical_axis_alignment": 1.0,
+        "cavity_clearance": {
+          "front_clearance_mm": 3.9000000000000057,
+          "back_clearance_mm": 121.30726567768298,
+          "top_clearance_mm": 11.594403256834912,
+          "bottom_clearance_mm": 29.751723299561572,
+          "left_clearance_mm": 8.58559571823281,
+          "right_clearance_mm": 5.741424545439088
+        },
+        "obb_intersection": {
+          "target": "right_temple",
+          "intersects": false,
+          "distance_mm": 26.403949109169087,
+          "contact_mm": null
+        },
+        "mounting_face": "lens",
+        "mounting_face_to_surface_mm": 0.5,
+        "mounting_face_projection_mm": 0.5,
+        "optical_cone_clear": false,
+        "optical_cone_obstruction_mm": 1.169526315754872,
+        "aperture_required": true,
+        "aperture_location_mm": [
+          167.0975311430375,
+          89.59657232830386,
+          30.501723299561572
+        ]
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "left_temple",
+      "label": "left_temple_led_front",
+      "center_mm": [
+        148.6085511999444,
+        119.7631414674636,
+        19.43162674147714
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.9701347538328952,
+        0.23251180737999166,
+        0.06911453417681115
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9701347538328952,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 25.21720055316861,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.9463350546945194,
+        "mounting_face_projection_mm": -0.9463350546945195,
+        "led_camera_beam_intersection": {
+          "projection_mm": 10.746681473789662,
+          "perpendicular_distance_mm": 29.491872756003044,
+          "beam_radius_at_projection_mm": 6.204599441787625,
+          "required_radius_mm": 7.704599441787625
+        }
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "left_temple",
+      "label": "left_temple_led_rear",
+      "center_mm": [
+        149.86869897413038,
+        187.08518578945484,
+        23.120788946099346
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.9055843569197296,
+        -0.06375433982029542,
+        -0.4193475368430797
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9055843569197296,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 22.23962548566944,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.8123864370903524,
+        "mounting_face_projection_mm": -0.8123864370903524,
+        "led_camera_beam_intersection": {
+          "projection_mm": 18.816211020713478,
+          "perpendicular_distance_mm": 92.0979751045059,
+          "beam_radius_at_projection_mm": 10.86354449793773,
+          "required_radius_mm": 12.36354449793773
+        }
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "right_temple",
+      "label": "right_temple_led_front",
+      "center_mm": [
+        126.97709013216274,
+        122.92072043873291,
+        23.41435886595588
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        -0.9592381224443915,
+        -0.19257840724412462,
+        -0.20682306813475768
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9592381224443915,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 40.40716206311233,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.9632054015715611,
+        "mounting_face_projection_mm": -0.9632054015715611
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "right_temple",
+      "label": "right_temple_led_rear",
+      "center_mm": [
+        125.64546737178573,
+        188.21665558860707,
+        19.53530798819883
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        -0.9773625735134639,
+        0.20334792144774308,
+        -0.05841252209947306
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9773625735134639,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 39.95118748634226,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.9010172330086509,
+        "mounting_face_projection_mm": -0.9010172330086509
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    }
+  ],
+  "rejected": [],
+  "invalid": [],
+  "best_set": [
+    {
+      "component": "camthink_ov5640_8p5",
+      "region": "center_nose_bridge",
+      "label": null,
+      "center_mm": [
+        167.0975311430375,
+        94.34657232830386,
+        25.501723299561572
+      ],
+      "envelope_mm": [
+        8.5,
+        8.5,
+        6.5
+      ],
+      "clearance_mm": 1.0,
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "checks": {
+        "optical_axis_alignment": 1.0,
+        "cavity_clearance": {
+          "front_clearance_mm": 9.5,
+          "back_clearance_mm": 120.80726567768298,
+          "top_clearance_mm": 14.094403256834912,
+          "bottom_clearance_mm": 22.251723299561572,
+          "left_clearance_mm": 6.035595718232798,
+          "right_clearance_mm": 3.1914245454390766
+        },
+        "obb_intersection": {
+          "target": "right_temple",
+          "intersects": false,
+          "distance_mm": 23.983611298442312,
+          "contact_mm": null
+        },
+        "mounting_face": "lens",
+        "mounting_face_to_surface_mm": 1.0,
+        "mounting_face_projection_mm": 1.0,
+        "optical_cone_clear": false,
+        "optical_cone_obstruction_mm": 1.633341052279306,
+        "aperture_required": true,
+        "aperture_location_mm": [
+          167.0975311430375,
+          90.09657232830386,
+          25.501723299561572
+        ],
+        "camera_aperture_diameter_recommendation_mm": 23.09401076758503
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "front_frame",
+      "label": "forward_led_bottom",
+      "center_mm": [
+        167.0975311430375,
+        91.29657232830387,
+        20.501723299561572
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "checks": {
+        "optical_axis_alignment": 1.0,
+        "cavity_clearance": {
+          "front_clearance_mm": 3.9000000000000057,
+          "back_clearance_mm": 121.30726567768298,
+          "top_clearance_mm": 21.594403256834912,
+          "bottom_clearance_mm": 19.751723299561572,
+          "left_clearance_mm": 8.58559571823281,
+          "right_clearance_mm": 5.741424545439088
+        },
+        "obb_intersection": {
+          "target": "right_temple",
+          "intersects": false,
+          "distance_mm": 27.748494233232694,
+          "contact_mm": null
+        },
+        "mounting_face": "lens",
+        "mounting_face_to_surface_mm": 0.5,
+        "mounting_face_projection_mm": 0.5,
+        "optical_cone_clear": false,
+        "optical_cone_obstruction_mm": 0.7083303275111348,
+        "aperture_required": true,
+        "aperture_location_mm": [
+          167.0975311430375,
+          89.59657232830386,
+          20.501723299561572
+        ]
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "front_frame",
+      "label": "forward_led_top",
+      "center_mm": [
+        167.0975311430375,
+        91.29657232830387,
+        30.501723299561572
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "checks": {
+        "optical_axis_alignment": 1.0,
+        "cavity_clearance": {
+          "front_clearance_mm": 3.9000000000000057,
+          "back_clearance_mm": 121.30726567768298,
+          "top_clearance_mm": 11.594403256834912,
+          "bottom_clearance_mm": 29.751723299561572,
+          "left_clearance_mm": 8.58559571823281,
+          "right_clearance_mm": 5.741424545439088
+        },
+        "obb_intersection": {
+          "target": "right_temple",
+          "intersects": false,
+          "distance_mm": 26.403949109169087,
+          "contact_mm": null
+        },
+        "mounting_face": "lens",
+        "mounting_face_to_surface_mm": 0.5,
+        "mounting_face_projection_mm": 0.5,
+        "optical_cone_clear": false,
+        "optical_cone_obstruction_mm": 1.169526315754872,
+        "aperture_required": true,
+        "aperture_location_mm": [
+          167.0975311430375,
+          89.59657232830386,
+          30.501723299561572
+        ]
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "left_temple",
+      "label": "left_temple_led_front",
+      "center_mm": [
+        148.6085511999444,
+        119.7631414674636,
+        19.43162674147714
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.9701347538328952,
+        0.23251180737999166,
+        0.06911453417681115
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9701347538328952,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 25.21720055316861,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.9463350546945194,
+        "mounting_face_projection_mm": -0.9463350546945195,
+        "led_camera_beam_intersection": {
+          "projection_mm": 10.746681473789662,
+          "perpendicular_distance_mm": 29.491872756003044,
+          "beam_radius_at_projection_mm": 6.204599441787625,
+          "required_radius_mm": 7.704599441787625
+        }
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "left_temple",
+      "label": "left_temple_led_rear",
+      "center_mm": [
+        149.86869897413038,
+        187.08518578945484,
+        23.120788946099346
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        0.9055843569197296,
+        -0.06375433982029542,
+        -0.4193475368430797
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9055843569197296,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 22.23962548566944,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.8123864370903524,
+        "mounting_face_projection_mm": -0.8123864370903524,
+        "led_camera_beam_intersection": {
+          "projection_mm": 18.816211020713478,
+          "perpendicular_distance_mm": 92.0979751045059,
+          "beam_radius_at_projection_mm": 10.86354449793773,
+          "required_radius_mm": 12.36354449793773
+        }
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "right_temple",
+      "label": "right_temple_led_front",
+      "center_mm": [
+        126.97709013216274,
+        122.92072043873291,
+        23.41435886595588
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        -0.9592381224443915,
+        -0.19257840724412462,
+        -0.20682306813475768
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9592381224443915,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 40.40716206311233,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.9632054015715611,
+        "mounting_face_projection_mm": -0.9632054015715611
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    },
+    {
+      "component": "vsma1094750x02",
+      "region": "right_temple",
+      "label": "right_temple_led_rear",
+      "center_mm": [
+        125.64546737178573,
+        188.21665558860707,
+        19.53530798819883
+      ],
+      "envelope_mm": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "clearance_mm": 0.5,
+      "optical_axis_world": [
+        -0.9773625735134639,
+        0.20334792144774308,
+        -0.05841252209947306
+      ],
+      "checks": {
+        "optical_axis_alignment": 0.9773625735134639,
+        "obb_intersection": {
+          "target": "frame",
+          "intersects": false,
+          "distance_mm": 39.95118748634226,
+          "contact_mm": null
+        },
+        "mounting_face": "back",
+        "mounting_face_to_surface_mm": 0.9010172330086509,
+        "mounting_face_projection_mm": -0.9010172330086509
+      },
+      "status": "PASS",
+      "reason": "All geometric checks pass; cavity clearances and optical axis alignment within tolerance"
+    }
+  ],
+  "diagnostics": [
+    {
+      "component": "camera",
+      "status": "PASS",
+      "center_mm": [
+        167.0975311430375,
+        94.34657232830386,
+        25.501723299561572
+      ],
+      "cavity_clearance": {
+        "front_clearance_mm": 9.5,
+        "back_clearance_mm": 120.80726567768298,
+        "top_clearance_mm": 14.094403256834912,
+        "bottom_clearance_mm": 22.251723299561572,
+        "left_clearance_mm": 6.035595718232798,
+        "right_clearance_mm": 3.1914245454390766
+      },
+      "optical_axis_alignment": 1.0
+    },
+    {
+      "component": "forward_leds",
+      "status": "PASS",
+      "accepted_count": 2,
+      "rejected_count": 0,
+      "poses": [
+        {
+          "label": "forward_led_bottom",
+          "center_mm": [
+            167.0975311430375,
+            91.29657232830387,
+            20.501723299561572
+          ]
+        },
+        {
+          "label": "forward_led_top",
+          "center_mm": [
+            167.0975311430375,
+            91.29657232830387,
+            30.501723299561572
+          ]
+        }
+      ],
+      "rejected_reasons": []
+    },
+    {
+      "component": "temple_leds",
+      "status": "PASS",
+      "accepted_count": 4,
+      "rejected_count": 0,
+      "poses": [
+        {
+          "label": "left_temple_led_front",
+          "center_mm": [
+            148.6085511999444,
+            119.7631414674636,
+            19.43162674147714
+          ]
+        },
+        {
+          "label": "left_temple_led_rear",
+          "center_mm": [
+            149.86869897413038,
+            187.08518578945484,
+            23.120788946099346
+          ]
+        },
+        {
+          "label": "right_temple_led_front",
+          "center_mm": [
+            126.97709013216274,
+            122.92072043873291,
+            23.41435886595588
+          ]
+        },
+        {
+          "label": "right_temple_led_rear",
+          "center_mm": [
+            125.64546737178573,
+            188.21665558860707,
+            19.53530798819883
+          ]
+        }
+      ],
+      "rejected_reasons": []
+    }
+  ],
+  "summary": {
+    "candidate_count": 7,
+    "accepted": 7,
+    "rejected": 0,
+    "invalid": 0
+  }
+}

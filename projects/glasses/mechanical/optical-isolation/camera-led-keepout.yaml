@@ -1,0 +1,72 @@
+schema_version: 1
+
+system: camera_led_keepout
+units: mm
+
+camera:
+  id: camthink_ov5640_8p5
+  envelope_mm:
+    x: 8.5
+    y: 8.5
+    z: 6.5
+
+  position:
+    region: center_nose_bridge
+    coordinates: geometry_derived
+
+  orientation:
+    direction: forward
+    optical_axis: geometry_derived
+
+  keepout:
+    enabled: true
+    full_module_envelope: true
+    lens_clearance: true
+    fpc_clearance: true
+
+forward_leds:
+  quantity: 2
+  component: vsma1094750x02
+
+  orientation:
+    direction: same_as_camera
+    beam_angle_deg: 60
+    optical_axis: geometry_derived
+
+  placement:
+    coordinates: geometry_derived
+
+  clearance:
+    camera_keepout: required
+    value_mm: geometry_derived
+
+  optical_path:
+    window_required: true
+    unobstructed: true
+
+temple_leds:
+  quantity: 4
+  component: vsma1094750x02
+
+  orientation:
+    direction: outward
+    beam_angle_deg: 60
+    optical_axis: geometry_derived
+
+  placement:
+    coordinates: geometry_derived
+
+  clearance:
+    camera_keepout: required
+    value_mm: geometry_derived
+
+  optical_path:
+    window_required: true
+    unobstructed: true
+
+validation:
+  camera_led_intersection: forbidden
+  led_led_intersection: forbidden
+  optical_window_intersection: forbidden
+  camera_lens_obstruction: forbidden
+  guessed_coordinates: forbidden
