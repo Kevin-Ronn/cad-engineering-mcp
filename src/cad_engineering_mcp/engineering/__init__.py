@@ -139,3 +139,18 @@ from .release_blockers import (
     build_release_blocker_manifest,
     serialise_release_blocker_manifest,
 )
+
+from .provenance import (
+    ProvenanceError,
+    ProvenanceRecord,
+    VALID_PROVENANCE_KINDS,
+    VALID_RESOLUTION_STRATEGIES,
+    OVERRIDE_REL,
+    add_override,
+    build_resolution_plan,
+    find_override,
+    list_overrides,
+    load_overrides,
+    resolve_with_provenance,
+    save_overrides,
+)

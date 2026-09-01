@@ -5,10 +5,12 @@ from mcp.server import MCPServer
 from .tools import (
     add_assembly_component,
     audit_timeline,
+    authoritative_value_override,
     generate_pcb_outline,
     get_pose_validation_summary,
     list_analysis_artifacts,
     list_assembly_components,
+    list_authoritative_overrides,
     manufacturing_release_report,
     measure_mesh,
     mesh_interference,
@@ -17,6 +19,7 @@ from .tools import (
     read_analysis_artifact,
     reconcile_pcb,
     release_blocker_manifest,
+    resolution_plan,
     run_pose_pipeline,
     save_manufacturing_release_report,
     save_release_blocker_manifest,
@@ -159,6 +162,36 @@ Phase 5 adds the release-blocker resolution and audit-timeline layer:
                                   under ``manufacturing/releases/``
                                   with backup + audit; refuses to
                                   mutate unless allow_mutation=true.
+
+Phase 6 adds the formal provenance + authoritative-override layer:
+
+  list_authoritative_overrides -- read-only inspection of
+                                  ``components/component-authority-overrides.yaml``.
+                                  Returns every recorded override with
+                                  its full ProvenanceRecord metadata.
+  authoritative_value_override -- records an authoritative value for a
+                                  recognised component field, with
+                                  explicit provenance (kind,
+                                  evidence_path, evidence_sha256,
+                                  confidence, recorded_at,
+                                  recorded_by, notes). Persists under
+                                  ``components/component-authority-overrides.yaml``
+                                  via the standard Phase 3 backup +
+                                  audit infrastructure. Refuses to
+                                  record UNKNOWN / TBD / TBD_FROM_*
+                                  values. Refuses to silently
+                                  overwrite an existing authoritative
+                                  resolution. Dry-run by default;
+                                  requires allow_mutation=true.
+  resolution_plan              -- consumes the Phase 5 release-blocker
+                                  manifest and partitions every
+                                  blocker into one of four resolution
+                                  strategies: OVERRIDE,
+                                  POLICY_YAML, GEOMETRY_DERIVED,
+                                  EXTERNAL_DATASHEET. Read-only. Lets
+                                  the release engineer know which
+                                  blockers can be resolved without
+                                  external data.
 """
 )
 
@@ -232,6 +265,11 @@ Phase 5 tools:
   release_blocker_manifest
   audit_timeline
   save_release_blocker_manifest
+
+Phase 6 tools:
+  list_authoritative_overrides
+  authoritative_value_override
+  resolution_plan
 """
 
 
@@ -644,6 +682,97 @@ def save_release_blocker_manifest(
         destination=destination,
         allow_mutation=allow_mutation,
     )
+
+
+@mcp.tool()
+def list_authoritative_overrides() -> dict:
+    """List the recorded authoritative overrides.
+
+    Read-only. Returns the records persisted under
+    ``components/component-authority-overrides.yaml`` with their full
+    ProvenanceRecord metadata (kind, evidence_path, evidence_sha256,
+    confidence, recorded_at, recorded_by, notes).
+    """
+    from .tools.provenance_tools import (
+        list_authoritative_overrides as _impl,
+    )
+
+    return _impl()
+
+
+@mcp.tool()
+def authoritative_value_override(
+    component_id: str,
+    field: str,
+    value: object,
+    kind: str,
+    *,
+    evidence_path: str | None = None,
+    evidence_sha256: str | None = None,
+    confidence: str = "authoritative",
+    recorded_by: str = "engineering_agent",
+    notes: str | None = None,
+    force: bool = False,
+    allow_mutation: bool = False,
+) -> dict:
+    """Record an authoritative value with explicit provenance.
+
+    The override is the only legitimate way to resolve an UNKNOWN/TBD
+    blocker without weakening validation: each override carries a
+    :class:`ProvenanceRecord` (kind, evidence_path, evidence_sha256,
+    confidence, recorded_at, recorded_by, notes) and is persisted
+    under
+    ``components/component-authority-overrides.yaml``.
+
+    Refuses to record UNKNOWN/TBD values. Refuses to silently
+    overwrite an existing authoritative resolution (use ``force=true``
+    for an explicit override). Refuses to mutate unless
+    ``allow_mutation=true``. Backed up under
+    ``manufacturing/releases/<UTC>/`` and audit-logged.
+    """
+    from .tools.provenance_tools import (
+        authoritative_value_override as _impl,
+    )
+
+    return _impl(
+        component_id=component_id,
+        field=field,
+        value=value,
+        kind=kind,
+        evidence_path=evidence_path,
+        evidence_sha256=evidence_sha256,
+        confidence=confidence,
+        recorded_by=recorded_by,
+        notes=notes,
+        force=force,
+        allow_mutation=allow_mutation,
+    )
+
+
+@mcp.tool()
+def resolution_plan() -> dict:
+    """Build the engineering-data resolution plan.
+
+    Read-only. Consumes the Phase 5 release-blocker manifest and
+    partitions every blocker into one of four resolution strategies:
+
+      * ``OVERRIDE``           -- resolvable by recording an
+                                   authoritative value with provenance
+                                   via authoritative_value_override.
+      * ``POLICY_YAML``        -- resolvable by editing a project
+                                   policy YAML (declarative, non-data).
+      * ``GEOMETRY_DERIVED``   -- requires the geometry solver.
+      * ``EXTERNAL_DATASHEET`` -- requires an external authoritative
+                                   source (vendor datasheet) not yet
+                                   in the repository.
+
+    The plan never invents a strategy. The status is
+    ``RESOLVABLE_NOW`` only when every blocker is OVERRIDE or
+    POLICY_YAML.
+    """
+    from .tools.provenance_tools import resolution_plan as _impl
+
+    return _impl()
 
 
 if __name__ == "__main__":

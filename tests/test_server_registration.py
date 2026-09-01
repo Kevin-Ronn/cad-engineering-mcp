@@ -1,6 +1,6 @@
 """Verify the MCP server exposes every registered tool by name.
 
-Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5: 24 tools total.
+Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5 + Phase 6: 27 tools total.
 """
 from __future__ import annotations
 
@@ -37,6 +37,10 @@ EXPECTED_TOOLS = {
     "release_blocker_manifest",
     "audit_timeline",
     "save_release_blocker_manifest",
+    # Phase 6.
+    "list_authoritative_overrides",
+    "authoritative_value_override",
+    "resolution_plan",
 }
 
 
@@ -48,8 +52,8 @@ def test_all_tools_registered():
     assert not missing, f"Missing tools: {sorted(missing)}"
     extra = registered - EXPECTED_TOOLS
     assert not extra, f"Unexpected tools: {sorted(extra)}"
-    assert len(registered) == 24, (
-        f"Expected exactly 24 tools, got {len(registered)}: {sorted(registered)}"
+    assert len(registered) == 27, (
+        f"Expected exactly 27 tools, got {len(registered)}: {sorted(registered)}"
     )
 
 
@@ -116,7 +120,19 @@ def test_phase5_tools_present():
         assert name in mcp._tool_manager._tools, name
 
 
+def test_phase6_tools_present():
+    from cad_engineering_mcp.server import mcp
+
+    expected_phase6 = (
+        "list_authoritative_overrides",
+        "authoritative_value_override",
+        "resolution_plan",
+    )
+    for name in expected_phase6:
+        assert name in mcp._tool_manager._tools, name
+
+
 def test_tool_count_exact():
     from cad_engineering_mcp.server import mcp
 
-    assert len(mcp._tool_manager._tools) == 24
+    assert len(mcp._tool_manager._tools) == 27

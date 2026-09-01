@@ -18,6 +18,11 @@ from .release_blocker_tools import (
     release_blocker_manifest,
     save_release_blocker_manifest,
 )
+from .provenance_tools import (
+    authoritative_value_override,
+    list_authoritative_overrides,
+    resolution_plan,
+)
 from .mesh_interference import mesh_interference
 from .optical_window_tools import validate_optical_window_system
 from .propose_pose import propose_pose
@@ -64,4 +69,8 @@ __all__ = [
     "audit_timeline",
     "release_blocker_manifest",
     "save_release_blocker_manifest",
+    # Phase 6
+    "authoritative_value_override",
+    "list_authoritative_overrides",
+    "resolution_plan",
 ]
