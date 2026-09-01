@@ -8,12 +8,16 @@ from .tools import (
     get_pose_validation_summary,
     list_analysis_artifacts,
     list_assembly_components,
+    manufacturing_release_report,
     measure_mesh,
     mesh_interference,
     minimum_surface_distance,
     propose_pose,
     read_analysis_artifact,
+    reconcile_pcb,
     run_pose_pipeline,
+    save_manufacturing_release_report,
+    validate_dfm_dfa,
     validate_optical_window_system,
     validate_poses,
     validate_structural_policy,
@@ -87,6 +91,39 @@ Phase 3 adds the controlled-write and engineering-policy tools:
                                   thickness, recess, retention, and
                                   adhesive fields. INCOMPLETE whenever
                                   a required field is TBD.
+
+Phase 4 adds the engineering-data, DFM/DFA, PCB-reconciliation,
+and manufacturing-readiness layer:
+
+  validate_dfm_dfa             -- runs the DFM (wall thickness, rib
+                                  geometry, PCB stackup, hole geometry,
+                                  manufacturing method) and DFA
+                                  (replaceability, wire routing,
+                                  connector access, screw bosses,
+                                  snap-fits, removable front) checks
+                                  across every project manifest. Never
+                                  upgrades an unresolved TBD to PASS.
+  reconcile_pcb                -- derives a PCB outline from the
+                                  mechanical envelope, the validated
+                                  component poses, the LED keepouts,
+                                  and the camera FPC; cross-checks the
+                                  existing schematic outline; reports
+                                  every UNKNOWN footprint / connector /
+                                  stackup field that blocks release.
+  manufacturing_release_report -- aggregates reference integrity,
+                                  DFM/DFA, PCB reconciliation, and
+                                  component-data UNKNOWN/TBD coverage
+                                  into one release-readiness envelope.
+                                  Returns RELEASE_READY only when every
+                                  upstream validator has PASSed AND
+                                  every required component field is
+                                  authoritative.
+  save_manufacturing_release_report
+                               -- persists the manufacturing-readiness
+                                  report under
+                                  ``manufacturing/releases/`` with
+                                  backup + audit; refuses to mutate
+                                  unless allow_mutation=true.
 """
 )
 
@@ -149,6 +186,12 @@ Phase 3 tools:
   add_assembly_component
   validate_structural_policy
   validate_optical_window_system
+
+Phase 4 tools:
+  validate_dfm_dfa
+  reconcile_pcb
+  manufacturing_release_report
+  save_manufacturing_release_report
 """
 
 
@@ -425,6 +468,73 @@ def validate_optical_window_system() -> dict:
     )
 
     return _impl()
+
+
+@mcp.tool()
+def validate_dfm_dfa() -> dict:
+    """Run the DFM and DFA checks across the project YAML manifests.
+
+    Read-only. Returns a structured envelope with per-rule
+    findings, the combined DFM/DFA status, and the TBD field scan.
+    The status is ``INCOMPLETE`` whenever any BLOCK-severity
+    finding is present or any required field is TBD.
+    """
+    from .tools.manufacturing_tools import validate_dfm_dfa as _impl
+
+    return _impl()
+
+
+@mcp.tool()
+def reconcile_pcb() -> dict:
+    """Reconcile the PCB architecture against the mechanical envelope.
+
+    Read-only. Returns the derived PCB outline (from the frame
+    bbox), the existing outline (from schematic-architecture.yaml),
+    the fitted-in-frame verdict, the per-component envelopes, and
+    a list of UNKNOWN/TBD findings that block release.
+    """
+    from .tools.manufacturing_tools import reconcile_pcb as _impl
+
+    return _impl()
+
+
+@mcp.tool()
+def manufacturing_release_report() -> dict:
+    """Build the manufacturing-readiness release report.
+
+    Combines reference integrity, DFM/DFA, PCB reconciliation, and
+    component-data UNKNOWN/TBD coverage. The status is
+    ``RELEASE_READY`` only when every upstream validator PASSed AND
+    every required component field is authoritative; otherwise
+    ``INCOMPLETE`` or ``RELEASE_BLOCKED``.
+    """
+    from .tools.manufacturing_tools import (
+        manufacturing_release_report as _impl,
+    )
+
+    return _impl()
+
+
+@mcp.tool()
+def save_manufacturing_release_report(
+    destination: str = "manufacturing/releases/manufacturing-readiness.json",
+    allow_mutation: bool = False,
+) -> dict:
+    """Persist the manufacturing-readiness report.
+
+    Refuses to mutate unless ``allow_mutation=true``. Every write
+    is backed up under ``manufacturing/releases/<UTC>/`` and
+    audit-logged. The tool never overwrites a release-readiness
+    report with an ``ERROR`` envelope.
+    """
+    from .tools.manufacturing_tools import (
+        save_manufacturing_release_report as _impl,
+    )
+
+    return _impl(
+        destination=destination,
+        allow_mutation=allow_mutation,
+    )
 
 
 if __name__ == "__main__":

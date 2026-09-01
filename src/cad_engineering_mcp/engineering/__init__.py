@@ -116,13 +116,16 @@ from .component_authority import (
     resolve_component_field,
 )
 
-from .component_authority import (
-    ComponentAuthorityError,
-    KNOWN_COMPONENT_IDS,
-    PER_COMPONENT_YAML,
-    append_unknown_record,
-    is_recognised_field,
-    load_unknowns,
-    mark_component_unknown,
-    resolve_component_field,
+from .dfm_dfa import (
+    DfmDfaError,
+    run_dfm_dfa_validation,
+)
+
+from .pcb_reconcile import (
+    PcbReconcileError,
+    run_pcb_reconciliation,
+)
+
+from .manufacturing_readiness import (
+    run_manufacturing_release_report,
 )

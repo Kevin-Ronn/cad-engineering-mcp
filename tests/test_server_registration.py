@@ -1,6 +1,6 @@
 """Verify the MCP server exposes every registered tool by name.
 
-Phase 1 + Phase 2 + Phase 3: 17 tools total.
+Phase 1 + Phase 2 + Phase 3 + Phase 4: 21 tools total.
 """
 from __future__ import annotations
 
@@ -28,6 +28,11 @@ EXPECTED_TOOLS = {
     "add_assembly_component",
     "validate_structural_policy",
     "validate_optical_window_system",
+    # Phase 4.
+    "validate_dfm_dfa",
+    "reconcile_pcb",
+    "manufacturing_release_report",
+    "save_manufacturing_release_report",
 }
 
 
@@ -39,8 +44,8 @@ def test_all_tools_registered():
     assert not missing, f"Missing tools: {sorted(missing)}"
     extra = registered - EXPECTED_TOOLS
     assert not extra, f"Unexpected tools: {sorted(extra)}"
-    assert len(registered) == 17, (
-        f"Expected exactly 17 tools, got {len(registered)}: {sorted(registered)}"
+    assert len(registered) == 21, (
+        f"Expected exactly 21 tools, got {len(registered)}: {sorted(registered)}"
     )
 
 
@@ -82,7 +87,20 @@ def test_phase3_tools_present():
         assert name in mcp._tool_manager._tools, name
 
 
+def test_phase4_tools_present():
+    from cad_engineering_mcp.server import mcp
+
+    expected_phase4 = (
+        "validate_dfm_dfa",
+        "reconcile_pcb",
+        "manufacturing_release_report",
+        "save_manufacturing_release_report",
+    )
+    for name in expected_phase4:
+        assert name in mcp._tool_manager._tools, name
+
+
 def test_tool_count_exact():
     from cad_engineering_mcp.server import mcp
 
-    assert len(mcp._tool_manager._tools) == 17
+    assert len(mcp._tool_manager._tools) == 21

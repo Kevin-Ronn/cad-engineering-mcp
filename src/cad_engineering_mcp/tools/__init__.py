@@ -7,6 +7,12 @@ from .assembly_tools import (
     list_assembly_components,
 )
 from .generate_pcb_outline import generate_pcb_outline
+from .manufacturing_tools import (
+    manufacturing_release_report,
+    reconcile_pcb,
+    save_manufacturing_release_report,
+    validate_dfm_dfa,
+)
 from .mesh_interference import mesh_interference
 from .optical_window_tools import validate_optical_window_system
 from .propose_pose import propose_pose
@@ -44,4 +50,9 @@ __all__ = [
     "run_pose_pipeline",
     "validate_optical_window_system",
     "validate_structural_policy",
+    # Phase 4
+    "manufacturing_release_report",
+    "reconcile_pcb",
+    "save_manufacturing_release_report",
+    "validate_dfm_dfa",
 ]

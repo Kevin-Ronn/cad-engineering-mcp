@@ -420,8 +420,16 @@ def _is_authoritative_resolution(value: Any, source: str) -> bool:
     Provisional values (analysis-artifact center_mm, etc.) are *not*
     authoritative by themselves; they are provisional geometry-derived
     numbers that still depend on the underlying mesh.
+
+    The literal string ``"UNKNOWN"`` is the explicit sentinel the
+    resolver uses when no source carries a concrete value; it is
+    never authoritative regardless of type.
     """
+    if source == "UNKNOWN":
+        return False
     if _is_tbd_marker(value):
+        return False
+    if isinstance(value, str) and value.strip().upper() == "UNKNOWN":
         return False
     if isinstance(value, bool):
         return True
@@ -519,6 +527,27 @@ def resolve_component_field(
                         candidate_value = value
                         candidate_source = "per_component_yaml"
                         break
+                # Engineering convention: per-component YAMLs that
+                # place envelope / mechanical / electrical / thermal
+                # data under those parent keys (e.g. camera-module.yaml
+                # stores the envelope under ``mechanical.envelope_mm``)
+                # must still resolve a query of the bare
+                # ``envelope_mm.x`` path. Try the parent-prefixed
+                # alternates only when the direct walk returned
+                # UNKNOWN. This never overrides an existing
+                # authoritative resolution.
+                if candidate_source == "UNKNOWN":
+                    for parent in (
+                        "mechanical",
+                        "electrical",
+                        "thermal",
+                        "optical",
+                    ):
+                        value = _dotted_get(doc, f"{parent}.{normalised_field}")
+                        if value != "UNKNOWN" and not _is_tbd_marker(value):
+                            candidate_value = value
+                            candidate_source = "per_component_yaml"
+                            break
         else:
             sources_checked.append("per_component_yaml")
 
