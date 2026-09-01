@@ -13,6 +13,11 @@ from .manufacturing_tools import (
     save_manufacturing_release_report,
     validate_dfm_dfa,
 )
+from .release_blocker_tools import (
+    audit_timeline,
+    release_blocker_manifest,
+    save_release_blocker_manifest,
+)
 from .mesh_interference import mesh_interference
 from .optical_window_tools import validate_optical_window_system
 from .propose_pose import propose_pose
@@ -55,4 +60,8 @@ __all__ = [
     "reconcile_pcb",
     "save_manufacturing_release_report",
     "validate_dfm_dfa",
+    # Phase 5
+    "audit_timeline",
+    "release_blocker_manifest",
+    "save_release_blocker_manifest",
 ]

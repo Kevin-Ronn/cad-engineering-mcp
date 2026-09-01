@@ -4,6 +4,7 @@ from mcp.server import MCPServer
 
 from .tools import (
     add_assembly_component,
+    audit_timeline,
     generate_pcb_outline,
     get_pose_validation_summary,
     list_analysis_artifacts,
@@ -15,8 +16,10 @@ from .tools import (
     propose_pose,
     read_analysis_artifact,
     reconcile_pcb,
+    release_blocker_manifest,
     run_pose_pipeline,
     save_manufacturing_release_report,
+    save_release_blocker_manifest,
     validate_dfm_dfa,
     validate_optical_window_system,
     validate_poses,
@@ -124,6 +127,38 @@ and manufacturing-readiness layer:
                                   ``manufacturing/releases/`` with
                                   backup + audit; refuses to mutate
                                   unless allow_mutation=true.
+
+Phase 5 adds the release-blocker resolution and audit-timeline layer:
+
+  release_blocker_manifest     -- re-runs every upstream validator
+                                  (reference integrity, structural
+                                  policy, optical windows, DFM/DFA,
+                                  PCB reconciliation, manufacturing
+                                  release report, component-authority
+                                  coverage, pose validation) and
+                                  emits one canonical blocker list
+                                  with source_tool / category /
+                                  severity / field / component_id /
+                                  value / reason / remediation_hint.
+                                  UNKNOWN and TBD values are preserved
+                                  verbatim; nothing is fabricated.
+                                  Status is RELEASE_BLOCKED whenever
+                                  any BLOCK-severity blocker is
+                                  present, INCOMPLETE when only
+                                  WARNING-severity blockers are
+                                  present, and RELEASE_READY only
+                                  when the blocker list is empty.
+  audit_timeline               -- reads
+                                  ``manufacturing/releases/audit/*.jsonl``
+                                  and returns a chronological list of
+                                  engineering events with optional
+                                  tool / operation / success filters.
+                                  Read-only inspection.
+  save_release_blocker_manifest
+                               -- persists the release-blocker manifest
+                                  under ``manufacturing/releases/``
+                                  with backup + audit; refuses to
+                                  mutate unless allow_mutation=true.
 """
 )
 
@@ -192,6 +227,11 @@ Phase 4 tools:
   reconcile_pcb
   manufacturing_release_report
   save_manufacturing_release_report
+
+Phase 5 tools:
+  release_blocker_manifest
+  audit_timeline
+  save_release_blocker_manifest
 """
 
 
@@ -529,6 +569,75 @@ def save_manufacturing_release_report(
     """
     from .tools.manufacturing_tools import (
         save_manufacturing_release_report as _impl,
+    )
+
+    return _impl(
+        destination=destination,
+        allow_mutation=allow_mutation,
+    )
+
+
+@mcp.tool()
+def release_blocker_manifest() -> dict:
+    """Build the canonical release-blocker manifest.
+
+    Re-runs every upstream validator (reference integrity, structural
+    policy, optical windows, DFM/DFA, PCB reconciliation,
+    manufacturing release report, component-authority coverage,
+    pose validation) and emits one deterministic blocker list. Each
+    blocker carries ``source_tool``, ``category``, ``severity``,
+    ``field``, ``component_id``, ``value``, ``reason``, and
+    ``remediation_hint``. UNKNOWN/TBD values are preserved verbatim.
+
+    Read-only. Status is ``RELEASE_BLOCKED`` whenever any BLOCK-severity
+    blocker is present, ``INCOMPLETE`` when only WARNING-severity
+    blockers remain, and ``RELEASE_READY`` only when the blocker list
+    is empty.
+    """
+    from .tools.release_blocker_tools import (
+        release_blocker_manifest as _impl,
+    )
+
+    return _impl()
+
+
+@mcp.tool()
+def audit_timeline(
+    tool_filter: str | None = None,
+    operation_filter: str | None = None,
+    success_only: bool | None = None,
+) -> dict:
+    """Build the engineering audit-timeline from the JSONL log.
+
+    Reads ``manufacturing/releases/audit/*.jsonl`` and returns a
+    chronological list of engineering events with optional filters
+    by tool name, operation, or success/failure. Read-only.
+    """
+    from .tools.release_blocker_tools import (
+        audit_timeline as _impl,
+    )
+
+    return _impl(
+        tool_filter=tool_filter,
+        operation_filter=operation_filter,
+        success_only=success_only,
+    )
+
+
+@mcp.tool()
+def save_release_blocker_manifest(
+    destination: str = "manufacturing/releases/release-blocker-manifest.json",
+    allow_mutation: bool = False,
+) -> dict:
+    """Persist the release-blocker manifest.
+
+    Refuses to mutate unless ``allow_mutation=true``. Every write is
+    backed up under ``manufacturing/releases/<UTC>/`` and
+    audit-logged. The tool never overwrites a destination outside the
+    allowed roots and never downgrades BLOCK to WARNING.
+    """
+    from .tools.release_blocker_tools import (
+        save_release_blocker_manifest as _impl,
     )
 
     return _impl(

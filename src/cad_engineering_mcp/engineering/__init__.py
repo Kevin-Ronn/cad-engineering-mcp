@@ -129,3 +129,13 @@ from .pcb_reconcile import (
 from .manufacturing_readiness import (
     run_manufacturing_release_report,
 )
+
+from .release_blockers import (
+    ReleaseBlockerError,
+    VALID_CATEGORIES,
+    VALID_SEVERITIES,
+    REQUIRED_OBJECTIVES,
+    build_audit_timeline,
+    build_release_blocker_manifest,
+    serialise_release_blocker_manifest,
+)

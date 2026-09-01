@@ -1,6 +1,6 @@
 """Verify the MCP server exposes every registered tool by name.
 
-Phase 1 + Phase 2 + Phase 3 + Phase 4: 21 tools total.
+Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5: 24 tools total.
 """
 from __future__ import annotations
 
@@ -33,6 +33,10 @@ EXPECTED_TOOLS = {
     "reconcile_pcb",
     "manufacturing_release_report",
     "save_manufacturing_release_report",
+    # Phase 5.
+    "release_blocker_manifest",
+    "audit_timeline",
+    "save_release_blocker_manifest",
 }
 
 
@@ -44,8 +48,8 @@ def test_all_tools_registered():
     assert not missing, f"Missing tools: {sorted(missing)}"
     extra = registered - EXPECTED_TOOLS
     assert not extra, f"Unexpected tools: {sorted(extra)}"
-    assert len(registered) == 21, (
-        f"Expected exactly 21 tools, got {len(registered)}: {sorted(registered)}"
+    assert len(registered) == 24, (
+        f"Expected exactly 24 tools, got {len(registered)}: {sorted(registered)}"
     )
 
 
@@ -100,7 +104,19 @@ def test_phase4_tools_present():
         assert name in mcp._tool_manager._tools, name
 
 
+def test_phase5_tools_present():
+    from cad_engineering_mcp.server import mcp
+
+    expected_phase5 = (
+        "release_blocker_manifest",
+        "audit_timeline",
+        "save_release_blocker_manifest",
+    )
+    for name in expected_phase5:
+        assert name in mcp._tool_manager._tools, name
+
+
 def test_tool_count_exact():
     from cad_engineering_mcp.server import mcp
 
-    assert len(mcp._tool_manager._tools) == 21
+    assert len(mcp._tool_manager._tools) == 24
