@@ -67,6 +67,58 @@ PLACEMENT_POLICY_REL = Path("mechanical/interfaces/component-placement-policy.ya
 
 
 # ---------------------------------------------------------------------------
+# Canonical engineering-status resolution
+# ---------------------------------------------------------------------------
+
+
+def _resolve_pose_validation_status(doc: dict[str, Any]) -> tuple[str, str]:
+    """Return ``(canonical_status, status_kind)`` for a pose-validation
+    artifact.
+
+    P0-2 fix: Phase 7 consumes the canonical engineering-aware status,
+    NOT the raw ``validation.overall_status``. The legacy raw PASS
+    is no longer a sufficient condition for Phase 7 to consume the
+    artifact -- that was the original P0-2 audit finding (raw PASS
+    bypass of the engineering-level INCOMPLETE downgrade for
+    obstructed optical cones / missing mesh-collision backend).
+
+    The artifact carries three status fields produced by
+    :func:`validate_poses_tool`:
+
+      * ``engineering_status`` -- the canonical engineering verdict
+        consumed by Phase 7.
+      * ``validator_status`` -- the raw validator's verdict. This is
+        NOT sufficient on its own for Phase 7.
+      * ``release_status`` -- the manufacturing/release readiness
+        result. This is a SEPARATE concept from engineering_status
+        (it does not replace or downgrade it); Phase 7 must not
+        treat it as a fallback.
+
+    Resolution precedence (canonical for Phase 7):
+
+      1. ``engineering_status`` -- if present, it is the canonical
+         verdict. ``PASS`` -> proceed; anything else -> reject.
+      2. ``engineering_status`` absent -- the artifact is LEGACY
+         (produced before the engineering-aware tool was wired into
+         the MCP path). Phase 7 must FAIL CLOSED and require the
+         operator to re-run the engineering-aware ``validate_poses``
+         tool so the canonical fields are populated. Legacy raw
+         PASS is explicitly NOT trusted.
+
+    ``status_kind`` records which path was used so callers can
+    detect legacy artifacts and re-run the engineering-aware tool.
+    """
+    engineering_status = doc.get("engineering_status")
+    if isinstance(engineering_status, str) and engineering_status:
+        return engineering_status, "engineering_status"
+    # No canonical engineering_status -- legacy artifact. Fail
+    # closed. We do NOT fall back to validator_status or to
+    # validation.overall_status; doing so would re-introduce the
+    # raw-PASS bypass that P0-2 audit specifically called out.
+    return "LEGACY_NO_ENGINEERING_STATUS", "legacy"
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -124,8 +176,21 @@ def _load_json(path: Path) -> Any:
 def _load_pose_validation(glasses_root: Path) -> dict[str, Any]:
     """Load the component-pose-validation artifact.
 
-    Raises :class:`PlExecutionError` when the artifact is missing or
-    its ``validation.overall_status`` is not ``PASS``.
+    Raises :class:`PlExecutionError` when:
+
+      * the artifact is missing;
+      * the artifact carries no ``engineering_status`` field
+        (legacy artifact produced before the engineering-aware
+        ``validate_poses`` tool was wired into the MCP path);
+      * the canonical engineering status is not ``PASS``.
+
+    P0-2 fix: legacy raw PASS is NOT a sufficient condition for
+    Phase 7. The original audit finding was that raw
+    ``validation.overall_status == "PASS"`` could be consumed by
+    Phase 7 even when the engineering-aware status (e.g. for an
+    obstructed optical cone) was INCOMPLETE. The MCP path now
+    persists ``engineering_status`` to the artifact; Phase 7
+    requires it.
     """
     path = glasses_root / POSE_VALIDATION_REL
     if not path.exists():
@@ -138,33 +203,51 @@ def _load_pose_validation(glasses_root: Path) -> dict[str, Any]:
         raise PlExecutionError(
             f"Pose validation artifact is not a JSON object: {path}"
         )
-    validation = doc.get("validation") or {}
-    if not isinstance(validation, dict):
+    canonical_status, status_kind = _resolve_pose_validation_status(doc)
+    if canonical_status == "LEGACY_NO_ENGINEERING_STATUS":
         raise PlExecutionError(
-            "Pose validation artifact has no 'validation' object."
+            "Pose validation artifact is legacy: it carries no "
+            "engineering_status field. The original P0-2 audit "
+            "finding specifically forbade trusting raw "
+            "validation.overall_status == 'PASS' as sufficient for "
+            "Phase 7. Re-run the engineering-aware 'validate_poses' "
+            "MCP tool so the canonical engineering_status is "
+            "persisted to the artifact."
         )
-    overall = validation.get("overall_status")
-    if overall != "PASS":
+    if canonical_status != "PASS":
         raise PlExecutionError(
-            "Pose validation overall_status is "
-            f"{overall!r}; refused to derive placement coordinates "
-            "from a non-PASS source."
+            "Pose validation canonical status "
+            f"({status_kind}) is {canonical_status!r}; "
+            "refused to derive placement coordinates from a "
+            "non-authoritative source."
         )
     return doc
 
 
 def _index_pose_validation(doc: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """Index the accepted poses by (component, region).
+    """Index the accepted poses by the authoritative unique identity.
 
-    Some components appear multiple times (the LED appears in 6
-    placements). The same (component, region) pair may therefore
-    appear multiple times; we keep the first occurrence but record
-    the count so callers can detect duplicates.
+    P0-3 fix: the index key is ``component::region::identity`` where
+    ``identity`` is the entry's ``label`` field if present, or the
+    literal string ``"_no_label"`` otherwise. This keeps the index
+    scheme uniform across all entries (cameras with ``label: null``
+    and LEDs with explicit labels both produce stable keys) while
+    preserving the ability to disambiguate multiple physical
+    instances of the same component and region.
+
+    A duplicate ``(component, region, identity)`` is treated as an
+    ambiguous authoring error: the conflicting key is REMOVED from
+    the index so that :func:`_pose_at` returns ``None`` (fail-closed).
+    The duplicate is recorded in ``_duplicates`` for diagnostic
+    visibility. Phase 7 will surface such duplicates as
+    ``SKIP_NO_AUTHORITATIVE_POSE`` and refuse to fabricate a
+    resolution.
     """
     accepted = doc.get("accepted", []) or []
     if not isinstance(accepted, list):
         return {}
     index: dict[str, dict[str, Any]] = {}
+    duplicates: list[dict[str, Any]] = []
     for entry in accepted:
         if not isinstance(entry, dict):
             continue
@@ -172,10 +255,25 @@ def _index_pose_validation(doc: dict[str, Any]) -> dict[str, dict[str, Any]]:
         region = entry.get("region")
         if not component or not region:
             continue
-        key = f"{component}::{region}"
+        label_value = entry.get("label")
+        identity = str(label_value) if label_value else "_no_label"
+        key = f"{component}::{region}::{identity}"
         if key in index:
-            continue  # First occurrence wins; duplicates ignored.
+            # Fail-closed: remove the conflicting entry from the
+            # index so neither occurrence can be resolved. The
+            # duplicate is logged for diagnostics.
+            del index[key]
+            duplicates.append(
+                {
+                    "component": component,
+                    "region": region,
+                    "label": label_value,
+                }
+            )
+            continue
         index[key] = entry
+    if duplicates:
+        index["_duplicates"] = {"items": duplicates}  # type: ignore[assignment]
     return index
 
 
@@ -231,38 +329,71 @@ def _placement_yield_components(doc: dict[str, Any]) -> dict[str, str]:
 # data -- no inference, no fabrication. When a YAML key is missing
 # from this map the resolver returns ``None`` (the placement cannot
 # be auto-resolved; the YAML is left untouched).
-PLACEMENT_KEY_TO_POSE: dict[str, tuple[str, str]] = {
-    # LED placements.
-    "placements.front_left_led": ("vsma1094750x02", "front_frame"),
-    "placements.front_right_led": ("vsma1094750x02", "front_frame"),
-    "placements.front_left_aux": ("vsma1094750x02", "front_frame"),
-    "placements.front_right_aux": ("vsma1094750x02", "front_frame"),
-    "placements.left_temple_led_front": ("vsma1094750x02", "left_temple"),
-    "placements.left_temple_led_rear": ("vsma1094750x02", "left_temple"),
+#
+# P0-3 fix: each entry is keyed by the *authoritative unique pose
+# identity* -- a triple of (component_id, region, label). Multiple
+# physical instances of the same component and region (e.g. two
+# forward LEDs with labels ``forward_led_bottom`` /
+# ``forward_led_top``) are now distinct and resolve to their own
+# coordinates. Previously these collapsed onto the first occurrence.
+PLACEMENT_KEY_TO_POSE: dict[str, tuple[str, str, str]] = {
+    # Front-frame LEDs (the artifact carries two distinct physical
+    # instances under the same component+region; each is identified
+    # by its ``label``).
+    "placements.front_left_led": (
+        "vsma1094750x02",
+        "front_frame",
+        "forward_led_bottom",
+    ),
+    "placements.front_right_led": (
+        "vsma1094750x02",
+        "front_frame",
+        "forward_led_top",
+    ),
+    # Temple LEDs (one per side, one each side of the temple).
+    "placements.left_temple_led_front": (
+        "vsma1094750x02",
+        "left_temple",
+        "left_temple_led_front",
+    ),
+    "placements.left_temple_led_rear": (
+        "vsma1094750x02",
+        "left_temple",
+        "left_temple_led_rear",
+    ),
     "placements.right_temple_led_front": (
         "vsma1094750x02",
         "right_temple",
+        "right_temple_led_front",
     ),
     "placements.right_temple_led_rear": (
         "vsma1094750x02",
         "right_temple",
+        "right_temple_led_rear",
     ),
-    # Camera placements (single OV5640 in center_nose_bridge).
+    # Camera placements (single OV5640 in center_nose_bridge;
+    # all four YAML keys resolve to the same canonical pose -- the
+    # artifact carries ``label: null`` for the camera entry, so we
+    # index it under the ``_no_label`` sentinel per _index_pose_validation).
     "cameras.left_camera_front": (
         "camthink_ov5640_8p5",
         "center_nose_bridge",
+        "_no_label",
     ),
     "cameras.left_camera_rear": (
         "camthink_ov5640_8p5",
         "center_nose_bridge",
+        "_no_label",
     ),
     "cameras.right_camera_front": (
         "camthink_ov5640_8p5",
         "center_nose_bridge",
+        "_no_label",
     ),
     "cameras.right_camera_rear": (
         "camthink_ov5640_8p5",
         "center_nose_bridge",
+        "_no_label",
     ),
 }
 
@@ -270,12 +401,19 @@ PLACEMENT_KEY_TO_POSE: dict[str, tuple[str, str]] = {
 def _pose_at(
     index: dict[str, dict[str, Any]], key: str
 ) -> dict[str, Any] | None:
-    """Look up a pose by YAML placement key."""
-    pair = PLACEMENT_KEY_TO_POSE.get(key)
-    if pair is None:
+    """Look up a pose by YAML placement key.
+
+    P0-3 fix: the index is keyed by ``component::region::label`` so
+    multiple physical instances of the same component and region
+    remain distinct. A missing or ambiguous triple returns ``None``
+    (fail-closed); the resolver surfaces it as
+    ``SKIP_NO_AUTHORITATIVE_POSE``.
+    """
+    triple = PLACEMENT_KEY_TO_POSE.get(key)
+    if triple is None:
         return None
-    component, region = pair
-    return index.get(f"{component}::{region}")
+    component, region, label = triple
+    return index.get(f"{component}::{region}::{label}")
 
 
 def build_placement_resolution_plan(
@@ -335,6 +473,9 @@ def build_placement_resolution_plan(
     pose_doc = _load_pose_validation(glasses_root=glasses_root)
     pose_path = glasses_root / POSE_VALIDATION_REL
     pose_sha = _file_sha256(pose_path)
+    canonical_status, _status_kind = _resolve_pose_validation_status(
+        pose_doc
+    )
     index = _index_pose_validation(pose_doc)
     accepted = pose_doc.get("accepted", []) or []
     components_seen: list[str] = []
@@ -390,8 +531,8 @@ def build_placement_resolution_plan(
 
         # Determine the action.
         pose = _pose_at(index, placement_key)
-        component_id, region = (
-            PLACEMENT_KEY_TO_POSE.get(placement_key, (None, None))
+        component_id, region, label = PLACEMENT_KEY_TO_POSE.get(
+            placement_key, (None, None, None)
         )
         if pose is None:
             no_authoritative_pose += 1
@@ -484,7 +625,7 @@ def build_placement_resolution_plan(
                     "kind": "geometry_derived",
                     "source_path": str(POSE_VALIDATION_REL),
                     "source_sha256": pose_sha,
-                    "source_overall_status": "PASS",
+                    "source_overall_status": canonical_status,
                     "pose_index": _pose_index(accepted, pose),
                     "component_id": component_id,
                     "region": region,
@@ -513,9 +654,7 @@ def build_placement_resolution_plan(
         "pose_validation": {
             "path": str(POSE_VALIDATION_REL),
             "sha256": pose_sha,
-            "overall_status": pose_doc.get("validation", {}).get(
-                "overall_status"
-            ),
+            "overall_status": canonical_status,
             "accepted_count": len(accepted),
             "components": components_seen,
         },

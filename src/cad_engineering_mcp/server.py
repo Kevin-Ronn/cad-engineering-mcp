@@ -457,20 +457,20 @@ def validate_poses(
     candidates_path: str | None = None,
     tolerance_overrides_mm: dict | None = None,
 ) -> dict:
-    """Run the geometry-aware pose validator and return the structured report.
+    """Run the engineering-aware pose validator.
 
-    candidates_path:         default
-        ``analysis/geometry/component-pose-candidates.json``
-    tolerance_overrides_mm:  optional tolerance overrides. Values below
-        the mandatory policy floors are rejected. Never silently
-        applied.
+    This is the production MCP path. It runs the geometry validator,
+    computes the engineering-aware status (which downgrades raw
+    PASS to INCOMPLETE for obstructed optical cones or missing
+    mesh-collision backends), and **persists** the canonical status
+    fields to the artifact so Phase 7 cannot consume a raw PASS
+    without the engineering-aware verdict.
 
-    Returns the complete validator output. The summary ``status`` is
-    INCOMPLETE whenever the camera optical cone is obstructed or the
-    validator cannot produce a deterministic result, so callers cannot
-    mistake an obstructed optical cone for a production-ready PASS.
+    Persistence is mandatory -- this is the fix for the P0-2 audit
+    finding where the raw ``validation.overall_status`` could be
+    consumed by Phase 7 without the engineering downgrade.
     """
-    from .tools.validate_poses import validate_poses as _impl
+    from .tools.validate_poses import validate_poses_tool as _impl
 
     return _impl(
         candidates_path=candidates_path,

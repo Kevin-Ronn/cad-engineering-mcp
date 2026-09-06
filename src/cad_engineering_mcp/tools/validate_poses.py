@@ -473,3 +473,96 @@ def validate_poses(
         },
         warnings=summary_warnings,
     )
+
+
+def _persist_engineering_status(
+    *,
+    artifact_path: Path,
+    validator_status: str,
+    engineering_status: str,
+    release_status: str,
+) -> dict[str, Any]:
+    """Persist the engineering-level status into the pose-validation
+    artifact so downstream phases (Phase 7 placement execution) can
+    consume the canonical status without re-deriving it.
+
+    This adds three top-level fields to the artifact:
+
+      * ``validator_status`` -- the raw validator's verdict
+        (e.g. ``PASS`` / ``FAIL`` / ``UNKNOWN``). Preserved
+        verbatim from ``validation.overall_status``.
+      * ``engineering_status`` -- the engineering-aware verdict
+        (e.g. ``INCOMPLETE`` for an obstructed optical cone). This
+        is the canonical status Phase 7 must consume.
+      * ``release_status`` -- the manufacturing readiness flag
+        (``PRODUCTION_READY`` / ``NOT_PRODUCTION_READY`` /
+        ``UNKNOWN``).
+
+    The function refuses to silently downgrade an INCOMPLETE
+    engineering status to PASS. It never invents status values:
+    every status is sourced from the in-process computation.
+
+    The artifact is rewritten via the standard ``read_text`` /
+    ``write_text`` round-trip; the existing JSON content is
+    preserved (the new fields are added at the top level only).
+    """
+    if not artifact_path.exists():
+        return {"persisted": False, "reason": "artifact missing"}
+    doc = json.loads(artifact_path.read_text(encoding="utf-8"))
+    if not isinstance(doc, dict):
+        return {"persisted": False, "reason": "artifact not a JSON object"}
+    doc["validator_status"] = str(validator_status)
+    doc["engineering_status"] = str(engineering_status)
+    doc["release_status"] = str(release_status)
+    doc["engineering_status_computed_at"] = utcnow_iso()
+    artifact_path.write_text(
+        json.dumps(doc, indent=2, sort_keys=False, ensure_ascii=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    return {"persisted": True, "path": str(artifact_path)}
+
+
+def validate_poses_tool(
+    *,
+    tolerance_overrides_mm: dict[str, float] | None = None,
+    candidates_path: str = _DEFAULT_CANDIDATES_PATH,
+    artifact_path: str = "analysis/geometry/component-pose-validation.json",
+    persist_to_artifact: bool = True,
+) -> dict[str, Any]:
+    """Re-export helper for tests + Phase 7 callers (the engineering-aware
+    wrapper that the MCP-registered ``validate_poses`` tool calls).
+
+    Runs the validator, then (when ``persist_to_artifact`` is true) writes
+    the engineering-aware ``engineering_status`` / ``release_status`` /
+    ``validator_status`` fields back into the canonical pose-validation
+    ARTIFACT (not the candidates file) so Phase 7 can consume the
+    canonical verdict without re-deriving the optical-cone /
+    mesh-collision downgrade (P0-2 fix).
+
+    The artifact path defaults to
+    ``analysis/geometry/component-pose-validation.json`` and is
+    resolved relative to :func:`glasses_root` (NOT relative to the
+    candidates path).
+    """
+    envelope = validate_poses(
+        tolerance_overrides_mm=tolerance_overrides_mm,
+        candidates_path=candidates_path,
+    )
+    if persist_to_artifact and envelope.get("status") not in {"ERROR"}:
+        resolved_artifact = (
+            glasses_root() / artifact_path
+        ).resolve()
+        _persist_engineering_status(
+            artifact_path=resolved_artifact,
+            validator_status=str(
+                envelope["data"].get("artifact_overall_status", "UNKNOWN")
+            ),
+            engineering_status=str(envelope.get("status", "UNKNOWN")),
+            release_status=str(
+                envelope["data"].get(
+                    "engineering_readiness", "UNKNOWN"
+                )
+            ),
+        )
+    return envelope

@@ -19,5 +19,12 @@ dependencies = [
     "networkx"
 ]
 
+[project.scripts]
+# Console entry point so the MCP server can be launched without
+# absolute paths: `python -m cad_engineering_mcp` (preferred for
+# development) or `cad-engineering-mcp` (after `pip install -e .`).
+# The function lives in src/cad_engineering_mcp/__main__.py.
+cad-engineering-mcp = "cad_engineering_mcp.__main__:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
