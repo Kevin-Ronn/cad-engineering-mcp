@@ -3,6 +3,7 @@ manufacturing-readiness tools."""
 from __future__ import annotations
 
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -28,9 +29,10 @@ def snapshot_yaml():
         glasses / MOUNTING_INTERFACES_REL,
         glasses / REMOVABLE_FRONT_REL,
     ]
+    tmp = Path(tempfile.gettempdir())
     snapshots = []
     for p in paths:
-        snap = Path(f"/tmp/_phase4_snap_{p.name}")
+        snap = tmp / f"_phase4_snap_{p.name}"
         shutil.copy2(p, snap)
         snapshots.append((p, snap))
     yield snapshots

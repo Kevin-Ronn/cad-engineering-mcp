@@ -834,6 +834,20 @@ def apply_placement_resolution(
             "pose_validation_sha256": plan["pose_validation"]["sha256"],
         },
     )
+    # The controlled-write helper may signal a dry-run by returning a
+    # mapping with ``dry_run`` truthy. Honour that signal: a dry-run
+    # never persists anything, so ``executed`` must be False and
+    # ``applied`` must be 0 (the in-memory diff never reached disk).
+    if isinstance(write_summary, dict) and write_summary.get("dry_run"):
+        return {
+            "executed": False,
+            "applied": 0,
+            "skipped": skipped,
+            "errors": errors,
+            "resolutions": plan["resolutions"],
+            "applied_records": applied_records,
+            "write_summary": write_summary,
+        }
     return {
         "executed": True,
         "applied": applied,

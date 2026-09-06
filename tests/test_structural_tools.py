@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -19,8 +20,9 @@ def snapshot_yaml():
     glasses = glasses_root()
     policy = glasses / POLICY_REL
     rib = glasses / RIB_REL
-    policy_snap = Path("/tmp/_policy_snapshot.yaml")
-    rib_snap = Path("/tmp/_rib_snapshot.yaml")
+    tmp = Path(tempfile.gettempdir())
+    policy_snap = tmp / "_policy_snapshot.yaml"
+    rib_snap = tmp / "_rib_snapshot.yaml"
     shutil.copy2(policy, policy_snap)
     shutil.copy2(rib, rib_snap)
     yield policy_snap, rib_snap

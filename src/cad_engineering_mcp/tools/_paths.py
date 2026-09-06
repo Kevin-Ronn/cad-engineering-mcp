@@ -7,20 +7,25 @@ must resolve it through :func:`safe_resolve` so that:
 * symlinks that escape the project root are rejected
 * missing files raise a structured error rather than crashing
 
-The project root is portable: it honours the ``CAD_ENGINEERING_ROOT``
-environment variable, falls back to the repository root that contains
-``src/cad_engineering_mcp/server.py`` (resolved via ``__file__``), and
-finally to the historical ``~/cad-engineering-mcp`` default for back-
-compatibility. The hard-coded home-directory assumption in earlier
-modules is preserved as a last-resort fallback only.
+The project root is portable and is computed by the shared resolver in
+:mod:`cad_engineering_mcp.engineering.paths`. It honours the
+``CAD_ENGINEERING_ROOT`` environment variable, falls back to the
+repository root that contains ``src/cad_engineering_mcp/server.py``
+(resolved via ``__file__``), and finally to the historical
+``~/cad-engineering-mcp`` default for back-compatibility.
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Iterable
 
 from ..engineering.component_geometry import ComponentGeometryError
+from ..engineering.paths import (
+    glasses_root as _glasses_root,
+    project_root as _project_root,
+    resolve_project_root as _resolve_project_root,
+    reset_project_root_cache as _reset_project_root_cache,
+)
 
 
 # Sub-tree of the project that read/verification tools are allowed to
@@ -46,70 +51,20 @@ class PathSecurityError(ComponentGeometryError):
     """Raised when a requested path is outside the allowed project tree."""
 
 
-def _historical_default() -> Path:
-    return Path.home() / "cad-engineering-mcp"
-
-
-def resolve_project_root() -> Path:
-    """Return the CAD Engineering repository root.
-
-    Resolution order:
-
-    1. ``CAD_ENGINEERING_ROOT`` environment variable, if set and existing.
-    2. Repository root derived from this file's location
-       (``<repo>/src/cad_engineering_mcp/tools/_paths.py`` -> ``<repo>``).
-    3. The historical ``~/cad-engineering-mcp`` default for back-compat.
-
-    The returned path is resolved to an absolute path and verified to
-    exist. If neither source is usable, ``PathSecurityError`` is raised.
-    """
-    env_root = os.environ.get("CAD_ENGINEERING_ROOT")
-    if env_root:
-        candidate = Path(env_root).expanduser().resolve()
-        if candidate.is_dir():
-            return candidate
-
-    # Walk up from this file to find the repo root that contains
-    # src/cad_engineering_mcp/server.py and pyproject.toml.
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        if (parent / "pyproject.toml").is_file() and (
-            parent / "src" / "cad_engineering_mcp" / "server.py"
-        ).is_file():
-            return parent
-
-    fallback = _historical_default()
-    if fallback.is_dir():
-        return fallback.resolve()
-
-    raise PathSecurityError(
-        "Could not locate the CAD Engineering repository root. "
-        "Set CAD_ENGINEERING_ROOT or run from the repo directory."
-    )
-
-
-def project_root() -> Path:
-    """Cached project root accessor.
-
-    Computing the root repeatedly inside hot paths is wasteful; cache it
-    on first use. The cache is module-level so test fixtures can reset it
-    by calling :func:`reset_project_root_cache`.
-    """
-    cached = globals().get("_PROJECT_ROOT")
-    if cached is not None:
-        return cached
-    root = resolve_project_root()
-    globals()["_PROJECT_ROOT"] = root
-    return root
+# Re-export the shared resolver so existing ``from .tools._paths import
+# project_root`` / ``glasses_root`` imports keep working.
+project_root = _project_root
+glasses_root = _glasses_root
+resolve_project_root = _resolve_project_root
 
 
 def reset_project_root_cache() -> None:
-    globals().pop("_PROJECT_ROOT", None)
+    """Clear the cached project root.
 
-
-def glasses_root() -> Path:
-    """Return ``<project_root>/projects/glasses``."""
-    return project_root() / "projects" / "glasses"
+    Delegates to :func:`cad_engineering_mcp.engineering.paths.reset_project_root_cache`
+    so the cache is shared between engineering and tools modules.
+    """
+    _reset_project_root_cache()
 
 
 def _normalize(path: Path, *, must_be_under: Path) -> Path:

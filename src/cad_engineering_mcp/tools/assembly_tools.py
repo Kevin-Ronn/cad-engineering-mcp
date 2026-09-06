@@ -389,7 +389,7 @@ def add_assembly_component(
             timestamp=timestamp,
             tool="add_assembly_component",
             operation="add",
-            affected_paths=[str(destination.relative_to(glasses_root()))],
+            affected_paths=[destination.relative_to(glasses_root()).as_posix()],
             success=False,
             metadata={"component_id": component_id},
             errors=[str(exc)],
@@ -427,7 +427,7 @@ def add_assembly_component(
             timestamp=timestamp,
             tool="add_assembly_component",
             operation="add",
-            affected_paths=[str(destination.relative_to(glasses_root()))],
+            affected_paths=[destination.relative_to(glasses_root()).as_posix()],
             success=False,
             metadata={
                 "component_id": component_id,
@@ -448,7 +448,7 @@ def add_assembly_component(
         timestamp=timestamp,
         tool="add_assembly_component",
         operation="add",
-        affected_paths=[str(destination.relative_to(glasses_root()))],
+        affected_paths=[destination.relative_to(glasses_root()).as_posix()],
         success=True,
         metadata={
             "component_id": component_id,

@@ -96,7 +96,13 @@ def test_python_m_cad_engineering_mcp_imports_without_hardcoded_paths():
     )
     # The resolved module path must live inside the package's src/
     # tree -- this confirms there is no host-specific hard-coding.
-    assert "cad_engineering_mcp/__main__.py" in result.stdout
+    # Use Path so the assertion works on both POSIX and Windows
+    # (the printed path uses the OS-native separator).
+    printed_path = Path(result.stdout.strip().splitlines()[-1])
+    parts = printed_path.as_posix().split("/")
+    assert parts[-2:] == ["cad_engineering_mcp", "__main__.py"], (
+        f"unexpected __main__ location: {printed_path}"
+    )
 
 
 def test_no_host_specific_paths_in_launcher_metadata():

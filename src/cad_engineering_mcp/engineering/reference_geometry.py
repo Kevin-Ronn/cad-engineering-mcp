@@ -7,8 +7,10 @@ from typing import Any
 import trimesh
 import yaml
 
+from .paths import project_root as _project_root
 
-PROJECT_ROOT = Path.home() / "cad-engineering-mcp"
+
+PROJECT_ROOT = _project_root()
 REFERENCE_ROOT = PROJECT_ROOT / "projects" / "glasses" / "references"
 MANIFEST_PATH = REFERENCE_ROOT / "reference-manifest.yaml"
 

@@ -129,7 +129,7 @@ def apply_placement_resolution(
             timestamp=utc_timestamp_fs(),
             tool="apply_placement_resolution",
             operation="no_mutation_dry_run",
-            affected_paths=[str(PLACEMENT_POLICY_REL)],
+            affected_paths=[PLACEMENT_POLICY_REL.as_posix()],
             success=True,
             metadata={
                 "would_apply": resolvable,

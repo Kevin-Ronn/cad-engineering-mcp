@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -18,8 +19,9 @@ def snapshot_yaml():
     glasses = glasses_root()
     sys_path = glasses / SYSTEM_REL
     geo_path = glasses / GEOMETRY_REL
-    sys_snap = Path("/tmp/_ow_sys_snapshot.yaml")
-    geo_snap = Path("/tmp/_ow_geo_snapshot.yaml")
+    tmp = Path(tempfile.gettempdir())
+    sys_snap = tmp / "_ow_sys_snapshot.yaml"
+    geo_snap = tmp / "_ow_geo_snapshot.yaml"
     shutil.copy2(sys_path, sys_snap)
     shutil.copy2(geo_path, geo_snap)
     yield sys_snap, geo_snap

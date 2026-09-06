@@ -1,6 +1,8 @@
 """Verify the MCP server exposes every registered tool by name.
 
-Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5 + Phase 6: 27 tools total.
+Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5 + Phase 6 + Phase 7:
+30 tools total. Phase 7 added the placement-resolution / structural-
+objective-verification layer.
 """
 from __future__ import annotations
 
@@ -41,6 +43,10 @@ EXPECTED_TOOLS = {
     "list_authoritative_overrides",
     "authoritative_value_override",
     "resolution_plan",
+    # Phase 7.
+    "placement_resolution_plan",
+    "apply_placement_resolution",
+    "verify_structural_objectives",
 }
 
 
@@ -52,8 +58,8 @@ def test_all_tools_registered():
     assert not missing, f"Missing tools: {sorted(missing)}"
     extra = registered - EXPECTED_TOOLS
     assert not extra, f"Unexpected tools: {sorted(extra)}"
-    assert len(registered) == 27, (
-        f"Expected exactly 27 tools, got {len(registered)}: {sorted(registered)}"
+    assert len(registered) == 30, (
+        f"Expected exactly 30 tools, got {len(registered)}: {sorted(registered)}"
     )
 
 
@@ -132,7 +138,19 @@ def test_phase6_tools_present():
         assert name in mcp._tool_manager._tools, name
 
 
+def test_phase7_tools_present():
+    from cad_engineering_mcp.server import mcp
+
+    expected_phase7 = (
+        "placement_resolution_plan",
+        "apply_placement_resolution",
+        "verify_structural_objectives",
+    )
+    for name in expected_phase7:
+        assert name in mcp._tool_manager._tools, name
+
+
 def test_tool_count_exact():
     from cad_engineering_mcp.server import mcp
 
-    assert len(mcp._tool_manager._tools) == 27
+    assert len(mcp._tool_manager._tools) == 30

@@ -107,12 +107,24 @@ def list_analysis_artifacts(
             try:
                 resolved = safe_resolve(path)
             except PathSecurityError as exc:
+                # When the walked root is the entire glasses tree
+                # (``category="all"``) the rglob will encounter files
+                # under sub-trees that the security policy excludes
+                # from the read/inspection surface (``agent/``,
+                # ``smart-ring/``, top-level ``CLAUDE.md`` ...). These
+                # rejections are expected and are skipped silently --
+                # they are not analysis artifacts and were never
+                # intended to be visible through this tool. Real
+                # security violations (e.g. a symlink that escapes
+                # the walked root) still surface as ERROR.
+                if walk_root == glasses_root():
+                    continue
                 errors.append(f"{path}: {exc}")
                 continue
             rel = resolved.relative_to(glasses_root())
             artifacts.append(
                 {
-                    "path": str(rel),
+                    "path": rel.as_posix(),
                     "kind": _kind_of(resolved),
                     "bytes": resolved.stat().st_size,
                     "mtime_iso": _mtime_iso(resolved),
@@ -168,7 +180,7 @@ def read_analysis_artifact(
             duration_ms=0,
             status="ERROR",
             data={
-                "path": str(resolved.relative_to(glasses_root())),
+                "path": resolved.relative_to(glasses_root()).as_posix(),
                 "bytes": size,
                 "max_bytes": max_bytes,
             },
@@ -187,7 +199,7 @@ def read_analysis_artifact(
             duration_ms=0,
             status="ERROR",
             data={
-                "path": str(resolved.relative_to(glasses_root())),
+                "path": resolved.relative_to(glasses_root()).as_posix(),
                 "format": fmt,
                 "bytes": size,
             },
@@ -204,7 +216,7 @@ def read_analysis_artifact(
                 duration_ms=0,
                 status="ERROR",
                 data={
-                    "path": str(resolved.relative_to(glasses_root())),
+                    "path": resolved.relative_to(glasses_root()).as_posix(),
                     "format": fmt,
                 },
                 errors=[f"JSON parse error: {exc}"],
@@ -220,7 +232,7 @@ def read_analysis_artifact(
                 duration_ms=0,
                 status="ERROR",
                 data={
-                    "path": str(resolved.relative_to(glasses_root())),
+                    "path": resolved.relative_to(glasses_root()).as_posix(),
                     "format": fmt,
                 },
                 errors=[f"YAML parse error: {exc}"],
@@ -232,7 +244,7 @@ def read_analysis_artifact(
             duration_ms=0,
             status="ERROR",
             data={
-                "path": str(resolved.relative_to(glasses_root())),
+                "path": resolved.relative_to(glasses_root()).as_posix(),
                 "format": fmt,
                 "bytes": size,
             },
@@ -247,7 +259,7 @@ def read_analysis_artifact(
         duration_ms=0,
         status="PASS",
         data={
-            "path": str(resolved.relative_to(glasses_root())),
+            "path": resolved.relative_to(glasses_root()).as_posix(),
             "format": fmt,
             "bytes": size,
             "data": data,
@@ -288,7 +300,7 @@ def get_pose_validation_summary(
             duration_ms=0,
             status="ERROR",
             data={
-                "path": str(resolved.relative_to(glasses_root())),
+                "path": resolved.relative_to(glasses_root()).as_posix(),
             },
             errors=[f"Failed to read validation artifact: {exc}"],
         )
@@ -397,7 +409,7 @@ def get_pose_validation_summary(
         duration_ms=0,
         status=status,
         data={
-            "path": str(resolved.relative_to(glasses_root())),
+            "path": resolved.relative_to(glasses_root()).as_posix(),
             "artifact_overall_status": overall_status,
             "summary_status": status,
             "counts": {

@@ -249,7 +249,7 @@ def authoritative_value_override(
             timestamp=utc_timestamp_fs(),
             tool="authoritative_value_override",
             operation="no_mutation_dry_run",
-            affected_paths=[str(OVERRIDE_REL)],
+            affected_paths=[OVERRIDE_REL.as_posix()],
             success=True,
             metadata={
                 "would_write_record": record_dict,

@@ -373,7 +373,7 @@ def perform_write(
             timestamp=timestamp,
             tool=tool,
             operation=operation,
-            affected_paths=[str(resolved.relative_to(glasses_root()))],
+            affected_paths=[resolved.relative_to(glasses_root()).as_posix()],
             success=False,
             metadata=metadata,
             errors=[f"Write failed for {resolved}"],
@@ -383,20 +383,26 @@ def perform_write(
         timestamp=timestamp,
         tool=tool,
         operation=operation,
-        affected_paths=[str(resolved.relative_to(glasses_root()))],
+        affected_paths=[resolved.relative_to(glasses_root()).as_posix()],
         success=True,
         metadata={
             **(metadata or {}),
             "backup": (
-                str(backup.relative_to(glasses_root())) if backup else None
+                backup.relative_to(glasses_root()).as_posix()
+                if backup
+                else None
             ),
         },
     )
     return {
-        "destination": str(resolved.relative_to(glasses_root())),
+        "destination": resolved.relative_to(glasses_root()).as_posix(),
         "timestamp": timestamp,
-        "backup": str(backup.relative_to(glasses_root())) if backup else None,
-        "audit_log": str(audit_log_path(timestamp).relative_to(glasses_root())),
+        "backup": (
+            backup.relative_to(glasses_root()).as_posix() if backup else None
+        ),
+        "audit_log": audit_log_path(timestamp)
+        .relative_to(glasses_root())
+        .as_posix(),
     }
 
 

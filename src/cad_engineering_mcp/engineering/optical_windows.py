@@ -5,8 +5,10 @@ from typing import Any
 
 import yaml
 
+from .paths import project_root as _project_root
 
-PROJECT_ROOT = Path.home() / "cad-engineering-mcp"
+
+PROJECT_ROOT = _project_root()
 
 WINDOW_SYSTEM_PATH = (
     PROJECT_ROOT

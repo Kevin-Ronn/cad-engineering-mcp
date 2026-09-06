@@ -6,7 +6,10 @@ from typing import Any
 import yaml
 
 
-PROJECT_ROOT = Path.home() / "cad-engineering-mcp"
+from .paths import project_root as _project_root
+
+
+PROJECT_ROOT = _project_root()
 
 STRUCTURAL_POLICY = (
     PROJECT_ROOT

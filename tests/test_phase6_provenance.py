@@ -17,6 +17,7 @@ Covers:
 from __future__ import annotations
 
 import json
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -262,7 +263,7 @@ def _override(**kwargs):
 
 def test_authoritative_value_override_dry_run_does_not_write():
     target = glasses_root() / OVERRIDE_REL
-    backup = Path("/tmp/_override_backup_dry.yaml")
+    backup = Path(tempfile.gettempdir()) / "_override_backup_dry.yaml"
     if target.exists():
         backup.write_text(target.read_text(encoding="utf-8"))
     try:

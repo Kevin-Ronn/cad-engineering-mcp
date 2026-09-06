@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -32,7 +33,7 @@ def clean_releases():
 
 def _snapshot_pose_validation(glasses: Path) -> Path:
     src = glasses / "analysis" / "geometry" / "component-pose-validation.json"
-    snap = Path("/tmp/_pose_validation_snapshot.json")
+    snap = Path(tempfile.gettempdir()) / "_pose_validation_snapshot.json"
     shutil.copy2(src, snap)
     return snap
 

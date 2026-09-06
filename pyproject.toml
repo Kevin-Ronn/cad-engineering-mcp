@@ -14,6 +14,13 @@ dependencies = [
     "numpy",
     "scipy",
     "trimesh",
+    # rtree is a hard runtime dependency: trimesh.util.bounds_tree
+    # (used by trimesh.proximity.closest_point, mesh.triangles_tree,
+    # and ray casting) does an unconditional ``import rtree`` with no
+    # fallback. The MCP tool ``minimum_surface_distance`` and any code
+    # path that exercises mesh interference queries therefore require
+    # it to be installed.
+    "rtree",
     "shapely",
     "lxml",
     "networkx"

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -648,7 +649,7 @@ def test_audit_timeline_empty_when_no_log(tmp_path):
     or empty."""
     glasses = glasses_root()
     audit_dir = glasses / "manufacturing" / "releases" / "audit"
-    backup = Path("/tmp/_audit_timeline_backup")
+    backup = Path(tempfile.gettempdir()) / "_audit_timeline_backup"
     if audit_dir.exists():
         shutil.copytree(audit_dir, backup, dirs_exist_ok=True)
         shutil.rmtree(audit_dir)

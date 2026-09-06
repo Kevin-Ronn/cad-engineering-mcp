@@ -35,6 +35,7 @@ Safety rules (mirrors of CLAUDE.md and the Phase 3 directive):
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -60,43 +61,66 @@ POSE_ARTIFACTS: tuple[str, ...] = (
     "analysis/geometry/component-pose-validation.json",
 )
 
-# The default venv Python inside the project root.
-DEFAULT_PYTHON = ".venv/bin/python"
+
+def _allowed_venv_paths() -> tuple[Path, ...]:
+    """Return the resolved paths that count as the project venv Python."""
+    root = project_root().resolve()
+    return (
+        (root / ".venv" / "bin" / "python").resolve(),
+        (root / ".venv" / "Scripts" / "python.exe").resolve(),
+    )
 
 
 def _resolve_python(python_path: str | None) -> Path:
     """Resolve and validate ``python_path`` against the safe set.
 
-    * Relative paths that resolve to ``./.venv/bin/python`` are allowed.
-    * Absolute paths must live inside the project root.
-    * Any other path is rejected with :class:`MutationError``.
-
-    Note: we use ``Path.absolute()`` (which does NOT follow symlinks)
-    so the venv Python symlink into the system Python still compares
-    equal to ``./.venv/bin/python``.
+    * No path → use :data:`sys.executable`; it must equal one of the
+      allowed venv paths, otherwise the rejection message lists the
+      allowed paths so callers can fix their environment.
+    * The active ``sys.executable`` is always accepted when it matches
+      an allowed venv path.
+    * Relative or absolute paths must point at the project venv Python
+      (``./.venv/bin/python`` on POSIX or ``./.venv/Scripts/python.exe``
+      on Windows).
+    * Any other path is rejected with :class:`MutationError`. The
+      message always includes the substring "venv" so the test suite can
+      recognise it as a venv-rejection regardless of whether the path
+      was inside or outside the project root.
     """
-    import os as _os
+    allowed = _allowed_venv_paths()
 
-    raw = python_path or DEFAULT_PYTHON
-    candidate = Path(raw)
-    if not candidate.is_absolute():
-        candidate = (project_root() / raw).absolute()
-    else:
-        candidate = candidate.absolute()
+    if python_path is None:
+        active = Path(sys.executable).resolve()
+        if active in allowed:
+            return active
+        raise MutationError(
+            "python_path must be the project venv Python "
+            f"({sorted(str(p) for p in allowed)}); the active "
+            f"interpreter {active} is not the project venv interpreter. "
+            "Activate the project venv or pass python_path explicitly."
+        )
+
+    raw = Path(python_path)
+    candidate = (
+        (project_root() / raw).resolve()
+        if not raw.is_absolute()
+        else raw.resolve()
+    )
 
     root = project_root().resolve()
     try:
         candidate.relative_to(root)
     except ValueError as exc:
         raise MutationError(
-            f"python_path escapes project root: {candidate}"
+            f"python_path must be the project venv Python "
+            f"({sorted(str(p) for p in allowed)}); "
+            f"got {candidate} which is outside the project venv."
         ) from exc
 
-    expected = (root / DEFAULT_PYTHON).absolute()
-    if candidate != expected:
+    if candidate not in allowed:
         raise MutationError(
-            f"python_path must be the project venv Python ({expected}); "
-            f"got {candidate}"
+            f"python_path must be the project venv Python "
+            f"({sorted(str(p) for p in allowed)}); got {candidate}"
         )
     return candidate
 
@@ -272,7 +296,7 @@ def run_pose_pipeline(
             timestamp=timestamp,
             tool="run_pose_pipeline",
             operation="execute",
-            affected_paths=[str(script.relative_to(glasses_root()))],
+            affected_paths=[script.relative_to(glasses_root()).as_posix()],
             success=False,
             errors=[f"Pipeline timed out after {exc.timeout}s"],
         )
@@ -281,7 +305,7 @@ def run_pose_pipeline(
             started_at_iso=started,
             duration_ms=int(exc.timeout or 0) * 1000,
             status="ERROR",
-            data={"command": cmd, "executed": True},
+            data={"command": cmd, "executed": True, "exit_code": None},
             errors=[f"Pipeline timed out after {exc.timeout}s"],
         )
     except Exception as exc:  # noqa: BLE001 -- surface as ERROR
@@ -289,7 +313,7 @@ def run_pose_pipeline(
             timestamp=timestamp,
             tool="run_pose_pipeline",
             operation="execute",
-            affected_paths=[str(script.relative_to(glasses_root()))],
+            affected_paths=[script.relative_to(glasses_root()).as_posix()],
             success=False,
             errors=[f"{type(exc).__name__}: {exc}"],
         )
@@ -298,7 +322,7 @@ def run_pose_pipeline(
             started_at_iso=started,
             duration_ms=0,
             status="ERROR",
-            data={"command": cmd, "executed": True},
+            data={"command": cmd, "executed": True, "exit_code": None},
             errors=[f"{type(exc).__name__}: {exc}"],
         )
 

@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import math
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -28,7 +29,7 @@ ASSEMBLY_REL = Path("mechanical/assemblies/glasses-assembly.yaml")
 def _snapshot_assembly(glasses: Path) -> Path:
     """Copy the assembly YAML to a tmp path so tests can restore it."""
     src = glasses / ASSEMBLY_REL
-    snap = Path("/tmp/_assembly_snapshot_test.yaml")
+    snap = Path(tempfile.gettempdir()) / "_assembly_snapshot_test.yaml"
     shutil.copy2(src, snap)
     return snap
 

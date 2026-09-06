@@ -7,7 +7,10 @@ import numpy as np
 import yaml
 
 
-PROJECT_ROOT = Path.home() / "cad-engineering-mcp"
+from .paths import project_root as _project_root
+
+
+PROJECT_ROOT = _project_root()
 
 ASSEMBLY_PATH = (
     PROJECT_ROOT

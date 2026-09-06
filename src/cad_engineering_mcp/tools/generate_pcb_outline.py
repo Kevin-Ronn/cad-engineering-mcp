@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,56 @@ GENERATED_OUTPUTS: tuple[str, ...] = (
     "electronics/glasses-pcb.kicad_pcb",
     "electronics/glasses-pcb.summary.json",
 )
+
+
+# Acceptable project-venv interpreter paths. ``sys.executable`` is the
+# authoritative "the interpreter currently running this tool" path;
+# platform-specific venv layouts are kept for back-compat with callers
+# that explicitly opt into them.
+def _allowed_venv_paths() -> tuple[Path, ...]:
+    root = project_root().resolve()
+    return (
+        (root / ".venv" / "bin" / "python").resolve(),
+        (root / ".venv" / "Scripts" / "python.exe").resolve(),
+    )
+
+
+def _resolve_python(python_path: str | None) -> Path:
+    """Resolve and validate ``python_path`` against the safe set.
+
+    * No path → use :data:`sys.executable`.
+    * The active ``sys.executable`` is always accepted (it is the
+      interpreter that already drives this MCP server).
+    * Relative or absolute paths must point at the project venv Python
+      (``./.venv/bin/python`` on POSIX or ``./.venv/Scripts/python.exe``
+      on Windows).
+    * Any other path is rejected with :class:`MutationError`.
+    """
+    allowed = _allowed_venv_paths()
+    if python_path is None:
+        chosen = Path(sys.executable).resolve()
+        if chosen not in allowed:
+            raise MutationError(
+                "python_path must be the project venv Python "
+                f"({sorted(str(p) for p in allowed)}); "
+                f"the active interpreter {chosen} is not the venv "
+                "interpreter. Pass python_path explicitly or activate "
+                "the project venv."
+            )
+        return chosen
+
+    candidate = Path(python_path)
+    if not candidate.is_absolute():
+        candidate = (project_root() / python_path).resolve()
+    else:
+        candidate = candidate.resolve()
+
+    if candidate not in allowed:
+        raise MutationError(
+            "python_path must be the project venv Python "
+            f"({sorted(str(p) for p in allowed)}); got {candidate}"
+        )
+    return candidate
 
 
 def _read_pose_validation() -> dict[str, Any]:
@@ -180,23 +231,15 @@ def generate_pcb_outline(
 
     # 0. Validate python_path first (before any other check) so a bad
     #    interpreter never leaks through a non-mutation dry-run branch.
-    py_env = python_path or "./.venv/bin/python"
-    py_candidate = Path(py_env)
-    if not py_candidate.is_absolute():
-        py_candidate = (project_root() / py_env).absolute()
-    else:
-        py_candidate = py_candidate.absolute()
-    expected_py = (project_root() / ".venv/bin/python").absolute()
-    if py_candidate != expected_py:
+    try:
+        py_candidate = _resolve_python(python_path)
+    except MutationError as exc:
         return make_envelope(
             tool="generate_pcb_outline",
             started_at_iso=started,
             duration_ms=0,
             status="ERROR",
-            errors=[
-                f"python_path must be the project venv Python "
-                f"({expected_py}); got {py_candidate}"
-            ],
+            errors=[str(exc)],
         )
 
     # 1. Pre-flight: read pose validation.
@@ -271,7 +314,7 @@ def generate_pcb_outline(
             timestamp=timestamp,
             tool="generate_pcb_outline",
             operation="no_mutation",
-            affected_paths=[str(generator.relative_to(glasses_root()))],
+            affected_paths=[generator.relative_to(glasses_root()).as_posix()],
             success=True,
             metadata={
                 "would_execute": cmd,
@@ -322,7 +365,7 @@ def generate_pcb_outline(
             timestamp=timestamp,
             tool="generate_pcb_outline",
             operation="execute",
-            affected_paths=[str(generator.relative_to(glasses_root()))],
+            affected_paths=[generator.relative_to(glasses_root()).as_posix()],
             success=False,
             errors=[f"Generator timed out after {exc.timeout}s"],
         )

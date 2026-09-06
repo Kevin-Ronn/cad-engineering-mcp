@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -321,7 +322,7 @@ def _restore_placement_policy():
     """Backup-and-restore helper for the placement policy YAML."""
     glasses = glasses_root()
     src = glasses / PLACEMENT_POLICY_REL
-    backup = Path("/tmp/_phase7_placement_policy_backup.yaml")
+    backup = Path(tempfile.gettempdir()) / "_phase7_placement_policy_backup.yaml"
     if src.exists():
         shutil.copy2(src, backup)
     yield backup
@@ -332,7 +333,7 @@ def _restore_placement_policy():
 
 def test_apply_placement_resolution_dry_run_does_not_write(synthetic_glasses_root):
     target = synthetic_glasses_root / PLACEMENT_POLICY_REL
-    backup = Path("/tmp/_phase7_apply_dry_backup.yaml")
+    backup = Path(tempfile.gettempdir()) / "_phase7_apply_dry_backup.yaml"
     if target.exists():
         shutil.copy2(target, backup)
     try:
@@ -354,7 +355,7 @@ def test_apply_placement_resolution_dry_run_does_not_write(synthetic_glasses_roo
 
 def test_apply_placement_resolution_mutation_writes_and_audits(synthetic_glasses_root):
     target = synthetic_glasses_root / PLACEMENT_POLICY_REL
-    backup = Path("/tmp/_phase7_apply_mut_backup.yaml")
+    backup = Path(tempfile.gettempdir()) / "_phase7_apply_mut_backup.yaml"
     releases_dir = synthetic_glasses_root / "manufacturing" / "releases"
     if target.exists():
         shutil.copy2(target, backup)
@@ -364,18 +365,33 @@ def test_apply_placement_resolution_mutation_writes_and_audits(synthetic_glasses
         for child in releases_dir.iterdir():
             pre_existing_releases.add(child.name)
     try:
-        env = apply_placement_resolution(
-            glasses_root=synthetic_glasses_root,
-            perform_write_fn=lambda **kwargs: {
-                "destination": str(PLACEMENT_POLICY_REL),
+        def _mock_write(**kwargs):
+            # The mock acts as a stand-in for the controlled-write
+            # helper: it must actually persist ``content`` to the
+            # destination (resolved against the synthetic project
+            # root) so subsequent YAML reads see the new coordinates.
+            dest = kwargs["destination"]
+            content = kwargs["content"]
+            resolved = (
+                synthetic_glasses_root / dest
+                if not Path(dest).is_absolute()
+                else Path(dest)
+            )
+            resolved.parent.mkdir(parents=True, exist_ok=True)
+            resolved.write_text(content, encoding="utf-8")
+            return {
+                "destination": str(dest),
                 "timestamp": "test-ts",
-                "backup": "manufacturing/releases/test-ts/"
-                + str(PLACEMENT_POLICY_REL),
+                "backup": "manufacturing/releases/test-ts/" + str(dest),
                 "audit_log": "manufacturing/releases/audit/test.jsonl",
                 "applied_records": kwargs.get("metadata", {}).get(
                     "applied_records", []
                 ),
-            },
+            }
+
+        env = apply_placement_resolution(
+            glasses_root=synthetic_glasses_root,
+            perform_write_fn=_mock_write,
         )
         assert env["executed"] is True
         assert env["applied"] >= 6
@@ -421,7 +437,7 @@ def test_apply_placement_resolution_mutation_writes_and_audits(synthetic_glasses
 def test_apply_placement_resolution_only_keys_filter(synthetic_glasses_root):
     """The ``only_keys`` filter restricts which placements are mutated."""
     target = synthetic_glasses_root / PLACEMENT_POLICY_REL
-    backup = Path("/tmp/_phase7_only_keys_backup.yaml")
+    backup = Path(tempfile.gettempdir()) / "_phase7_only_keys_backup.yaml"
     releases_dir = synthetic_glasses_root / "manufacturing" / "releases"
     if target.exists():
         shutil.copy2(target, backup)
@@ -430,9 +446,21 @@ def test_apply_placement_resolution_only_keys_filter(synthetic_glasses_root):
         for child in releases_dir.iterdir():
             pre_existing_releases.add(child.name)
     try:
+        def _mock_write(**kwargs):
+            dest = kwargs["destination"]
+            content = kwargs["content"]
+            resolved = (
+                synthetic_glasses_root / dest
+                if not Path(dest).is_absolute()
+                else Path(dest)
+            )
+            resolved.parent.mkdir(parents=True, exist_ok=True)
+            resolved.write_text(content, encoding="utf-8")
+            return {"ok": True}
+
         env = apply_placement_resolution(
             glasses_root=synthetic_glasses_root,
-            perform_write_fn=lambda **kwargs: {"ok": True},
+            perform_write_fn=_mock_write,
             only_keys=["placements.front_left_led"],
         )
         assert env["executed"] is True
@@ -467,7 +495,7 @@ def test_apply_placement_resolution_refuses_non_pass_pose_validation():
     # Temporarily rename the pose-validation JSON so the loader cannot
     # find it.
     pose_path = glasses_root() / POSE_VALIDATION_REL
-    backup = Path("/tmp/_phase7_pose_backup.json")
+    backup = Path(tempfile.gettempdir()) / "_phase7_pose_backup.json"
     if pose_path.exists():
         shutil.copy2(pose_path, backup)
     try:
@@ -619,7 +647,7 @@ def test_apply_placement_resolution_mcp_dry_run(synthetic_glasses_root):
     )
 
     target = synthetic_glasses_root / PLACEMENT_POLICY_REL
-    backup = Path("/tmp/_phase7_mcp_dry_backup.yaml")
+    backup = Path(tempfile.gettempdir()) / "_phase7_mcp_dry_backup.yaml"
     if target.exists():
         shutil.copy2(target, backup)
     try:

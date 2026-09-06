@@ -161,7 +161,7 @@ def mark_component_unknown(
             timestamp=timestamp,
             tool="mark_component_unknown",
             operation="no_mutation_dry_run",
-            affected_paths=[str(UNKNOWN_REL)],
+            affected_paths=[UNKNOWN_REL.as_posix()],
             success=True,
             metadata={
                 "would_record": record,
@@ -286,7 +286,7 @@ def mark_component_unknown(
             timestamp=timestamp,
             tool="mark_component_unknown",
             operation="add",
-            affected_paths=[str(UNKNOWN_REL)],
+            affected_paths=[UNKNOWN_REL.as_posix()],
             success=False,
             metadata={
                 "component_id": component_id,
@@ -311,7 +311,7 @@ def mark_component_unknown(
         timestamp=timestamp,
         tool="mark_component_unknown",
         operation="add" if duplicate_index is None else "replace",
-        affected_paths=[str(UNKNOWN_REL)],
+        affected_paths=[UNKNOWN_REL.as_posix()],
         success=True,
         metadata={
             "component_id": component_id,
