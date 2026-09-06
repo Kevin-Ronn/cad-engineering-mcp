@@ -1,0 +1,59 @@
+schema_version: 1
+component:
+  id: ti_tas2770
+  category: class_d_audio_amplifier_i2s_smartamp
+  units: mm
+  role: alternative_amplifier_candidate_with_integrated_boost
+
+source:
+  manufacturer: Texas Instruments
+  part_number: TAS2770 (datasheet SLASEG8)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.ti.com/product/TAS2770
+      description: "TI TAS2770 product page and datasheet"
+
+mechanical:
+  package: 0.4 mm pitch WCSP
+  dimensions_mm: { length: 2.0, height: 2.0, depth: 0.5 }  # approx 4 mm2 footprint
+  source_for_mechanical: TI datasheet summary
+
+electrical:
+  interface: I2S / TDM (digital input) plus I2C (control)
+  supply_voltage_v: { min: 2.7, typ: 3.6, max: 5.5 }  # PVDD via on-chip boost from a 3.6 V Li-ion rail
+  io_voltage_v: 1.8 (verify per datasheet)
+  output_power_w: 6.1 (typ into 4 ohm at 1% THD+N with boost); 11.6 W peak
+  efficiency_percent: 85 (typical class-D with boost)
+  quiescent_current_ma: UNKNOWN
+  shutdown_current_na: less than 1
+  load_impedance_ohm: 4 to 8
+  filterless: yes (with internal boost)
+  thermal_protection: yes
+  speaker_protection: yes (integrated DSP, SpeakerProtect, excursion control, thermal limiting, EQ)
+  source_for_electrical: TI datasheet
+
+acoustic:
+  thd_plus_n_percent: less than 0.1
+  integrated_dsp: yes
+  source_for_acoustic: TI datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey
+  unit_price_usd: 2.50 to 4.00 (single-piece retail)
+  moq: 1
+  lead_time: stock
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Quiescent current not in the summary"
+    - "Exact WCSP dimensions and pin count not in the summary"
+    - "I/O voltage (1.8 V vs 3.3 V) must be verified in the TI datasheet PDF"
+
+constraints:
+  status: ALTERNATIVE — integrated boost means the amplifier can run from a 3.6 V Li-ion rail and produce 6.1 W into 4 ohm (overkill for the glasses) without a separate boost converter. The integrated DSP speaker protection is a real plus for small speakers that can be over-driven. 2.0 x 2.0 mm package is between MAX98390 (1.33) and MAX98357A (3.0).
+  v853_connection: "I2S BCLK, LRCLK, DIN connect directly to V853 I2S0 or I2S1. I2C control bus shares the TWI0 bus. No level shifter needed if I/O voltage is 1.8 V (verify)."

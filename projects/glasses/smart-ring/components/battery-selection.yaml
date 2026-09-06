@@ -1,0 +1,30 @@
+schema_version: 1
+battery_selection:
+  id: smart_ring_battery_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "Research actual ring-form-factor batteries. Use Open Ring (not specified; reference) and NERVA_Ring (curved LiPo ~7x33x17.7 mm; reference-only) as references. Target ~3-5 days for controller-focused V1 if realistically achievable. Do not claim this until power analysis supports it."
+
+  candidates:
+
+    - { part: "Curved LiPo (custom-shaped)", capacity_mah: 35-60, voltage_nominal_v: 3.85, voltage_range_v: 3.0-4.4, dimensions_mm: "approximately 6-8 wide x 35-40 long x 2.5-3.5 thick (curved to match the inner ring radius)", manufacturer: "EEMB (LP-series), Grepow, BAK, generic Chinese LiPo vendors", protection: "PCM (overcharge / overdischarge / overcurrent / short circuit) + NTC thermistor", mass_g: "approximately 1-2", notes: "Standard ring-class LiPo. The exact dimensions depend on the inner ring radius and the available space in the V1 design. Custom-shaped (curved) to match the inner ring. The capacity is in the 35-60 mAh range. The energy is 0.13-0.23 Wh." }
+
+    - { part: "Small cylindrical Li-ion (e.g. 14500 sub-class)", capacity_mah: 60-100, voltage_nominal_v: 3.7, dimensions_mm: "10-14 long x 4-5 diameter", notes: "NOT recommended for a slim ring (the cylindrical shape does not match the inner ring; the thickness is 4-5 mm which is too thick for a 3 mm ring target)" }
+
+  recommended: "Curved LiPo, 35-60 mAh, custom-shaped for the V1 inner ring radius"
+
+  safety:
+    pcm: "REQUIRED. Overcharge / overdischarge / overcurrent / short circuit protection. The BQ25185 charger IC includes this in some configurations, but the cell should also have a built-in PCM for redundant protection."
+    ntc: "REQUIRED. The BQ25185 TS input monitors the cell temperature. The TMP117 measures the FINGER temperature (separate from the cell temperature)."
+    swelling: "The cell must be mechanically constrained in the V1 housing with a slight compression fit (no rigid constraint; allow ~5% thickness expansion over cycle life). The cell must be protected from sharp edges and accidental puncture (a rigid enclosure with foam padding is the standard solution)."
+    cycle_life: "Approximately 500-1000 cycles to 80% capacity (typical LiPo). The ring's usage pattern (3-5 days per charge, daily use) gives a 1.5-3 year cycle life, which is acceptable for a wearable V1."
+
+  capacity_targets:
+    V1_target: "Approximately 40-50 mAh (3.85 V nominal; 0.15-0.19 Wh). The V1 power consumption is approximately 0.2-0.5 mW average (touch + IMU + BLE), so 3-5 days of runtime is achievable with a 40-50 mAh cell."
+    V2_target: "Same cell (PPG adds 5-10 mW average; the 40-50 mAh cell still gives 3-4 days of runtime)."
+
+  sources:
+    - { ref: "EEMB (example LiPo vendor)", url: "https://www.eemb.com/", note: "EEMB is a reputable Chinese LiPo manufacturer. Custom curved LiPo is available on request." }
+    - { ref: "Open Ring (reference; battery not specified)", url: "https://github.com/stawiski/open-ring", note: "Open Ring's README does not specify a battery. The V1 design chooses a curved LiPo based on the form factor." }
+    - { ref: "NERVA_Ring (reference-only; license unknown)", url: "https://github.com/NRG24/NERVA_Ring", note: "NERVA uses a curved LiPo (~7x33x17.7 mm). The brief notes that NERVA's documentation has known discrepancies; we do NOT copy NERVA's BOM but use the form factor as a reference." }

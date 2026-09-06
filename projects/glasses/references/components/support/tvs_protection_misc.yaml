@@ -1,0 +1,44 @@
+schema_version: 1
+component:
+  id: tvs_unidirectional_5v_battery
+  category: esd_protection_tvs_array
+  units: mm
+  role: misc_tvs_protection
+
+source:
+  manufacturer: various (Littelfuse, Bourns, ST, ON Semi, NXP)
+  part_number: representative example: SMAJ5.0CA (Littelfuse) or PESD5V0L1BA (NXP)
+  source_type: market_survey
+  source_docs:
+    - url: https://www.littelfuse.com/
+      description: "Littelfuse product line"
+
+mechanical:
+  package: SMA or SOD-123
+  dimensions_mm: approximately 3.5 x 1.6 (SMA) or 3.6 x 1.8 (SOD-123)
+  source_for_mechanical: typical TVS
+
+electrical:
+  reverse_stand_off_v: 5.0
+  breakdown_v: 6.4 (typical)
+  clamping_v: 9.2 (at 10 A, 8/20 us)
+  peak_pulse_current_a: 400 (8/20 us, SMA)
+  source_for_electrical: typical TVS datasheet
+
+environmental:
+  operating_temperature_c: { min: -55, max: 150 }
+
+purchase:
+  distributor: Mouser; DigiKey; LCSC
+  unit_price_usd: 0.10 to 0.50 (single-piece)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: market_survey
+
+constraints:
+  status: SERIOUS — required for the battery line (VBAT) to clamp inductive transients. Optional for the 3V3 / 1V8 rails (the AXP2101 PMIC has internal protection but external TVS is good practice for wearable ESD).
+  glasses_use_case: "VBAT line TVS (one per cell), VBUS line TVS (one), and 3V3 / 1V8 rail TVS (one each) on the compute-PCB."

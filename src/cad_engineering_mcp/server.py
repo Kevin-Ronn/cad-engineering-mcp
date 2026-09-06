@@ -4,6 +4,7 @@ from mcp.server import MCPServer
 
 from .tools import (
     add_assembly_component,
+    apply_placement_resolution,
     audit_timeline,
     authoritative_value_override,
     generate_pcb_outline,
@@ -15,6 +16,7 @@ from .tools import (
     measure_mesh,
     mesh_interference,
     minimum_surface_distance,
+    placement_resolution_plan,
     propose_pose,
     read_analysis_artifact,
     reconcile_pcb,
@@ -28,6 +30,7 @@ from .tools import (
     validate_poses,
     validate_structural_policy,
     verify_reference_integrity,
+    verify_structural_objectives,
 )
 from .tools._paths import glasses_root, project_root
 
@@ -192,6 +195,39 @@ Phase 6 adds the formal provenance + authoritative-override layer:
                                   the release engineer know which
                                   blockers can be resolved without
                                   external data.
+
+Phase 7 adds the engineering release-execution layer:
+
+  placement_resolution_plan     -- read-only inspection of which
+                                  placement-policy YAML coordinates
+                                  can be resolved from the
+                                  geometry-derived pose-validation
+                                  artifact
+                                  (``analysis/geometry/component-pose-validation.json``
+                                  with overall_status PASS). Returns
+                                  the resolved coordinates plus the
+                                  full provenance
+                                  (source_path / source_sha256 /
+                                  pose_index) for each placement.
+                                  Refuses to fabricate values; never
+                                  reads partial / incomplete pose
+                                  data.
+  apply_placement_resolution   -- controlled write of the resolved
+                                  coordinates back into
+                                  ``mechanical/interfaces/component-placement-policy.yaml``
+                                  via the standard Phase 3 backup +
+                                  audit infrastructure. Refuses to
+                                  mutate unless allow_mutation=true.
+                                  Each mutated placement also carries
+                                  a ``coordinate_source`` provenance
+                                  block.
+  verify_structural_objectives  -- reads the structural YAMLs
+                                  directly and verifies the 4 required
+                                  production-engineering objectives
+                                  are authoritatively defined. Returns
+                                  PASS when every objective is on
+                                  disk. Never invents data; reports
+                                  the on-disk state verbatim.
 """
 )
 
@@ -270,6 +306,11 @@ Phase 6 tools:
   list_authoritative_overrides
   authoritative_value_override
   resolution_plan
+
+Phase 7 tools:
+  placement_resolution_plan
+  apply_placement_resolution
+  verify_structural_objectives
 """
 
 
@@ -771,6 +812,78 @@ def resolution_plan() -> dict:
     POLICY_YAML.
     """
     from .tools.provenance_tools import resolution_plan as _impl
+
+    return _impl()
+
+
+@mcp.tool()
+def placement_resolution_plan() -> dict:
+    """Build the placement-resolution plan from the geometry-derived
+    pose-validation artifact.
+
+    Read-only. Reads
+    ``analysis/geometry/component-pose-validation.json`` (which must
+    have ``overall_status == "PASS"``) and the placement-policy YAML,
+    then emits a deterministic plan that maps every accepted pose
+    onto its YAML placeholder. Each resolution carries the full
+    provenance (source_path / source_sha256 / pose_index /
+    overall_status). Placements that already carry an authoritative
+    3-vector are skipped; placements whose YAML key has no matching
+    pose are reported as ``SKIP_NO_AUTHORITATIVE_POSE``.
+    """
+    from .tools.placement_execution_tools import (
+        placement_resolution_plan as _impl,
+    )
+
+    return _impl()
+
+
+@mcp.tool()
+def apply_placement_resolution(
+    only_keys: list[str] | None = None,
+    allow_mutation: bool = False,
+) -> dict:
+    """Persist resolved placement coordinates in the policy YAML.
+
+    Reads the geometry-derived pose-validation artifact, builds the
+    resolution plan, and writes the resolved coordinates back into
+    ``mechanical/interfaces/component-placement-policy.yaml`` via the
+    standard Phase 3 backup + audit infrastructure.
+
+    Refuses to draw coordinates from a non-PASS pose-validation
+    artifact. Refuses to mutate unless ``allow_mutation=true``.
+    Each mutated placement also carries a ``coordinate_source``
+    provenance block (kind / source_artifact / source_sha256 /
+    pose_index / resolved_at).
+
+    Args:
+        only_keys: optional list of YAML placement keys (e.g.
+            ``["placements.front_left_led"]``); only those placements
+            are mutated. By default every RESOLVE action is applied.
+        allow_mutation: must be ``True`` to actually write.
+    """
+    from .tools.placement_execution_tools import (
+        apply_placement_resolution as _impl,
+    )
+
+    return _impl(
+        only_keys=only_keys,
+        allow_mutation=allow_mutation,
+    )
+
+
+@mcp.tool()
+def verify_structural_objectives() -> dict:
+    """Verify the 4 required structural-policy objectives are present.
+
+    Read-only. Reads ``structural-policy.yaml`` and ``rib-system.yaml``
+    directly (not the incomplete ``validate_structural_policy``
+    module output) and returns PASS when every required objective
+    is authoritatively defined.
+    """
+    from .tools.placement_execution_tools import (
+        verify_structural_objectives as _impl,
+    )
 
     return _impl()
 

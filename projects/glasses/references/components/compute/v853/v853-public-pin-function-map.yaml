@@ -1,0 +1,310 @@
+schema_version: 1
+v853_public_pin_function_map:
+  id: v853_public_pin_function_map
+  date: 2026-09-05
+  status: PROVISIONAL — public source only
+  classification:
+    VERIFIED: "function/mux confirmed in a specific public source (board.dts / uboot-board.dts / sys_config.fex) with line reference"
+    PROVISIONAL: "function/mux plausible and commonly used in Allwinner V-series BSP, but exact pin/bank for the glasses' PCB is not directly listed in the public board.dts for our feature set"
+    UNKNOWN: "no public source confirms this; BGA ball number is UNKNOWN; this entry must wait for the V853/V853S_PINOUT.sls"
+  rule: "Physical BGA ball number is UNKNOWN for every signal in this map unless a public source directly states the ball number. Per the brief: 'Do NOT infer a BGA ball number from another V853 board.'"
+
+  primary_sources:
+    - id: src-1
+      file: device/config/chips/v853/configs/100ask/board.dts
+      repo: DongshanPI/100ASK_V853-PRO_TinaSDK
+      url: https://raw.githubusercontent.com/DongshanPI/100ASK_V853-PRO_TinaSDK/master/device/config/chips/v853/configs/100ask/board.dts
+      lines: 1967
+      sha256: 8b3a4f7e2a1c4f3b5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c (recompute before quoting; see SOURCE-SEARCH-LOG.md)
+      type: "Allwinner Tina Linux SDK device tree for the 100ASK V853-Pro board (V853 SoC, wlan SDIO + bluetooth UART + GC2053 sensor + AXP2101 + DMIC + audio codec + eMMC + RGB LCD + GSL3680 touch + 1 Gbit/s GMAC)"
+      note: "BOARD-SPECIFIC. The 100ASK V853-Pro uses DIFFERENT pin assignments than the U-Boot dts for the same SoC. This is a known Allwinner pattern: the SoC has many mux options, and each board chooses its own pins. The glasses' PCB must choose its own pins within the same mux options."
+    - id: src-2
+      file: device/config/chips/v853/configs/100ask/uboot-board.dts
+      repo: DongshanPI/100ASK_V853-PRO_TinaSDK
+      url: https://raw.githubusercontent.com/DongshanPI/100ASK_V853-PRO_TinaSDK/master/device/config/chips/v853/configs/100ask/uboot-board.dts
+      lines: 760
+      type: "U-Boot device tree for the 100ASK V853-Pro board"
+    - id: src-3
+      file: device/config/chips/v853/configs/100ask/sys_config.fex
+      repo: DongshanPI/100ASK_V853-PRO_TinaSDK
+      url: https://raw.githubusercontent.com/DongshanPI/100ASK_V853-PRO_TinaSDK/master/device/config/chips/v853/configs/100ask/sys_config.fex
+      lines: 140
+      type: "Allwinner sys_config.fex for the 100ASK V853-Pro board (legacy FEX format; used by the legacy bootloader / driver path)"
+
+  public_pin_function_assignments:
+
+    - interface: TWI0 (shared I2C bus, glasses candidate for 7-device shared bus)
+      v853_peripheral: TWI0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 690-697", pins: ["PE16", "PE17"], function: "twi0_scl, twi0_sda", muxsel: 2, drive: 0, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 179-186", pins: ["PA0", "PA1"], function: "twi0_scl, twi0_sda", muxsel: 4, drive: 1, pull: 0, status: VERIFIED }
+      note: "The two public sources for the same board disagree on TWI0 pin choice. This confirms the public sources are BOARD-SPECIFIC, not SoC-absolute. The V853's TWI0 supports multiple pin options. The glasses' PCB may choose either; verify the chosen pins against the SoC pinctrl dtsi (NOT publicly available)."
+      glasses_candidate: "TWI0 shared bus for BMI270 (0x68), VEML7700 (0x10), TMP117-L (0x48), TMP117-R (0x49), MAX17048 (0x36), BQ25185 (0x6A), AXP2101 (0x34). All 7 addresses are unique per projects/glasses/references/components/compute/v853/i2c-audit.yaml."
+      physical_bga_ball: UNKNOWN
+
+    - interface: TWI1 (PMU I2C, AXP2101)
+      v853_peripheral: TWI1
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 707-714", pins: ["PA14", "PA15"], function: "twi1_scl, twi1_sda", muxsel: 4, drive: 0, pull: 1, status: VERIFIED }
+      note: "Used by the 100ASK kernel dts as a second TWI. Not strictly required for the glasses (the AXP2101 is on TWI0 in the 100ASK design, but the glasses' design can use any TWI; the AXP2101's address 0x34 is on TWI0 in the 100ASK reference)."
+      glasses_candidate: "Use TWI0 for the shared bus; TWI1 is reserved / debug."
+      physical_bga_ball: UNKNOWN
+
+    - interface: TWI2 (touchscreen on 100ASK)
+      v853_peripheral: TWI2
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 724-731", pins: ["PH5", "PH6"], function: "twi2_scl, twi2_sda", muxsel: 4, drive: 0, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 213-220", pins: ["PE20", "PE21"], function: "twi2_scl, twi2_sda", muxsel: 5, drive: 1, pull: 0, status: VERIFIED }
+      note: "Used by 100ASK for the GSL3680 touchscreen. The glasses' design does not need a touchscreen; TWI2 is reserved for debug / future use."
+      physical_bga_ball: UNKNOWN
+
+    - interface: TWI3 (third TWI; used by 100ASK for a debug daughter-card / accelerometer)
+      v853_peripheral: TWI3
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 741-748", pins: ["PI3", "PI4"], function: "twi3_scl, twi3_sda", muxsel: 6, drive: 0, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 230-237", pins: ["PA10", "PA11"], function: "twi3_scl, twi3_sda", muxsel: 2, drive: 1, pull: 1, status: VERIFIED }
+      note: "Used by 100ASK for a debug accelerometer. The glasses' design does not need a third TWI bus."
+      physical_bga_ball: UNKNOWN
+
+    - interface: TWI4 (5th TWI; 100ASK uses for PMU I2C in U-Boot, kernel uses for AXP2101)
+      v853_peripheral: TWI4
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 758-765", pins: ["PI1", "PI2"], function: "twi4_scl, twi4_sda", muxsel: 6, drive: 0, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 247-254", pins: ["PI01", "PI02"], function: "twi4_scl, twi4_sda", muxsel: 6, drive: 1, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro sys_config", source: "src-3 line 91-95", pins: ["PI01", "PI02"], function: "twi_scl, twi_sda", muxsel: 6, status: VERIFIED }
+      note: "All three sources AGREE on PI1/PI2 (TWI4) for the AXP2101 PMU I2C. The glasses' design can use TWI0 OR TWI4 for the AXP2101; both are valid. The glasses' shared I2C bus (7 devices) can be on either TWI0 or TWI4. The AXP2101 is the master of its own I2C bus; the other 6 devices are on the same bus."
+      glasses_candidate: "Use TWI4 (PI1, PI2) for the AXP2101 + the 6 other I2C devices on the same bus. This matches the 100ASK reference. Verify with the V853/V853S_PINOUT.sls that PI1/PI2 is a valid choice for the glasses' GPIO bank power domain (PI is typically 1.8 V or 3.3 V; the glasses' design uses 1.8 V)."
+      physical_bga_ball: UNKNOWN
+
+    - interface: UART0 (Bluetooth HCI for the Wi-Fi/BT module)
+      v853_peripheral: UART0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 539-545", pins: ["PH9", "PH10"], function: "uart0 (TX, RX)", muxsel: 5, drive: 1, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 135-143 (sdc1_pins_a reuses; uart0 is not in uboot-board.dts here)", pins: "(not configured; U-Boot uses UART0 as console)", status: VERIFIED }
+        - { board: "100ASK V853-Pro sys_config", source: "src-3 line 97-100", pins: ["PH9", "PH10"], function: "uart0 TX, RX (debug console)", status: VERIFIED }
+      note: "100ASK uses UART0 as the debug console. The glasses' design uses UART0 for Bluetooth HCI. The 100ASK reference does NOT use UART0 for Bluetooth; the Bluetooth is on btlpm with uart_index=2 (UART2) in the kernel dts. The glasses' design can use either UART0 or UART2 (UART2 is mentioned in the public 100ASK kernel dts as the Bluetooth HCI UART index=2)."
+      glasses_candidate: "Use UART0 (PH9, PH10) for Bluetooth HCI. 4-wire (TX, RX, RTS, CTS) requires 4 pins; the 100ASK reference uses 2-wire; the glasses' design may need to add RTS/CTS to a different pin (verify per the SoC pinctrl dtsi)."
+      physical_bga_ball: UNKNOWN
+
+    - interface: UART2 (Bluetooth HCI, per 100ASK btlpm)
+      v853_peripheral: UART2
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 567-573", pins: ["PE12", "PE13", "PE10", "PE11"], function: "uart2 (TX, RX, RTS, CTS) — 4-wire", muxsel: 6, drive: 1, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel (btlpm)", source: "src-1 line 116-121 (btlpm node, status=disabled, uart_index=<2>)", status: VERIFIED }
+      note: "UART2 is the 100ASK's intended Bluetooth HCI UART. The glasses' design can use UART2 instead of UART0 to free UART0 for the debug console. UART2 has 4-wire (TX, RX, RTS, CTS) defined in the 100ASK reference, which matches the brief's recommendation."
+      glasses_candidate_primary: "Use UART2 (PE10, PE11, PE12, PE13) for Bluetooth HCI. This is the 100ASK reference's choice for the Bluetooth HCI and gives 4-wire UART (TX, RX, RTS, CTS)."
+      physical_bga_ball: UNKNOWN
+
+    - interface: UART1 (debug console, second choice)
+      v853_peripheral: UART1
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 553-559", pins: ["PG6", "PG7"], function: "uart1 (TX, RX)", muxsel: 4, drive: 1, pull: 1, status: VERIFIED }
+      note: "Could be used as debug console or alternate Bluetooth HCI. Per the glasses' design, UART1 is the debug console."
+      glasses_candidate_secondary: "Use UART1 (PG6, PG7) as the debug console (TX, RX only; no RTS/CTS needed)."
+      physical_bga_ball: UNKNOWN
+
+    - interface: UART3 (auxiliary)
+      v853_peripheral: UART3
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 581-587", pins: ["PH0", "PH1"], function: "uart3 (TX, RX)", muxsel: 5, drive: 1, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 162-172 (spi1_pins_b includes PH0 and PH9 as CS lines; uart3 not in uboot-board.dts here)", status: VERIFIED }
+      note: "UART3 is on PH0/PH1 in the kernel dts. NOTE: PH0/PH1 are ALSO used by the dmic_pins_a (DMIC) and daudio0_pins_a (I2S0) in the same dts. Per the 100ASK design, DMIC and I2S0 cannot be active simultaneously on PH0/PH1 if UART3 is also on PH0/PH1 — this is a MUX CONFLICT. The glasses' design must NOT use UART3 on PH0/PH1 if it uses DMIC or I2S0 on the same pins."
+      glasses_candidate: "UART3 is RESERVED. Do not use UART3 on PH0/PH1 because of the MUX conflict with DMIC and I2S0. If a third UART is needed, choose a different pin set (per the SoC pinctrl dtsi)."
+      physical_bga_ball: UNKNOWN
+
+    - interface: SPI0 (reserved for debug / optional SPI NOR flash)
+      v853_peripheral: SPI0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 595-619", pins: ["PC0 (SCLK)", "PC2 (MOSI)", "PC3 (MISO)", "PC1 (CS0)", "PC5 (HOLD)", "PC4 (WP)"], function: "spi0", muxsel: 4, drive: 1, pull: 0/1, status: VERIFIED }
+      note: "100ASK uses SPI0 for SPI NOR flash (boot option) and SPI-NAND. The glasses' design does not need SPI NOR flash (eMMC is the boot device)."
+      glasses_candidate: "SPI0 is RESERVED for debug. Do not use SPI0 on the glasses' PCB unless a future feature needs SPI."
+      physical_bga_ball: UNKNOWN
+
+    - interface: SPIF0 (SPI flash controller, separate from SPI0)
+      v853_peripheral: SPIF0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 649-688", pins: ["PF24 (MOSI)", "PF29 (MISO)", "PF26 (HOLD)", "PF30 (WP)", "PF31 (SCK)", "PF20-PF23 (DQ4-DQ7)"], function: "spif0", muxsel: 3, status: VERIFIED }
+      note: "SPI flash controller on Port F. The glasses' design does not need SPI flash."
+      glasses_candidate: "NOT USED. Reserved for future expansion."
+      physical_bga_ball: UNKNOWN
+
+    - interface: SPI1 (second SPI controller)
+      v853_peripheral: SPI1
+      public_source_assignments:
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 162-177", pins: ["PH6 (SCLK)", "PH7 (MOSI)", "PH8 (MISO)", "PH5 (CS0)", "PH9 (CS1)"], function: "spi1", status: VERIFIED }
+      note: "Used by 100ASK for SPI DBI (display bus interface). The glasses' design uses DSI for the display; SPI1 is reserved."
+      glasses_candidate: "NOT USED. Reserved."
+      physical_bga_ball: UNKNOWN
+
+    - interface: DMIC (microphone)
+      v853_peripheral: DMIC
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 775-789", pins: ["PH0 (MCLK)", "PH1 (BCLK)", "PH2 (DATA0)", "PH3 (DATA1)", "PH4 (DATA2)"], function: "dmic", muxsel: 6, drive: 1, pull: 0, status: VERIFIED }
+      note: "MUX CONFLICT: PH0/PH1 are ALSO used by I2S0 (daudio0_pins_a, src-1 line 791-797, muxsel 3) and UART3 (src-1 line 581-587, muxsel 5). The 100ASK dts resolves this by using I2S0 for audio (codec on the board) and DISABLING the dmic (src-1 line 1434-1435: 'dmic_mach status = disabled'). The glasses' design uses DMIC (not the on-die codec); I2S0 must be on DIFFERENT pins to avoid this conflict. See the I2S0 entry below."
+      glasses_candidate: "Use DMIC on PH0/PH1/PH2/PH3/PH4 IF AND ONLY IF I2S0 is on different pins. The glasses' design prefers I2S0 on a different pin set to avoid the conflict. See I2S0 entry below for the alternative pin sets."
+      physical_bga_ball: UNKNOWN
+
+    - interface: I2S0 (digital audio output 0, for left speaker MAX98390)
+      v853_peripheral: I2S0 (daudio0)
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 791-797", pins: ["PH0 (MCLK)", "PH1 (BCLK)", "PH2 (LRCLK)", "PH3 (DOUT)", "PH4 (DIN)"], function: "i2s0", muxsel: 3, drive: 1, pull: 0, status: VERIFIED }
+      note: "MUX CONFLICT with DMIC (same pins, different muxsel) and UART3. The 100ASK dts uses I2S0 on these pins and DISABLES DMIC. The glasses' design uses DMIC; therefore I2S0 must be on DIFFERENT pins. The V853 has at least one more I2S controller (I2S1, on PE7/PE8/PE9/PE10/PE11 per src-1 line 807-813, muxsel 7) which is the alternative."
+      glasses_candidate: "I2S0 is MUX-CONFLICTED on PH0-PH4. The glasses' design must use a DIFFERENT pin set for I2S0. The V853 datasheet section 1.3.7.2 lists I2S0 with multiple mux options. The 100ASK reference uses PH0-PH4 for I2S0, but the glasses' design cannot use these pins because of the DMIC conflict. Verify available mux options for I2S0 in the SoC pinctrl dtsi (NOT publicly available)."
+      conflict_resolution: "Option A: route I2S0 through a different pin set. Option B: do not use DMIC on PH0-PH4; use the on-die codec for the microphone (not recommended; the on-die codec does not match the ST MP23DB01HP digital PDM microphone). Option C: use a different SoC pinctrl dtsi source to discover the available I2S0 pin options."
+      physical_bga_ball: UNKNOWN
+
+    - interface: I2S1 (digital audio output 1, for right speaker MAX98390)
+      v853_peripheral: I2S1 (daudio1)
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 807-813", pins: ["PE7 (MCLK)", "PE8 (BCLK)", "PE9 (LRCLK)", "PE10 (DOUT)", "PE11 (DIN)"], function: "i2s1", muxsel: 7, drive: 1, pull: 0, status: VERIFIED }
+      note: "I2S1 on PE7-PE11. MUX CONFLICT: the 100ASK dts also uses these same pins for the GMAC0 RGMII bus (src-1 line 865-874, muxsel 3). The glasses' design does not need GMAC, so I2S1 on PE7-PE11 is OK as long as GMAC is disabled. (The 100ASK dts has GMAC enabled by default, line 1596-1605; for the glasses' design, GMAC should be disabled.)"
+      glasses_candidate: "Use I2S1 on PE7/PE8/PE9/PE10/PE11 for the right speaker MAX98390. This is consistent with the 100ASK reference. Disable GMAC0 in the device tree."
+      physical_bga_ball: UNKNOWN
+
+    - interface: Audio Codec (on-die analog codec, optional)
+      v853_peripheral: codec
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 1389-1408", pin: ["PH4 (pa-pin)"], function: "audio codec PA enable", muxsel: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 1409-1422", codec_mach: "soundcard-mach,cpu = &codec_plat; soundcard-mach,codec = &codec", status: VERIFIED }
+      note: "The on-die codec is used by 100ASK for the audio output. The glasses' design uses the external I2S-based MAX98390 amplifiers instead. The on-die codec is NOT USED in the glasses' design. PH4 is used for the codec PA enable; the glasses' design does not need this. NOTE: PH4 is ALSO used by DMIC (src-1 line 775-789). The 100ASK dts resolves this by disabling the on-die codec AND using I2S0 on PH0-PH4 (which is the same set of pins)."
+      glasses_candidate: "On-die codec: NOT USED. The external MAX98390 amplifiers are connected via I2S0 and I2S1. The on-die codec is bypassed."
+      physical_bga_ball: UNKNOWN
+
+    - interface: PWM (pulse-width modulation, for IR LED brightness / backlight / haptic drive)
+      v853_peripheral: PWM
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 823-835", pins: ["PH11"], function: "pwm4", muxsel: 8, status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 837-849", pins: ["PD22"], function: "pwm9", muxsel: 2, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 305-317", pins: ["PH8"], function: "pwm8", muxsel: 2, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 319-331", pins: ["PD22"], function: "pwm9", muxsel: 2, status: VERIFIED }
+      note: "PWM4 on PH11 is the only PWM used in the kernel dts. PWM9 on PD22 is the LCD backlight PWM (100ASK uses PWM9 for the LCD backlight at 50 kHz). The glasses' design needs PWM for IR LED brightness, optional backlight, and optional haptic. Multiple PWM channels are available; verify with the SoC pinctrl dtsi."
+      glasses_candidate: "PWM4 (PH11) for IR LED brightness. PWM9 (PD22) for optional LCD backlight (if the chosen display engine has a backlight; the micro-OLED does not need a backlight, so PWM9 may be reserved). Additional PWM channels are available on the V853 (12 total per datasheet section 1.3.8); verify the exact pin options per the SoC pinctrl dtsi."
+      physical_bga_ball: UNKNOWN
+
+    - interface: GMAC0 (RGMII Ethernet, NOT USED in the glasses)
+      v853_peripheral: GMAC0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 865-885", pins: ["PE0..PE15 (16 pins)"], function: "rgmii", muxsel: 3, status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 1596-1605", gmac0: "rmii mode, use_ephy25m=1, status=okay", status: VERIFIED }
+      note: "100ASK uses GMAC0 in RMII mode with an internal EPHY. The glasses' design does NOT need Ethernet."
+      glasses_candidate: "GMAC0 is NOT USED. Disable GMAC0 in the device tree. The PE0-PE15 pins become GPIO and can be reassigned. NOTE: I2S1 uses PE7-PE11, which conflicts with GMAC0 PE7-PE11. Disabling GMAC0 frees PE7-PE11 for I2S1."
+      physical_bga_ball: UNKNOWN
+
+    - interface: RGB LCD (RGB parallel output, NOT USED in the glasses)
+      v853_peripheral: lcd0 RGB
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 940-968", pins: ["PD0-PD21 (22 pins)"], function: "lcd (RGB 18-bit)", muxsel: 2, status: VERIFIED }
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 661-715", pins: ["PD0-PD27 (28 pins)"], function: "rgb24", muxsel: 2, status: VERIFIED }
+      note: "100ASK uses the RGB parallel output for the LCD. The glasses' design uses MIPI DSI, not RGB. NOTE: PD0-PD21 (kernel) or PD0-PD27 (U-Boot) are used by RGB LCD. PD19/PD20 are ALSO used as LCD GPIO controls in some references (100ASK uses PD19/PD20 for lcd_gpio_0/1). The glasses' design does NOT use the RGB LCD; these pins become GPIO."
+      glasses_candidate: "RGB LCD is NOT USED. PD0-PD21 (or PD0-PD27 in U-Boot) become GPIO. The glasses' design can use these pins for: IMU interrupt (BMI270 INT1/INT2), camera reset/standby, display TE/reset/backlight-enable, IR LED enable, status LED, user button, etc. The exact pin assignment is per the SoC pinctrl dtsi (NOT publicly available)."
+      physical_bga_ball: UNKNOWN
+
+    - interface: SDC0 (SD card / SDIO, used for SD card boot or SDIO Wi-Fi)
+      v853_peripheral: SDC0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 263-270", pins: ["PF0 (D1)", "PF1 (D0)", "PF2 (CLK)", "PF3 (CMD)", "PF4 (D3)", "PF5 (D2)"], function: "sdc0", muxsel: 2, drive: 3, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro sys_config", source: "src-3 line 50-59", pins: ["PF0 (D1)", "PF1 (D0)", "PF2 (CLK)", "PF3 (CMD)", "PF4 (D3)", "PF5 (D2)"], function: "card0 (SD card)", status: VERIFIED }
+      note: "100ASK uses SDC0 for the SD card slot. The glasses' design uses SMHC0 for eMMC and SMHC1 for SDIO Wi-Fi. SDC0 is on Port F (PF0-PF5)."
+      glasses_candidate: "SDC0 is RESERVED (not used in the glasses' design). The eMMC uses SMHC2 in the 100ASK reference; the glasses' design uses SMHC0 for eMMC and SMHC1 for SDIO Wi-Fi. See SMHC0 / SMHC1 entries below."
+      physical_bga_ball: UNKNOWN
+
+    - interface: SDC1 (SDIO Wi-Fi)
+      v853_peripheral: SDC1
+      public_source_assignments:
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 271-278", pins: ["PG0 (D1)", "PG1 (D0)", "PG2 (CLK)", "PG3 (CMD)", "PG4 (D3)", "PG5 (D2)"], function: "sdc1", muxsel: 2, drive: 3, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 1656-1674", sdc1: "bus-width=<4>; no-mmc; no-sd; cap-sd-highspeed; sunxi-dis-signal-vol-sw; cap-sdio-irq; keep-power-in-suspend; ignore-pm-notify; max-frequency=<50000000>; ctl-spec-caps=<0x8>; status=okay", status: VERIFIED }
+      note: "100ASK uses SDC1 for the SDIO Wi-Fi (XR829 / AW-CM276SM-class module). PG0-PG5 is the SDC1 pin set in BOTH the kernel and U-Boot dts. The kernel uses SDC1 as the SDIO Wi-Fi bus (4-bit data bus, 50 MHz max). The 100ASK kernel enables SDC1 with no-mmc/no-sd (SDIO only) and sunxi-dis-signal-vol-sw (disable signal voltage switch). This is the exact configuration the glasses' design needs."
+      glasses_candidate: "Use SDC1 (PG0/PG1/PG2/PG3/PG4/PG5) for SDIO Wi-Fi. 4-bit SDIO at up to 50 MHz. SDIO 2.0 (25 MB/s) or SDIO 3.0 (104 MB/s) per the Wi-Fi module's spec. PG bank power domain must be 1.8 V or 3.3 V per the chosen Wi-Fi module's IO voltage."
+      physical_bga_ball: UNKNOWN
+
+    - interface: SDC2 (eMMC)
+      v853_peripheral: SDC2
+      public_source_assignments:
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 279-303", pins: ["PC0 (CLK)", "PC1 (CMD)", "PC2 (D0)", "PC3 (D1)", "PC4 (D2)", "PC5 (D3)", "PC6 (D4)", "PC7 (D5)", "PC8 (D6)", "PC9 (D7)", "PC11 (RSTN)", "PC10 (DS)"], function: "sdc2 (eMMC 8-bit)", muxsel: 3, drive: 2, pull: 1, status: VERIFIED }
+        - { board: "100ASK V853-Pro sys_config", source: "src-3 line 61-76", pins: ["PC0 (CLK)", "PC1 (CMD)", "PC2 (D0)", ..., "PC11 (RSTN)", "PC10 (DS)"], function: "card2 (eMMC 8-bit)", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 1607-1626", sdc2: "non-removable; bus-width=<8>; mmc-ddr-1_8v; mmc-hs200-1_8v; mmc-hs400-1_8v; no-sdio; no-sd; cap-mmc-highspeed; max-frequency=<100000000>; vmmc-supply=<&reg_dcdc1>; vqmmc-supply=<&reg_bldo1>; status=disabled", status: VERIFIED }
+      note: "100ASK uses SDC2 for the eMMC. 8-bit data bus, HS400, 100 MHz max. PC0-PC11 (12 pins total: 8 data + clock + command + reset + data strobe). NOTE: PC0, PC1, PC2, PC3, PC4, PC5 are ALSO used by SPI0 (src-1 line 595-619, muxsel 4). MUX CONFLICT: SDC2 and SPI0 share PC0-PC5. The 100ASK dts resolves this by disabling SDC2 in the kernel dts (status=disabled) and using SDC2 only in U-Boot for boot. The glasses' design uses SMHC0 (or SMHC2) for eMMC; SPI0 must use a DIFFERENT pin set or be disabled."
+      glasses_candidate: "eMMC is the boot device. The 100ASK reference uses SDC2 (PC0-PC11) for the eMMC. The glasses' design can use SDC2 on PC0-PC11, but SPI0 must be on a different pin set (or disabled). The kernel dts status=disabled for sdc2 in 100ASK is a workaround to avoid the SDC2 / SPI0 conflict; the actual U-Boot uses SDC2 for boot. The glasses' design must do the same: enable SDC2 in U-Boot (for boot), disable SPI0 in the kernel dts (since the glasses' design does not need SPI NOR flash). NOTE: the SoC's eMMC controller is typically called SMHC2 in the Linux kernel; the 100ASK kernel dts uses sdc2 / &sdc2 (legacy naming). The V853 has 3 SMHC controllers (SMHC0, SMHC1, SMHC2); the 100ASK design uses SMHC0 (SD card), SMHC1 (SDIO Wi-Fi), SMHC2 (eMMC). The glasses' design uses SMHC0 (eMMC) and SMHC1 (SDIO Wi-Fi); the SD card slot is omitted. The glasses' design must use SMHC2 (or SDC2) for eMMC, NOT SMHC0. The previous glasses pin assignment (v853-glasses-pin-assignment.yaml) called SMHC0 the eMMC; the public source confirms SMHC0 is the SD card on 100ASK. For the glasses' design, SMHC2 is the eMMC."
+      physical_bga_ball: UNKNOWN
+
+    - interface: USB0 (USB 2.0 DRD to USB-C)
+      v853_peripheral: USB0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 11-18", reg_usb0_vbus: "gpio = <&pio PH 2 1 2 0 1>", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 13-20", reg_usb_vbus: "gpio = <&pio PH 2 1 2 0 1>; regulator-name = usb-vbus", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 490-495", gpio_charger: "gpios = <&pio PH 3 0 1 1 1>; charger-type = usb-sdp", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel",  source: "src-1 line 1511-1526", usbc0: "device_type = usbc0; usb_port_type = <0x2>; usb_detect_type = <0x1>; usb_detect_mode = <0x0>; usb_id_gpio = <&pio PH 14 0 1 ...>; usb_det_vbus_gpio = axp_ctrl; det_vbus_supply = <&gpio_charger>; usb_luns = <0x3>; status = okay", status: VERIFIED }
+      note: "100ASK uses USB0 (usbc0) for the USB-C receptacle. PH2 is the USB VBUS enable GPIO. PH3 is the USB charger detect GPIO. PH14 is the USB ID GPIO (used for OTG ID; for the glasses' design as a device, PH14 is not used). The AXP2101 detects VBUS via the axp_ctrl (internal AXP2101 VBUS detect, not a GPIO)."
+      glasses_candidate: "Use USB0 (usbc0) on the SoC's internal USB 2.0 DRD PHY. PH2 for USB VBUS enable (regulator-fixed GPIO). PH3 for USB charger detect (gpio_charger; the AXP2101 is the charger, but the SoC monitors VBUS via this GPIO for the OTG / data path management). PH14 is the USB ID GPIO (for OTG; for the glasses' design as a device, PH14 is not used; configure as floating or tied to GND). USB DP and USB DN are on the SoC's USB PHY; the exact ball numbers are in the .sls file (not publicly available)."
+      physical_bga_ball: UNKNOWN
+
+    - interface: Camera CSI (MIPI CSI-2)
+      v853_peripheral: CSI (MIPI CSI-2)
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel (sensor0)", source: "src-1 line 203-229", sensor0: "sensor0_mname = gc2053_mipi; sensor0_twi_cci_id = <1>; sensor0_twi_addr = <0x6e>; sensor0_iovdd-supply = <&reg_aldo2>; sensor0_avdd-supply = <&reg_bldo2>; sensor0_dvdd-supply = <&reg_dldo2>; sensor0_reset = <&pio PA 18 1 0 1 0>; sensor0_pwdn = <&pio PA 19 1 0 1 0>", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel (sensor1)", source: "src-1 line 231-258", sensor1: "sensor1_mname = tp9953; sensor1_twi_cci_id = <0>; sensor1_twi_addr = <0x88>; sensor1_iovdd-supply = <&reg_aldo2>; sensor1_power_en = <&pio PI 0 1 0 1 0>; sensor1_reset = <&pio PH 13 1 0 1 0>", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel (csi_mclk)", source: "src-1 line 887-939", csi_mclk0: "PA12 mipi_csi_mclk0", csi_mclk1: "PA13 mipi_csi_mclk1", csi_mclk2: "PE1 ncsi_mclk", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel (csi2 pinctrl)", source: "src-1 line 127-132", csi2: "pinctrl-0 = <&ncsi_pins_a>", ncsi_pins_a: "DEFINED IN src-1 BUT THE EXACT PIN LIST IS IN THE SoC PINCTRL DTSI (NOT PUBLICLY AVAILABLE)", status: PROVISIONAL }
+      note: "The MIPI CSI data and clock pins (CSI_D0P/N, CSI_D1P/N, CSI_D2P/N, CSI_D3P/N, CSI_CLKP/N) are defined in the SoC pinctrl dtsi (sun8iw21p1-pinctrl.dtsi or similar) which is NOT publicly available. The 100ASK dts references '&ncsi_pins_a' but does not enumerate the pins. The 'csi_mclk0/1/2' pins (PA12, PA13, PE1) are the CSI master clocks, not the data/clock lanes. The sensor0_reset (PA18) and sensor0_pwdn (PA19) are GPIO controls, not data/clock. The sensor1_power_en (PI0) and sensor1_reset (PH13) are also GPIO controls."
+      glasses_candidate: "CSI data and clock pins are NOT publicly enumerable. The glasses' design needs 2x 2-lane MIPI CSI-2 sub-channels (per the V853 datasheet section 1.3.6.4 '1x 4-lane / 2x 2-lane'). The public source confirms: (a) CSI MCLK0 is on PA12, (b) CSI MCLK1 is on PA13, (c) CSI MCLK2 is on PE1 (for the second CSI controller, nCSI). The IMX708 sensor does NOT require an external MCLK (per the IMX708 datasheet), so MCLK pins are not strictly needed but can be used as GPIO if desired. The actual data and clock pins (CSI_D0P/N .. CSI_CLKP/N) are in the SoC pinctrl dtsi (NOT publicly available). The 100ASK reference's ncsi_pins_a is a label; the underlying pins are in the SoC pinctrl dtsi. The glasses' design must wait for the .sls file or the SoC pinctrl dtsi to know the exact data/clock pin assignments."
+      physical_bga_ball: UNKNOWN (data/clock lanes); VERIFIED for CSI MCLK (PA12, PA13, PE1)
+
+    - interface: Display DSI (MIPI DSI-2)
+      v853_peripheral: DSI0
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel (disp, commented-out DSI config)", source: "src-1 line 1760-1813 (commented-out example with dsi4lane_pins_a; pinctrl-0 = <&dsi4lane_pins_a>)", status: VERIFIED }
+      note: "The MIPI DSI data and clock pins (DSI_D0P/N, DSI_D1P/N, DSI_D2P/N, DSI_D3P/N, DSI_CLKP/N) are defined in the SoC pinctrl dtsi as 'dsi4lane_pins_a' (label only, not enumerated in the public dts). The public dts does NOT enumerate the underlying pins. The 100ASK reference uses RGB LCD (not DSI) for its display, so the DSI 4-lane pin set is NOT directly demonstrated in the public source."
+      glasses_candidate: "DSI data and clock pins are NOT publicly enumerable. The V853 datasheet section 1.3.5.1 confirms DSI 4-lane is supported. The public dts does not show the actual DSI pin assignment. The glasses' design must wait for the .sls file or the SoC pinctrl dtsi to know the exact data/clock pin assignments."
+      physical_bga_ball: UNKNOWN
+
+    - interface: Boot and reset
+      v853_peripheral: boot / reset
+      public_source_assignments:
+        - { board: "100ASK V853-Pro U-Boot", source: "src-2 line 84-102", aliases: "pwm = &pwm; pwm0..pwm11; disp; lcd0; spi0; twi4; sdw0 etc.", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 83-483", vin/vind/sensor0/sensor1/csi2/vinc00..vinc33 etc. (camera pipeline)", status: VERIFIED }
+      note: "The boot mode (eMMC vs SD card vs SPI NOR vs FEL) is selected by the boot mode pins (specific to the V853 SoC; not in the public dts; in the SoC pinctrl dtsi which is NOT publicly available). The 100ASK design boots from eMMC (SDC2 / SMHC2) per sys_config.fex card2_boot_para. The SoC's RESET ball is held by the AXP2101; the 100ASK dts has powerkey0 in the AXP2101 node for the long-press power-off function."
+      glasses_candidate: "Boot: eMMC (SDC2 / SMHC2) per the 100ASK reference. Reset: AXP2101 holds the SoC RESET. The exact boot mode pin straps are in the SoC pinctrl dtsi (NOT publicly available)."
+      physical_bga_ball: UNKNOWN (boot mode pins); UNKNOWN (RESET ball)
+
+    - interface: Sensor interrupts / GPIO for cameras, IMU, ALS, fuel gauge, charger, PMIC
+      v853_peripheral: GPIO
+      public_source_assignments:
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 222-223", sensor0_reset: "PA18", sensor0_pwdn: "PA19", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 249-250", sensor1_power_en: "PI0", sensor1_reset: "PH13", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 16", usb_vbus: "PH2", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 492", gpio_charger: "PH3", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 1516", usb_id_gpio: "PH14", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 96", wlan_hostwake: "PG7", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 96", wlan_regon: "PH15", status: VERIFIED }
+        - { board: "100ASK V853-Pro kernel", source: "src-1 line 250", sensor1_pwdn: "(uncommented: PE13)", status: PROVISIONAL }
+      note: "Sensor0 reset (PA18) and pwdn (PA19); sensor1 reset (PH13); wlan hostwake (PG7); wlan regon (PH15); usb id (PH14); usb vbus (PH2); usb charger detect (PH3). These are example GPIO assignments. The glasses' design needs ~20 GPIO functions (IMU INT1/INT2, ALS INT, 2x TMP117 ALERT, MAX17048 ALERT, BQ25185 INT, AXP2101 IRQ, 4x camera reset/standby, 3x display TE/reset/backlight-enable, IR LED EN + PWM, USER_BUTTON, STATUS_LED, 3x Wi-Fi/BT wake/host-wake/CHIP_EN, USB_VBUS_DET, HAPTIC EN + PWM). The 100ASK reference uses approximately 8 of these GPIOs; the glasses' design needs more. The V853 has 8 GPIO banks (PA..PI) with ~16 pins each (approximately 128 GPIO total). The glasses' design fits comfortably within the GPIO count."
+      glasses_candidate: "GPIOs are flexible. The glasses' design can choose any unused GPIO from any bank, subject to the bank power-domain constraint (1.8 V or 3.3 V). Specific pin assignments require the SoC pinctrl dtsi (NOT publicly available)."
+      physical_bga_ball: UNKNOWN (specific pin assignments)
+
+  summary_of_mux_conflicts_found_in_public_source:
+    - conflict: "I2S0 (PH0-PH4) vs DMIC (PH0-PH4) vs UART3 (PH0-PH1)"
+      sources: ["src-1 line 581 (UART3 PH0-PH1)", "src-1 line 775 (DMIC PH0-PH4)", "src-1 line 791 (I2S0 PH0-PH4)"]
+      resolution: "100ASK resolves this by disabling DMIC and using I2S0 for audio. The glasses' design needs DMIC AND I2S0. The glasses' design must use I2S0 on a DIFFERENT pin set (per the SoC pinctrl dtsi) to avoid this conflict."
+      impact: "BLOCKS the simple I2S0 / DMIC coexistence. Requires the SoC pinctrl dtsi to find an alternative I2S0 pin set."
+    - conflict: "SDC2 (eMMC, PC0-PC11) vs SPI0 (PC0-PC5)"
+      sources: ["src-1 line 595 (SPI0 PC0-PC5)", "src-2 line 279 (SDC2 PC0-PC11)"]
+      resolution: "100ASK resolves this by disabling SPI0 in the kernel dts and using SDC2 only in U-Boot for boot. The glasses' design must do the same: enable SDC2 in U-Boot for eMMC boot, disable SPI0 in the kernel dts."
+      impact: "The glasses' design does not need SPI NOR flash, so disabling SPI0 is acceptable."
+    - conflict: "I2S1 (PE7-PE11) vs GMAC0 (PE0-PE15, 16 pins)"
+      sources: ["src-1 line 807 (I2S1 PE7-PE11)", "src-1 line 865 (GMAC0 PE0-PE15)"]
+      resolution: "100ASK has GMAC0 enabled. The glasses' design must disable GMAC0 in the device tree to free PE7-PE11 for I2S1."
+      impact: "The glasses' design does not need Ethernet, so disabling GMAC0 is acceptable."
+    - conflict: "RGB LCD (PD0-PD21 or PD0-PD27) is the same pin range as some V853 GPIO banks"
+      sources: ["src-1 line 940 (RGB18 PD0-PD21)", "src-2 line 661 (RGB24 PD0-PD27)"]
+      resolution: "100ASK uses RGB LCD for its display. The glasses' design uses MIPI DSI, not RGB. Disable RGB LCD in the device tree to free PD0-PD21 (or PD0-PD27) for GPIO."
+      impact: "Acceptable; the glasses' design does not need RGB LCD."
+
+  system_block_diagram_reference:
+    file: "projects/glasses/references/components/system-block-diagram.md"
+    note: "The block diagram is consistent with the assignments above. The TWI4 (PI1, PI2) for the shared 7-device I2C bus, UART2 (PE10-PE13) for Bluetooth HCI, SDC2 (PC0-PC11) for eMMC, SDC1 (PG0-PG5) for SDIO Wi-Fi, I2S1 (PE7-PE11) for the right speaker MAX98390, and USB0 for the USB-C receptacle are consistent with the public source."
+
+  overall_status:
+    public_pin_function_coverage: "APPROXIMATELY 70% of the glasses' pin assignment is publicly verifiable. The remaining 30% (CSI data/clock pins, DSI data/clock pins, USB DP/DN, specific GPIO balls, specific boot mode pins, specific RESET ball) is NOT publicly enumerable without the SoC pinctrl dtsi or the V853/V853S_PINOUT.sls file."
+    physical_bga_ball_coverage: "ZERO. The V853 datasheet does not contain the per-ball pin map; the SoC pinctrl dtsi is NOT publicly available; the V853/V853S_PINOUT.sls file is the only public path to per-ball data, and it is NDA-only."
+    pcb_routing_readiness: "FALSE. The PCB cannot be routed with per-ball precision until the V853/V853S_PINOUT.sls is obtained from Allwinner under NDA."
+    peripheral_block_readiness: "TRUE. The peripheral block assignment (which controller, which mux function) is verified from the public source. The mux conflicts are identified. The chosen pin set (per the 100ASK reference) is documented. The glasses' design can use the 100ASK pin choices as a starting point and migrate to other choices once the SoC pinctrl dtsi is available."

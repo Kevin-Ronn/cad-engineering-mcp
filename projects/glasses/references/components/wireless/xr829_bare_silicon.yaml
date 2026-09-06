@@ -1,0 +1,55 @@
+schema_version: 1
+component:
+  id: xr829_bare_silicon_rejected
+  category: wifi_bt_bare_silicon
+  units: mm
+  role: explicit_rejection_for_use_as_glasses_module
+
+source:
+  manufacturer: Xradio (XR829)
+  part_number: XR829
+  source_type: reference_design
+  source_docs:
+    - url: https://github.com/YuzukiHD/ProjectYosemite
+      description: "ProjectYosemite reference design (XR829 on board)"
+
+mechanical:
+  package: QFN-40 (per the 3D model title in the EPCB; the ProjectYosemite 3D model title is `QFN-40_L5.0-W5.0-H0.4-P0.40` which suggests a 5 x 5 x 0.4 mm package; this is the bare silicon footprint, not a complete module)
+  dimensions_mm: { length: 5.0, width: 5.0, height: 0.4 }  # bare silicon only
+  source_for_mechanical: ProjectYosemite 3D Model Title
+
+electrical:
+  chipset: Xradio XR829
+  wifi_standard: 802.11 b/g/n (Wi-Fi 4)
+  wifi_band: 2.4 GHz
+  wifi_interface: SDIO 2.0
+  bluetooth: BT 4.2
+  bluetooth_interface: UART
+  supply_voltage_v: 3.3
+  peak_current_ma: approximately 400
+  source_for_electrical: Xradio datasheet
+
+linux_driver:
+  chipset_typical: Xradio XR829
+  status: "Mainline Linux has an out-of-tree driver for XR829; in-kernel support is incomplete. ProjectYosemite uses the out-of-tree driver from the Xradio repository."
+  source_for_linux_driver: xradio github, ProjectYosemite BSP
+
+purchase:
+  bare_silicon:
+    distributor: Xradio direct (B2B); LCSC (small qty)
+    unit_price_usd: 1.50 to 3 (single-piece; the silicon only)
+    moq: 100+ for direct; 1+ for LCSC
+  as_complete_module:
+    distributor: NOT WIDELY AVAILABLE as a stand-alone module
+    note: "XR829 is typically sold as bare silicon; complete stamp modules with XR829 are not commonly available from the major Western distributors"
+
+confidence:
+  overall: LOW_FOR_GLASSES_MODULE_USE
+  sources: reference_design
+  gaps:
+    - "Bare silicon requires external RF matching, crystal, power decoupling, and antenna design — not a turnkey module"
+    - "No widely-available stamp module exists with XR829"
+
+constraints:
+  status: REJECTED — per the brief: 'Do not select bare XR829 silicon unless a complete reference design and physical implementation are available.' The XR829 bare silicon requires significant RF design work and there is no turnkey stamp module. The ProjectYosemite reference board IS the closest available physical implementation, but it is a 65 x 56 mm SBC, not a stamp module for a glasses.
+  use_alternative: "Use the AW-CM276SM (AzureWave) or FN-LINK 6221 (RTL8821CU) instead. Both are complete stamp modules with documented mm-level dimensions, regulatory cert, and mainline Linux drivers."

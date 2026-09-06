@@ -1,0 +1,47 @@
+schema_version: 1
+component:
+  id: lra_haptic_8mm_generic
+  category: linear_resonant_actuator
+  units: mm
+  role: optional_haptic_actuator
+
+source:
+  manufacturer: various (Precision Microdrives / CUI Devices, AAC Technologies, Nidec, Mitsumi)
+  part_number: "8 mm LRA (e.g. Precision Microdrives 308-110; AAC surplus)"
+  source_type: market_survey_no_specific_pn
+  source_docs:
+    - url: https://www.precisionmicrodrives.com/
+      description: "Precision Microdrives (now CUI Devices)"
+
+mechanical:
+  dimensions_mm: { length: 8.0, width: 8.0, height: 3.0 }  # typical 8 mm LRA envelope
+  weight_g: approximately 1.0
+  mounting: SMD pads or solder tabs
+  source_for_mechanical: market survey / typical class
+
+electrical:
+  drive_voltage_v: 2.0 to 3.5 (AC, driven by waveform)
+  resonant_frequency_hz: 175 (typical; tunable by mass)
+  amplitude_g_rms: 1.0 to 2.5
+  interface: differential analog; driven by TI DRV2605 or similar LRA driver IC
+  source_for_electrical: market survey
+
+environmental:
+  operating_temperature_c: { min: -20, max: 70 }
+  source_for_environmental: market survey
+
+purchase:
+  distributor: Mouser; DigiKey; LCSC; AliExpress (AAC surplus)
+  unit_price_usd: 2 to 5 (single-piece retail); 0.80 to 2 in volume
+  moq: 1 to 10
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: market_survey_no_specific_pn
+
+constraints:
+  status: OPTIONAL — viable for glasses-temple haptics. Requires a dedicated LRA driver IC (TI DRV2605 or similar) and a host I2C/I2S path.
+  glasses_use_case: "Notification haptic, button-press feedback, or alarm. The 8 mm LRA in each temple is the right size (matches Meta Ray-Ban / Snap Spectacles class). However, the 8 x 8 x 3 mm envelope is large for a Wayfarer-style temple (which is 1.6 mm thick) and would require a temple pod. NOT recommended if temple thickness is a hard constraint."
+  decision: "List as OPTIONAL. Include in BOM only if the use case (notifications, alarms) justifies the temple pod."

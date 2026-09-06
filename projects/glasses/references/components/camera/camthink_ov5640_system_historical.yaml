@@ -1,0 +1,22 @@
+schema_version: 1
+system:
+  id: glasses_camera_system
+  units: mm
+camera_count: 1
+camera_policy:
+  arrangement: single_forward
+  placement:
+  - center_nose_bridge
+  orientation:
+    direction: forward
+    optical_axis: geometry_derived
+    follow_frame_curvature: true
+  mounting:
+    location: main_frame
+    dedicated_keepout: true
+    lens_aperture_clear: true
+  geometry_required_before_placement: true
+  dimensions_must_be_source_derived: true
+  lens_position_must_be_source_derived: true
+  optical_axis_must_be_source_derived: true
+  unknown_dimensions_must_not_be_guessed: true

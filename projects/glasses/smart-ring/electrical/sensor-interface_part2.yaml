@@ -1,0 +1,558 @@
+schema_version: 1
+ring_sensor_interface_part2:
+  id: smart_ring_sensor_interface_part2
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / KiCad / FreeCAD / firmware source code is created by this artifact.
+  parent_artifacts:
+    - "electrical/sensor-interface.yaml"
+    - "electrical/system-architecture.yaml"
+    - "firmware/architecture.md"
+    - "protocol/gesture-vocabulary.yaml"
+    - "components/*-selection.yaml"
+
+  note: "Companion to electrical/sensor-interface.yaml. That file defines the wiring (which signals go where); this file defines the per-sensor bring-up sequence (how the firmware initialises, calibrates, monitors, and recovers each sensor). The two files share the same I2C addresses and voltage rails. If they disagree, sensor-interface.yaml is authoritative for wiring; this file is authoritative for software behavior."
+
+  v1_sensor_scope:
+    description: "V1 sensors retained in the architecture per electrical/system-architecture.yaml and components/*-selection.yaml. PPG is V2-only and is documented here as a forward-compatibility placeholder (no V1 hardware bring-up)."
+    v1_sensors:
+      - { sensor: "BMI270 IMU",              component: "components/imu-selection.yaml",        reason: "Primary IMU; used for gestures (ROTATE_*) + wear-state stillness detection + (V2) PPG motion-artifact cancellation" }
+      - { sensor: "IQS127D touch IC",        component: "components/touch-selection.yaml",      reason: "Capacitive touch crown; 5-7 electrodes; provides TAP, DOUBLE_TAP, LONG_PRESS, SWIPE_* + wear-state touch presence" }
+      - { sensor: "TMP117 temperature",      component: "components/temperature-selection.yaml", reason: "Finger temperature; 1 Hz conversion; RR08 in V2 (V1 stores internally; not exposed via BLE)" }
+      - { sensor: "MAX17048 fuel gauge",     component: "components/battery-selection.yaml",    reason: "Battery state of charge + low-battery ALERT for RR03 + power-manager decisions" }
+      - { sensor: "DRV2605L haptic driver",   component: "components/haptic-selection.yaml",     reason: "LRA driver for RR05 haptic patterns" }
+      - { sensor: "MCP73831 charger (passive)", component: "components/charger-selection.yaml", reason: "Standalone charger IC; passive (no I2C); STAT GPIO optional" }
+    v2_only_or_excluded:
+      - { sensor: "MAX86140 PPG",             component: "components/ppg-selection.yaml",        reason: "V2-only; no V1 hardware bring-up; see section 5 placeholder" }
+
+  global_bring_up_order:
+    description: "The order in which sensors are brought up at boot. The order is determined by hard dependencies (I2C bus availability, power-rail sequencing) and soft dependencies (calibration prerequisites)."
+    sequence:
+      - { step: 1,  sensor: "power rails",        action: "Power manager enables VCC-1V8 LDO first; VCC-3V3 LDO after VCC-1V8 is stable (per electrical/power-tree.yaml). Wait for PG (power-good) GPIO from each LDO." }
+      - { step: 2,  sensor: "I2C0 bus",          action: "Zephyr I2C driver initialises I2C0 at 400 kHz Fast-Mode. Probe bus with a broadcast address read; record ACK/NACK for every 7-bit address 0x00..0x7F." }
+      - { step: 3,  sensor: "MAX17048 fuel gauge", action: "First device on the bus because it is the simplest I2C device; provides early battery-status visibility for the rest of the boot." }
+      - { step: 4,  sensor: "TMP117 temperature", action: "Second simple I2C device; one-shot conversion at boot to validate the sensor + I2C bus." }
+      - { step: 5,  sensor: "BMI270 IMU",        action: "Initialised after the temperature sensor because the IMU is the most power-sensitive device. Bring-up includes FIFO config + INT1/INT2 setup." }
+      - { step: 6,  sensor: "IQS127D touch IC",  action: "Initialised after the IMU. Touch IC electrode scanning begins only after the wear-state is WEAR_OFF (no false-positive touch events during boot)." }
+      - { step: 7,  sensor: "DRV2605L haptic driver", action: "Initialised last among the bus devices; loads the haptic waveform library from a small ROM table (per protocol/ring-gatt-spec.yaml section haptic_pattern_table). Initialised in standby; no haptic until RR05 is written." }
+      - { step: 8,  sensor: "MCP73831 charger",   action: "No firmware initialisation required (passive). The STAT GPIO is read once to determine initial charging_state; subsequent transitions are interrupt-driven." }
+      - { step: 9,  sensor: "wear-state manager", action: "Set initial wear_state to WEAR_OFF; wait for WEAR_PUT_ON candidate from the gesture FSM." }
+      - { step: 10, sensor: "BLE stack",         action: "Zephyr BLE host initialises; advertising begins; first CCCD write from the central starts the notify pipeline." }
+    dependencies:
+      - { dependent: "IQS127D",  requires: ["VCC-1V8", "I2C0"] }
+      - { dependent: "BMI270",   requires: ["VCC-1V8", "I2C0"] }
+      - { dependent: "TMP117",   requires: ["VCC-1V8", "I2C0"] }
+      - { dependent: "MAX17048", requires: ["VBAT (or VSYS)", "I2C0"] }
+      - { dependent: "DRV2605L", requires: ["VBAT (for LRA drive)", "VCC-1V8 (logic)", "I2C0"] }
+      - { dependent: "MCP73831", requires: ["Pogo input OR VBAT"] }
+      - { dependent: "MAX86140 (V2 only)", requires: ["VCC-1V8 (logic)", "VCC-3V3 (LED anode)", "I2C0"] }
+
+  bring_up_state_machine:
+    description: "Per-sensor state machine. Each sensor transitions through these states during bring-up. The sensor manager declares a sensor READY only after SELF_TEST and CALIBRATING (if any) have completed. The state machine mirrors firmware/architecture.md section 10 error handling (DEGRADED + FAILED are persistent)."
+    states:
+      - { state: "OFF",          description: "Sensor has no power; firmware has not initialised any register." }
+      - { state: "POWERED",      description: "Power rail stable; sensor is out of reset; I2C bus is alive; firmware has not yet written any configuration register." }
+      - { state: "RESET",        description: "Firmware is writing the soft-reset sequence; sensor is not yet accepting other commands." }
+      - { state: "INITIALIZING", description: "Firmware is writing the configuration registers (range, ODR, FIFO, interrupts, etc.)." }
+      - { state: "SELF_TEST",    description: "Firmware is running the sensor's built-in self-test (if any). Self-test result must pass before READY." }
+      - { state: "CALIBRATING",  description: "Firmware is collecting calibration data (e.g. gyro zero-rate, accelerometer static magnitude, touch electrode baselines). Some sensors require a 'still' period; the calibration procedure depends on the sensor." }
+      - { state: "READY",        description: "Sensor is fully operational; samples flow into the portable sensor manager; the gesture FSM may consume them." }
+      - { state: "DEGRADED",     description: "Sensor is operational but with reduced confidence (e.g. self-test marginal; calibration incomplete; I2C retries > threshold). The sensor manager increments the per-sensor fault counter but does NOT disable the sensor." }
+      - { state: "FAILED",       description: "Sensor has failed (self-test fail; I2C NACK; out-of-range reading). The sensor manager disables the sensor, increments fault_count_<sensor>, and emits a TEST_DIAGNOSTIC gesture event per firmware/architecture.md section 10.1." }
+    state_transitions:
+      - { from: "OFF",          event: "power rail good",                              to: "POWERED" }
+      - { from: "POWERED",      event: "firmware writes reset sequence",               to: "RESET" }
+      - { from: "RESET",        event: "reset sequence complete (chip ID read OK)",    to: "INITIALIZING" }
+      - { from: "INITIALIZING", event: "configuration registers written",              to: "SELF_TEST" }
+      - { from: "SELF_TEST",    event: "self-test passed",                             to: "CALIBRATING" }
+      - { from: "SELF_TEST",    event: "self-test failed",                             to: "FAILED" }
+      - { from: "CALIBRATING",  event: "calibration complete",                         to: "READY" }
+      - { from: "CALIBRATING",  event: "calibration timeout (no stillness detected)",  to: "DEGRADED" }
+      - { from: "READY",        event: "runtime fault (3+ I2C retries in 60 s)",       to: "DEGRADED" }
+      - { from: "READY",        event: "sensor I2C NACK for 5 retries",                to: "FAILED" }
+      - { from: "DEGRADED",     event: "fault clears after 60 s of normal operation",  to: "READY" }
+      - { from: "DEGRADED",     event: "fault worsens",                                to: "FAILED" }
+      - { from: "FAILED",       event: "firmware explicit reset",                      to: "POWERED" }
+
+  sensor_bmi270:
+    device_component: "Bosch BMI270 (LGA-2.5x3.0x0.8 mm)"
+    bus_interface: "I2C0 (400 kHz Fast-Mode)"
+    i2c_address: { address_7bit: "TBD per Bosch BMI270 datasheet; expected 0x68 (SDO=GND)", reason: "The datasheet is the authoritative source for the I2C address. The system-architecture.yaml assumption 0x68 is unverified." }
+    power_reset:
+      supply_voltage_v: 1.8
+      supply_rail: "VCC-1V8"
+      reset_signal: "soft-reset via register (per BMI270 datasheet CMD register); no hardware reset pin used in V1"
+      power_on_sequence: "VCC-1V8 stable -> wait at least 1 ms (per BMI270 power-on timing; TBD on datasheet) -> I2C transactions may begin"
+      notes: "BMI270 has a power-on-reset delay; the firmware must wait before the first I2C transaction. Exact delay is in the BMI270 datasheet (TBD until confirmed)."
+    initialization_sequence:
+      - "1. Wait for VCC-1V8 to be stable (LDO PG GPIO asserts)."
+      - "2. Wait the BMI270 power-on delay (datasheet TBD)."
+      - "3. Read the chip ID register (per BMI270 datasheet; TBD address). Expected value is in the datasheet; if not, the sensor is not present."
+      - "4. Issue the soft-reset command (CMD register; per datasheet)."
+      - "5. Wait for the reset to complete (poll the status register; per datasheet TBD)."
+      - "6. Load the sensor's configuration file (the BMI270 requires a configuration file to be loaded into its internal RAM; the file content is Bosch-proprietary and must be downloaded from Bosch's website; the exact file version is TBD)."
+      - "7. Enable the FIFO (per FIFO requirements below)."
+      - "8. Enable INT1 + INT2 with the desired trigger sources (per interrupt_behavior below)."
+      - "9. Set the accelerometer + gyroscope ODR and range (per sampling_rate and measurement_range)."
+      - "10. Transition to SELF_TEST."
+    register_configuration:
+      odr_register: { address: "TBD per BMI270 datasheet (ACC_CONF + GYR_CONF)", value: "TBD; 50 Hz for both accel and gyro is the V1 target (per firmware/architecture.md section 4)" }
+      range_register: { address: "TBD per BMI270 datasheet (ACC_RANGE + GYR_RANGE)", value: "TBD; accel +/- 4 g; gyro +/- 2000 dps are engineering starting points; subject to hardware characterisation" }
+      fifo_config_register: { address: "TBD per BMI270 datasheet (FIFO_CONFIG_0 + FIFO_CONFIG_1)", value: "TBD; header mode + watermark interrupt; V1 target is 1 KB FIFO with watermark at 50 percent" }
+      int1_map: { address: "TBD per BMI270 datasheet (INT1_IO_CTRL + INT1_MAP)", value: "TBD; FIFO watermark on INT2; motion-any on INT1" }
+      int2_map: { address: "TBD per BMI270 datasheet (INT2_IO_CTRL + INT2_MAP)", value: "TBD; data-ready on INT2 (optional)" }
+      notes: "Every register address and value is marked TBD because the BMI270 datasheet is the only authoritative source. The firmware driver uses the BMI270's official driver API in preference to raw register writes (per research/license-audit.md; the BMI270 has mainline Linux IIO support)."
+    sampling_rate: { target_hz: 50, reason: "Per firmware/architecture.md section 4 sensor acquisition timing. BMI270 supports up to 6400 Hz; 50 Hz is sufficient for ROTATE_CW/ROTATE_CCW recognition." }
+    measurement_range: { accel_g_pm: "TBD (engineering start: +/- 4 g)", gyro_dps_pm: "TBD (engineering start: +/- 2000 dps)", reason: "Subject to hardware characterisation; the V1 ring's expected motion profile (gestures + wrist motion) drives the range selection." }
+    resolution_data_format: { resolution_bits: 16, endianness: "little-endian", format: "two's complement; signed 16-bit per axis per sensor (accel x/y/z, gyro x/y/z)", notes: "BMI270 natively outputs 16-bit signed values; the portable sensor manager wraps them in sm_sample_header_t." }
+    interrupt_behavior:
+      int1:
+        trigger: "FIFO watermark; motion-any (accel magnitude above threshold)"
+        wake_source: true
+        direction: "input to nRF54L15 GPIO; rising-edge; firmware samples the IMU FIFO on wake"
+        notes: "INT1 wakes the nRF54L15 from System ON idle."
+      int2:
+        trigger: "FIFO watermark (alternate); data-ready"
+        wake_source: true
+        direction: "input to nRF54L15 GPIO; rising-edge"
+        notes: "INT2 may be used for FIFO threshold; both INTs map to the sensor worker."
+      latched_vs_pulsed: "TBD per BMI270 datasheet (latched is preferred; the firmware polls the FIFO on every INT1/INT2 wake)"
+    fifo_requirements: { fifo_bytes: 1024, mode: "header mode (per BMI270 datasheet; TBD register); V1 FIFO is 1 KB; watermark at 50 percent (512 bytes)", frames_per_second: "at 50 Hz with 6 axes + 1 timestamp, approx 12 bytes per frame => about 50 frames in 1 second => about 600 bytes; the 1 KB FIFO holds about 1.6 seconds", notes: "FIFO overflow triggers DEGRADED state and drop_count_imu increment per firmware/architecture.md section 6.2." }
+    timestamping_requirements:
+      timestamp_source: "nRF54L15 RTC counter (per firmware/architecture.md section 2.3 common timestamping); 1 microsecond resolution after prescaler"
+      timestamping_in_driver: "the BMI270's internal timestamp (per its datasheet; TBD) is captured in the FIFO header; the firmware merges it with the RTC timestamp at sample-publish time"
+      latency_to_publish_us: "< 100 (ISR -> sensor worker -> sm_publish)"
+    calibration_procedure:
+      type: "static accelerometer magnitude + gyro zero-rate"
+      when: "during boot if wear_state == WEAR_OFF and IMU has been still for at least 30 s; otherwise the calibration is DEFERRED to the first WEAR_PUT_ON -> WEAR_TAKEN_OFF cycle"
+      accelerometer_calibration: "sample the accelerometer for 2 seconds at 50 Hz with the ring lying still; verify that the magnitude is within 1 g +/- 0.05 g; if not, calibration FAILS and the sensor transitions to DEGRADED"
+      gyroscope_calibration: "sample the gyroscope for 2 seconds at 50 Hz with the ring lying still; compute the mean of each axis; store the mean as the zero-rate offset; the offset is subtracted from every gyro sample at runtime"
+      notes: "The calibration parameters are stored in sm_cal_t in static memory (per firmware/architecture.md section 2.3); they persist across reboot via the Zephyr settings subsystem."
+    startup_self_test:
+      available: true
+      procedure: "per BMI270 datasheet (TBD register sequence); the self-test verifies the accelerometer + gyroscope MEMS elements"
+      pass_criterion: "datasheet-defined threshold (TBD); on fail, transition to FAILED"
+      duration_ms: "TBD per BMI270 datasheet; typically < 100 ms"
+    runtime_health_monitoring:
+      monitored_signals: ["I2C ACK/NACK", "FIFO watermark hit rate", "sample magnitude plausibility", "self-test on every reboot"]
+      thresholds: "all TBD on prototype characterisation; the portable sensor manager counts failures per firmware/architecture.md section 10.1; > 10 failures in 60 s triggers DEGRADED; sensor I2C NACK for 5 retries triggers FAILED"
+    failure_behavior:
+      on_failure: "disable the IMU; emit a TEST_DIAGNOSTIC gesture event with payload describing the fault (per firmware/architecture.md section 10.1); the ring continues to operate with the touch-only gestures"
+      persistence: "fault_count_imu is persisted to flash; survives reboot"
+    power_state_behavior:
+      active_power_uA: 685
+      sleep_power_uA: 3
+      sleep_entry: "write BMI270 power-mode register to 'suspend' (per datasheet TBD)"
+      wake_up: "write BMI270 power-mode register to 'normal'; wait for ODR-stable bit (per datasheet TBD); duration < 10 ms"
+    firmware_abstraction:
+      header_file: "drv_bmi270.h (proposed; not yet created)"
+      struct: "struct sm_imu_driver { sm_status_t (*init)(void); sm_status_t (*enable)(void); sm_status_t (*disable)(void); sm_status_t (*read_fifo)(sm_sample_t *out, uint16_t max_samples); sm_status_t (*self_test)(void); sm_status_t (*calibrate)(void); void (*irq_handler)(void); }"
+      sensor_id_in_manager: "SM_SENSOR_IMU"
+      ring_buffer_index: "imu_ring (per firmware/architecture.md section 12.1; 100 samples x 32 bytes = 3.2 KB)"
+      drop_counter: "drop_count_imu (uint16; per firmware/architecture.md section 6.1)"
+
+  sensor_iqs127d:
+    device_component: "Azoteq IQS127D-00200 (WLCSP-1.5x1.5 mm)"
+    bus_interface: "I2C0 (400 kHz Fast-Mode)"
+    i2c_address: { address_7bit: "TBD per Azoteq IQS127D datasheet; expected 0x34", reason: "Per electrical/sensor-interface.yaml section known_uncertainties; the datasheet is authoritative." }
+    power_reset:
+      supply_voltage_v: 1.8
+      supply_rail: "VCC-1V8"
+      reset_signal: "soft-reset via I2C (specific sequence per IQS127D datasheet; TBD)"
+      power_on_sequence: "VCC-1V8 stable -> wait the IQS127D's start-up time (datasheet TBD) -> I2C transactions may begin"
+    initialization_sequence:
+      - "1. Wait for VCC-1V8 to be stable."
+      - "2. Wait the IQS127D power-on delay (datasheet TBD)."
+      - "3. Read the chip ID register (per IQS127D datasheet; TBD address). Expected value is in the datasheet."
+      - "4. Configure the electrode count and channel map (per IQS127D datasheet; TBD). V1 uses 5-7 electrodes."
+      - "5. Configure the touch thresholds (per IQS127D datasheet; TBD). V1 starting thresholds are engineering estimates; subject to hardware characterisation."
+      - "6. Configure the scan rate (V1 target: 100 Hz; per protocol/gesture-vocabulary.yaml section global_constants)."
+      - "7. Enable the INT GPIO output (active-low or active-high per IQS127D config; TBD)."
+      - "8. Enable the IQS127D's built-in gesture engine for reference (the firmware does NOT trust it per protocol/gesture-vocabulary.yaml section recognition_pipeline stage 1 notes; the firmware re-runs recognition on the raw sample stream)."
+      - "9. Transition to SELF_TEST (if available; TBD per IQS127D datasheet)."
+    register_configuration:
+      electrode_count_register: { address: "TBD per IQS127D datasheet", value: "5 to 7 (per the crown mechanical layout; TBD on mechanical/crown-layout.yaml)" }
+      touch_threshold_register: { address: "TBD per IQS127D datasheet", value: "TBD; engineering start per IQS127D evaluation board defaults; subject to prototype characterisation" }
+      scan_rate_register: { address: "TBD per IQS127D datasheet", value: "100 Hz target; exact register encoding TBD" }
+      int_config_register: { address: "TBD per IQS127D datasheet", value: "TBD; INT asserted on touch event; active level TBD" }
+      notes: "All register addresses and values TBD until the IQS127D datasheet is consulted."
+    sampling_rate: { target_hz: 100, reason: "Per protocol/gesture-vocabulary.yaml section global_constants.touch_debounce_ms + section recognition_pipeline.stage_4. The IQS127D scans at 100 Hz; the firmware re-runs gesture recognition on the event stream." }
+    measurement_range: { electrodes: "5 to 7 (per the crown layout)", output: "boolean per electrode + movement delta (TOUCH_MOVE reports from-to IDs)", notes: "The IQS127D reports touch events as a stream, not as continuous ADC readings; the firmware does NOT need raw capacitance values for gesture recognition." }
+    resolution_data_format: { format: "event stream; each event is {TOUCH_PRESS | TOUCH_RELEASE | TOUCH_MOVE, electrode_id}; 1 byte per event in the simplest encoding (per firmware/architecture.md section 2.3 sm_sample_header_t)", notes: "The IQS127D's built-in gesture engine outputs higher-level events (TAP, SWIPE); the firmware treats these as informational only and re-runs recognition." }
+    interrupt_behavior:
+      int: { trigger: "any touch event (press, release, move)", wake_source: true, direction: "input to nRF54L15 GPIO; rising-edge (or falling-edge; TBD per IQS127D config)", notes: "Wakes the nRF54L15 from System ON idle and System OFF (per firmware/architecture.md section 8.2)." }
+      latched_vs_pulsed: "TBD per IQS127D datasheet"
+    fifo_requirements:
+      fifo_events: "the IQS127D maintains its own event FIFO internally; the firmware drains it via I2C when INT asserts"
+      external_buffer_size: "32 events x 16 bytes (per firmware/architecture.md section 12.1 touch event ring buffer); holds about 0.32 s at 100 Hz"
+    timestamping_requirements:
+      timestamp_source: "nRF54L15 RTC counter (per firmware/architecture.md section 2.3 common timestamping)"
+      timestamping_in_driver: "the firmware stamps the timestamp at ISR (touch_isr); the IQS127D's internal timestamp is not used (per protocol/gesture-vocabulary.yaml section recognition_pipeline stage 1)"
+      latency_to_publish_us: "< 50 (ISR -> sensor worker -> sm_publish)"
+    calibration_procedure:
+      type: "electrode baseline capacitance"
+      when: "during boot if wear_state == WEAR_OFF and the ring has been still for at least 30 s; otherwise DEFERRED to the first WEAR_PUT_ON -> WEAR_TAKEN_OFF cycle"
+      procedure: "sample each electrode for 2 seconds; store the median reading as the baseline; subtract from subsequent readings to detect touch"
+      notes: "The baseline must be re-acquired after the ring is removed and the environment changes (e.g. temperature drift). The re-acquisition is triggered by WEAR_TAKEN_OFF."
+    startup_self_test:
+      available: "TBD per IQS127D datasheet; the IQS127D may have a built-in self-test for the electrodes"
+      procedure: "TBD"
+      pass_criterion: "TBD"
+      duration_ms: "TBD"
+    runtime_health_monitoring:
+      monitored_signals: ["I2C ACK/NACK", "INT GPIO toggle rate plausibility", "false-positive touch rate"]
+      thresholds: "all TBD on prototype characterisation"
+    failure_behavior:
+      on_failure: "disable the touch IC; the ring continues to operate with IMU-only gestures (ROTATE_*); a TEST_DIAGNOSTIC gesture event is emitted with the fault description"
+      persistence: "fault_count_touch is persisted to flash"
+    power_state_behavior:
+      active_power_uA: 40
+      sleep_power_uA: 0.5
+      sleep_entry: "write IQS127D low-power register (per datasheet TBD)"
+      wake_up: "any electrode touch event automatically wakes the IQS127D; the INT GPIO wakes the nRF54L15"
+    firmware_abstraction:
+      header_file: "drv_iqs127d.h (proposed; not yet created)"
+      struct: "struct sm_touch_driver { sm_status_t (*init)(void); sm_status_t (*enable)(void); sm_status_t (*disable)(void); sm_status_t (*read_events)(sm_touch_event_t *out, uint16_t max_events); sm_status_t (*calibrate)(void); void (*irq_handler)(void); }"
+      sensor_id_in_manager: "SM_SENSOR_TOUCH"
+      ring_buffer_index: "touch_ring (per firmware/architecture.md section 12.1; 32 events x 16 bytes = 512 B)"
+      drop_counter: "drop_count_touch (uint16; per firmware/architecture.md section 6.1)"
+
+  sensor_tmp117:
+    device_component: "Texas Instruments TMP117 (WCSP-1.5x1.5x0.5 mm)"
+    bus_interface: "I2C0 (400 kHz Fast-Mode)"
+    i2c_address: { address_7bit: "TBD per TI TMP117 datasheet; expected 0x48 (A0=GND)", reason: "Per electrical/sensor-interface.yaml section known_uncertainties; the datasheet is authoritative." }
+    power_reset:
+      supply_voltage_v: 1.8
+      supply_rail: "VCC-1V8"
+      reset_signal: "soft-reset via I2C (general-call reset per TMP117 datasheet; TBD)"
+      power_on_sequence: "VCC-1V8 stable -> wait at least 1.5 ms (per TMP117 power-on timing; TBD on datasheet) -> I2C transactions may begin"
+    initialization_sequence:
+      - "1. Wait for VCC-1V8 to be stable."
+      - "2. Wait the TMP117 power-on delay (datasheet TBD)."
+      - "3. Read the chip ID register (per TMP117 datasheet; TBD address). Expected value is in the datasheet."
+      - "4. Configure the conversion mode (one-shot vs continuous; V1 uses one-shot at 1 Hz)."
+      - "5. Configure the averaging mode (per TMP117 datasheet; V1 uses the default). The averaging affects the noise floor and the active current."
+      - "6. (Optional) configure the ALERT pin; V1 polls at 1 Hz so the ALERT is not strictly needed (per electrical/sensor-interface.yaml section gpio_allocation)."
+      - "7. Transition to SELF_TEST (if available; TBD per TMP117 datasheet)."
+      - "8. Start the first one-shot conversion (per firmware/architecture.md section 4: 1 Hz)."
+    register_configuration:
+      config_register: { address: "TBD per TMP117 datasheet (CONFIG)", value: "TBD; one-shot mode + averaging mode + alert polarity" }
+      conversion_trigger: "writing to the CONFIG register with the OS bit triggers a one-shot conversion (per datasheet TBD)"
+      notes: "All register addresses TBD until the TMP117 datasheet is consulted."
+    sampling_rate: { target_hz: 1, reason: "Per firmware/architecture.md section 4 + electrical/system-architecture.yaml section blocks.Temperature. 1 Hz is sufficient for wear-state stillness detection + (V2) RR08 BLE exposure." }
+    measurement_range: { range_c: [-55, 125], accuracy_c_pm: "TBD per TMP117 datasheet (engineering start: 0.1 C in the -20..50 C range; per components/temperature-selection.yaml)" }
+    resolution_data_format: { resolution_c: 0.0078125, format: "16-bit signed; 1 LSB = 0.0078125 C; little-endian", notes: "Per components/temperature-selection.yaml; the TMP117's resolution is fixed by the datasheet." }
+    interrupt_behavior:
+      alert: { trigger: "temperature above high threshold or below low threshold", wake_source: false, direction: "input to nRF54L15 GPIO; open-drain; 10 kohm pull-up to VCC-1V8 (per electrical/sensor-interface.yaml)", notes: "The ALERT is optional in V1; the firmware polls at 1 Hz." }
+    fifo_requirements: { external_buffer_size: "8 samples x 8 bytes (per firmware/architecture.md section 12.1 temperature sample buffer); 8 s at 1 Hz" }
+    timestamping_requirements:
+      timestamp_source: "nRF54L15 RTC counter"
+      timestamping_in_driver: "the firmware stamps the timestamp when the conversion result is read; the TMP117's conversion time is part of the publish latency budget"
+      latency_to_publish_ms: "< 5 (RTC compare -> sensor worker -> sm_publish)"
+    calibration_procedure:
+      type: "factory calibration only (the TMP117 is factory-calibrated per TI)"
+      when: "no in-field calibration; the TMP117's accuracy is specified in the datasheet"
+      notes: "Per components/temperature-selection.yaml; no in-field calibration is required for V1. Thermal isolation (the TMP117 is on the inner band, not inside the battery compartment) is the only environmental mitigation."
+    startup_self_test:
+      available: "TBD per TMP117 datasheet; the TMP117 may have a built-in self-test that validates the ADC"
+      procedure: "TBD"
+      pass_criterion: "TBD"
+      duration_ms: "TBD"
+    runtime_health_monitoring:
+      monitored_signals: ["I2C ACK/NACK", "conversion result plausibility (within -40..85 C; readings outside this range are flagged)"]
+      thresholds: "TBD on prototype characterisation"
+    failure_behavior:
+      on_failure: "disable the temperature sensor; a TEST_DIAGNOSTIC gesture event is emitted; the ring continues to operate (V1 does not depend on the temperature for any user-facing function; RR08 is V2-only)"
+      persistence: "fault_count_temp is persisted to flash"
+    power_state_behavior:
+      active_power_uA: 3.5
+      sleep_power_uA: 0.15
+      sleep_entry: "write TMP117 CONFIG register to shutdown mode (per datasheet TBD)"
+      wake_up: "write CONFIG register to one-shot mode to trigger a conversion"
+    firmware_abstraction:
+      header_file: "drv_tmp117.h (proposed; not yet created)"
+      struct: "struct sm_temp_driver { sm_status_t (*init)(void); sm_status_t (*enable)(void); sm_status_t (*disable)(void); sm_status_t (*read)(sm_temp_sample_t *out); sm_status_t (*self_test)(void); }"
+      sensor_id_in_manager: "SM_SENSOR_TEMP"
+      ring_buffer_index: "temp_ring (per firmware/architecture.md section 12.1; 8 samples x 8 bytes = 64 B)"
+      drop_counter: "drop_count_temp (uint16; per firmware/architecture.md section 6.1)"
+
+  sensor_max17048:
+    device_component: "Maxim Integrated (ADI) MAX17048"
+    bus_interface: "I2C0 (400 kHz Fast-Mode)"
+    i2c_address: { address_7bit: "0x36 (per electrical/sensor-interface.yaml; verify per ADI MAX17048 datasheet)", reason: "Per electrical/sensor-interface.yaml; the ADI datasheet is authoritative." }
+    power_reset:
+      supply_voltage_v: 3.0 to 4.2
+      supply_rail: "VBAT (direct from the battery; the MAX17048 measures the cell voltage)"
+      reset_signal: "POR (power-on-reset); no soft-reset in V1"
+      power_on_sequence: "VBAT present -> the MAX17048 self-initialises; the firmware polls the chip ID after the I2C bus is alive"
+    initialization_sequence:
+      - "1. Wait for VBAT to be present (the MAX17048 is powered by the battery)."
+      - "2. Wait for the I2C0 bus to be alive."
+      - "3. Read the chip ID register (per MAX17048 datasheet; TBD address). Expected value is in the datasheet."
+      - "4. Configure the ALERT pin (per MAX17048 datasheet; TBD). V1 enables ALERT on low battery threshold."
+      - "5. Read the initial state of charge (SOC) to seed RR03."
+      - "6. Transition to SELF_TEST (if available; TBD per MAX17048 datasheet)."
+      - "7. Transition to READY; the firmware polls the SOC at 1 Hz."
+    register_configuration:
+      alert_threshold_register: { address: "TBD per MAX17048 datasheet (RVAL / ATLD)", value: "TBD; engineering start: ALERT at 10 percent SOC" }
+      model_register: { address: "TBD per MAX17048 datasheet (MODELGAUGE)", value: "TBD; the MAX17048 uses a battery model; the model is loaded from a per-cell-characterisation table; the table content is TBD on the actual cell" }
+      notes: "The model register is the most important configuration; a wrong model yields wrong SOC readings. The model is provided by the battery manufacturer (EEMB-class per components/battery-selection.yaml) and is loaded at factory provisioning."
+    sampling_rate: { target_hz: 1, reason: "Per firmware/architecture.md section 4; the MAX17048's internal ADC runs continuously; the firmware polls the SOC register at 1 Hz." }
+    measurement_range: { soc_percent: [0, 100], voltage_v: [0, 5], accuracy_pm: "TBD per MAX17048 datasheet (engineering start: 1 percent SOC accuracy with the model correctly loaded)" }
+    resolution_data_format: { soc_resolution_percent: 1, voltage_resolution_mv: "TBD per datasheet", format: "16-bit unsigned for SOC + voltage; little-endian", notes: "The RR03 packing (8-bit percent + 2-bit charging_state + 6-bit reserved) is the BLE-level format; the internal storage is the raw 16-bit SOC." }
+    interrupt_behavior:
+      alert: { trigger: "SOC below ATLD threshold", wake_source: true, direction: "input to nRF54L15 GPIO; open-drain; 10 kohm pull-up to VCC-1V8", notes: "Asserts on low battery; wakes the sensor worker, which notifies RR03 with charging_state unchanged and percent decreased." }
+    fifo_requirements: { external_buffer_size: "4 entries x 8 bytes (per firmware/architecture.md section 12.1 fuel-gauge alert buffer); holds the last 4 alerts" }
+    timestamping_requirements:
+      timestamp_source: "nRF54L15 RTC counter"
+      latency_to_publish_ms: "< 5 (ALERT GPIO -> sensor worker -> BLE worker -> RR03 notify)"
+    calibration_procedure:
+      type: "battery model load (one-time, at factory provisioning)"
+      when: "factory provisioning only; the model is not re-loaded at runtime"
+      procedure: "load the MODELGAUGE register (and supporting registers) with the per-cell-characterisation table provided by the battery manufacturer (EEMB-class)"
+      notes: "Per components/battery-selection.yaml; the model is the single most important configuration for the MAX17048. A wrong model yields wrong SOC; the V1 firmware will refuse to declare READY until the model is verified against the actual cell."
+    startup_self_test:
+      available: "TBD per MAX17048 datasheet; the MAX17048 may not have a built-in self-test"
+      procedure: "the firmware verifies the model register against the expected model CRC (TBD)"
+      pass_criterion: "model CRC matches the expected value"
+      duration_ms: "negligible (single register read)"
+    runtime_health_monitoring:
+      monitored_signals: ["I2C ACK/NACK", "SOC monotonicity (SOC should not jump by > 5 percent between consecutive 1 Hz reads; if it does, the reading is flagged)", "voltage plausibility (within 3.0..4.2 V)"]
+      thresholds: "TBD on prototype characterisation"
+    failure_behavior:
+      on_failure: "disable the fuel gauge; the ring falls back to a fixed battery model (less accurate); a TEST_DIAGNOSTIC gesture event is emitted"
+      persistence: "fault_count_fg is persisted to flash"
+    power_state_behavior:
+      active_power_uA: 50
+      sleep_power_uA: 0.5
+      sleep_entry: "the MAX17048 has no sleep mode in V1; the I2C bus is the only way to reduce its current consumption"
+      wake_up: "the MAX17048 is always-on in V1; its current is negligible compared to the BLE sleep current"
+    firmware_abstraction:
+      header_file: "drv_max17048.h (proposed; not yet created)"
+      struct: "struct sm_fuelgauge_driver { sm_status_t (*init)(void); sm_status_t (*enable)(void); sm_status_t (*disable)(void); sm_status_t (*read_soc)(sm_fuelgauge_sample_t *out); sm_status_t (*verify_model)(void); }"
+      sensor_id_in_manager: "SM_SENSOR_FUELGAUGE"
+      ring_buffer_index: "fg_ring (per firmware/architecture.md section 12.1; 4 entries x 8 bytes = 32 B)"
+      drop_counter: "drop_count_fg is not separately tracked in firmware/architecture.md section 6.1; the firmware increments a generic fault counter"
+
+  sensor_mcp73831_charger:
+    device_component: "Microchip MCP73831 (SOT-23-5)"
+    bus_interface: "none (standalone; no I2C)"
+    notes: "The MCP73831 is a passive charger; no firmware register configuration is required. The firmware only reads the STAT GPIO (optional) to determine the charging state."
+    power_reset:
+      supply_voltage_v: 3.7 to 6.5
+      supply_rail: "Pogo input (5 V)"
+      reset_signal: "POR"
+    stat_gpio:
+      direction: "input to nRF54L15 GPIO; open-drain (per electrical/sensor-interface.yaml)"
+      pull: "10 kohm pull-up to VCC-1V8 (or to VBAT; TBD on schematic)"
+      semantics: "LOW = charging in progress; HIGH = charge complete or no input; HIGH-Z = fault (per MCP73831 datasheet; TBD on the exact encoding)"
+      notes: "The firmware reads the STAT GPIO once at boot and on every GPIO interrupt; the RR04 charging_state is derived from STAT + the fuel gauge's voltage."
+    calibration_procedure: { type: "none (passive)" }
+    startup_self_test: { available: false, notes: "The MCP73831 has no built-in self-test; the firmware verifies the charging state via the STAT GPIO + the fuel gauge's voltage reading." }
+    runtime_health_monitoring:
+      monitored_signals: ["STAT GPIO state plausibility (transitions)", "fuel gauge voltage during charging (should rise monotonically up to 4.2 V)"]
+    failure_behavior:
+      on_failure: "the firmware logs the fault + emits a TEST_DIAGNOSTIC gesture event; the user is expected to inspect the pogo connection"
+      persistence: "fault_count_charger is not separately tracked in firmware/architecture.md section 6.1"
+    power_state_behavior:
+      active_power_ua: 0
+      sleep_power_ua: 0
+      notes: "The MCP73831 is a passive charger; its current consumption is part of the charging current, not the ring's idle current."
+
+  sensor_drv2605l:
+    device_component: "Texas Instruments DRV2605L (QFN-1.5x1.5 mm)"
+    bus_interface: "I2C0 (400 kHz Fast-Mode)"
+    i2c_address: { address_7bit: "TBD per TI DRV2605L datasheet; expected 0x5A", reason: "Per electrical/sensor-interface.yaml section known_uncertainties; the datasheet is authoritative." }
+    power_reset:
+      supply_voltage_v: "1.8 (logic) + VBAT (LRA drive)"
+      supply_rail: "VCC-1V8 (logic) + VBAT (LRA drive, 3.0-4.2 V)"
+      reset_signal: "soft-reset via I2C (per DRV2605L datasheet; TBD)"
+      power_on_sequence: "VBAT present -> VCC-1V8 stable -> wait at least 1 ms (per DRV2605L power-on timing; TBD) -> I2C transactions may begin"
+    initialization_sequence:
+      - "1. Wait for VBAT + VCC-1V8 to be stable."
+      - "2. Read the chip ID register (per DRV2605L datasheet; TBD address). Expected value is in the datasheet."
+      - "3. Enter standby mode (per DRV2605L datasheet; TBD)."
+      - "4. Configure the LRA mode (auto-resonance tracking; per DRV2605L datasheet; TBD)."
+      - "5. Load the haptic waveform library into the DRV2605L's RAM from a small ROM table (per protocol/ring-gatt-spec.yaml section haptic_pattern_table). The 10 haptic IDs map to 10 DRV2605L waveform slots."
+      - "6. Set the rated voltage + overdrive voltage (per LRA selection in components/haptic-selection.yaml; values TBD on prototype characterisation)."
+      - "7. (Optional) enable the EN GPIO from the nRF54L15 for hardware power-down (per electrical/sensor-interface.yaml section gpio_allocation)."
+      - "8. Transition to STANDBY; the DRV2605L is not active until RR05 is written."
+    register_configuration:
+      mode_register: { address: "TBD per DRV2605L datasheet (MODE)", value: "TBD; standby mode after load; LRA mode (vs ERM mode)" }
+      library_register: { address: "TBD per DRV2605L datasheet (LIB_SEL)", value: "TBD; the LRA library (vs ERM library)" }
+      waveform_slot_register: { address: "TBD per DRV2605L datasheet (WAV_FRM_x)", value: "TBD; per-slot waveform definition; 10 slots for the 10 haptic IDs" }
+      rated_voltage_register: { address: "TBD per DRV2605L datasheet (RATED_VOLTAGE)", value: "TBD per LRA; engineering start per components/haptic-selection.yaml" }
+      notes: "All register addresses TBD until the DRV2605L datasheet is consulted."
+    sampling_rate: { target_hz: "event-driven; the DRV2605L is not polled; it is driven by the BLE worker on RR05 writes" }
+    measurement_range: { lra_drive_voltage_v: [2.0, 3.5], lra_drive_current_ma: [0, 200], notes: "Per components/haptic-selection.yaml; the DRV2605L has built-in over-current protection" }
+    resolution_data_format: { waveform_slot: "8-bit (one slot per haptic_id); per firmware/architecture.md section 9.1", notes: "The DRV2605L's waveform library is closed-loop; the firmware writes a slot index + intensity, the DRV2605L drives the LRA with auto-resonance tracking" }
+    interrupt_behavior:
+      fault_gpio: { trigger: "over-current, under-voltage, over-temperature (per DRV2605L datasheet)", wake_source: true, direction: "input to nRF54L15 GPIO; per DRV2605L datasheet TBD", notes: "The DRV2605L reports faults via the INT pin; the firmware transitions the haptic manager to a fault state and emits a TEST_DIAGNOSTIC gesture event." }
+    fifo_requirements:
+      notes: "The DRV2605L is a single-waveform-at-a-time device; the FIFO lives in the haptic manager (per firmware/architecture.md section 9.4; 4 entries x 8 bytes)."
+    timestamping_requirements:
+      timestamp_source: "nRF54L15 RTC counter"
+      latency_to_drive_ms: "< 15 (RR05 write -> BLE worker -> haptic manager -> I2C -> LRA drive; per firmware/architecture.md section 4)"
+    calibration_procedure:
+      type: "auto-resonance tracking (the DRV2605L does this at runtime; no factory calibration required)"
+      when: "every time a waveform is played; the DRV2605L measures the LRA's resonant frequency and adjusts the drive frequency"
+      notes: "Per components/haptic-selection.yaml; the auto-resonance tracking is the DRV2605L's built-in feature."
+    startup_self_test:
+      available: "TBD per DRV2605L datasheet; the DRV2605L may have a built-in self-test for the LRA driver"
+      procedure: "TBD"
+      pass_criterion: "TBD"
+      duration_ms: "TBD"
+    runtime_health_monitoring:
+      monitored_signals: ["I2C ACK/NACK", "fault GPIO assertions", "LRA drive current plausibility"]
+      thresholds: "TBD on prototype characterisation"
+    failure_behavior:
+      on_failure: "disable the haptic driver; the ring continues to operate (no haptic); a TEST_DIAGNOSTIC gesture event is emitted"
+      persistence: "fault_count_haptic is persisted to flash"
+    power_state_behavior:
+      active_power_ua: 500
+      sleep_power_ua: 1
+      sleep_entry: "write DRV2605L MODE register to standby (per datasheet TBD)"
+      wake_up: "write DRV2605L MODE register to active; wait for the device-ready bit (per datasheet TBD)"
+    firmware_abstraction:
+      header_file: "drv_drv2605l.h (proposed; not yet created)"
+      struct: "struct sm_haptic_driver { sm_status_t (*init)(void); sm_status_t (*play)(uint8_t slot, uint8_t intensity); sm_status_t (*stop)(void); sm_status_t (*fault)(void); }"
+      sensor_id_in_manager: "SM_SENSOR_HAPTIC (not a sensor in the strict sense; the haptic manager owns the FIFO + arbitration)"
+      ring_buffer_index: "haptic_fifo (per firmware/architecture.md section 12.1; 4 entries x 8 bytes = 32 B)"
+      drop_counter: "fault_count_haptic (uint16; per firmware/architecture.md section 6.5)"
+
+  wear_detection_inputs:
+    description: "V1 wear-state detection uses a composite of IQS127D touch presence + BMI270 stillness. There is no dedicated skin-contact electrode in V1 (that is V2 per components/ppg-selection.yaml section V2). The wear-state is a derived state, not a direct sensor reading."
+    inputs:
+      - { source: "IQS127D touch presence", signal: "any electrode reports TOUCH_PRESS sustained for at least wear_off_to_on_debounce_ms (100 ms; per protocol/gesture-vocabulary.yaml section global_constants)", role: "primary wear-state confirmation" }
+      - { source: "BMI270 acceleration", signal: "peak acceleration in the last 200 ms above wear_put_on_imu_motion_threshold_g (TBD on prototype characterisation)", role: "secondary wear-state confirmation; prevents accidental WEAR_PUT_ON from a static touch on a flat surface" }
+      - { source: "BMI270 stillness", signal: "peak acceleration in the last 30 s below wear_taken_off_imu_stillness_threshold_g (TBD) AND no touch event for at least 5 s", role: "wear-state off confirmation" }
+    bring_up:
+      - "No dedicated hardware bring-up beyond the IQS127D + BMI270 bring-up. The wear-state manager subscribes to the touch + IMU ring buffers (per firmware/architecture.md section 2.4)."
+      - "Initial wear_state at boot is WEAR_OFF."
+      - "The wear-state manager runs on the sensor worker (per firmware/architecture.md section 3.2)."
+    calibration_procedure:
+      type: "no separate calibration; the wear-state thresholds are derived from the IMU + touch calibration"
+      notes: "The wear-state thresholds (wear_put_on_imu_motion_threshold_g, wear_taken_off_imu_stillness_threshold_g) are TBD per protocol/gesture-vocabulary.yaml section unresolved_gesture_parameters."
+    firmware_abstraction:
+      header_file: "wear_state.h (proposed; not yet created)"
+      struct: "the wear-state is a derived state, not a sensor; it has no sensor_id_in_manager; it lives in the gesture FSM (per firmware/architecture.md section 5)"
+      ring_buffer_index: "n/a (derived state)"
+
+  sensor_max86140_v2_only:
+    device_component: "Maxim Integrated MAX86140 (OLGA-3.1x4.7x0.8 mm)"
+    bus_interface: "I2C0 (400 kHz Fast-Mode)"
+    i2c_address: { address_7bit: "TBD per Maxim MAX86140 datasheet", reason: "V2 only; no V1 hardware bring-up; address TBD until the schematic exists." }
+    v1_status: "EXCLUDED from V1 hardware per components/ppg-selection.yaml section V1 and electrical/system-architecture.yaml section note. This section is a placeholder for forward compatibility; no V1 bring-up sequence exists."
+    v2_forward_compatibility_notes:
+      - "The V2 PCB adds a MAX86140 + RED LED + IR LED + photodiode on the inner band (per components/ppg-selection.yaml section V2)."
+      - "The V2 software adds a motion-artifact filter (IMU data cancels the motion artifact) and an HR / SpO2 / HRV algorithm."
+      - "The V2 sensor placement is the same as NERVA_Ring's (inner band, between the IMU and the touch IC)."
+      - "The V2 sensor manager will register the MAX86140 as SM_SENSOR_PPG and the existing portable sensor manager + drop-counter + sequence-gap accounting infrastructure is reused."
+      - "The V2 GATT characteristic RR09 (PPG HR) is already defined in protocol/ring-gatt-spec.yaml."
+    reason_v1_excluded: "V1 is controller-only per the brief; adding PPG increases PCB area (3.1 x 4.7 mm), power (LED anode current 5-20 mA), and software complexity (motion-artifact filter) for a feature that is not on the V1 critical path."
+    known_uncertainties: ["MAX86140 register addresses", "MAX86140 I2C address", "LED current setting", "photodiode selection", "motion-artifact filter algorithm parameters", "RR09 notify cadence"]
+
+  bring_up_timing_budget:
+    description: "Total time from power-on to all sensors READY. The budget is bounded by the slowest device's bring-up sequence."
+    estimate:
+      - { step: "VBAT present + VCC-1V8 stable", duration_ms: "TBD on LDO PG GPIO timing; engineering start: 5 ms" }
+      - { step: "VCC-3V3 stable", duration_ms: "TBD; engineering start: 5 ms" }
+      - { step: "I2C0 bus alive", duration_ms: 1 }
+      - { step: "MAX17048 chip ID read + model verify", duration_ms: "TBD on MAX17048 I2C speed; engineering start: 10 ms" }
+      - { step: "TMP117 chip ID read + first conversion", duration_ms: "TBD; engineering start: 15 ms (conversion takes a few ms; TBD on datasheet)" }
+      - { step: "BMI270 chip ID read + soft-reset + config file load + FIFO config + interrupt config + first self-test", duration_ms: "TBD on BMI270 init timing; engineering start: 50 ms (config file load is the bulk)" }
+      - { step: "IQS127D chip ID read + electrode config + threshold config + scan rate + INT config", duration_ms: "TBD on IQS127D init timing; engineering start: 20 ms" }
+      - { step: "DRV2605L chip ID read + mode config + waveform library load + rated voltage config", duration_ms: "TBD on DRV2605L init timing; engineering start: 30 ms" }
+      - { step: "IMU calibration (if WEAR_OFF + stillness detected)", duration_ms: "TBD; engineering start: 2000 ms (2 s of stillness)" }
+      - { step: "Total (worst case, with calibration)", duration_ms: "approximately 2150 ms; subject to prototype measurement" }
+      - { step: "Total (typical, calibration deferred to first WEAR_TAKEN_OFF)", duration_ms: "approximately 150 ms" }
+    notes: "The total bring-up time is dominated by the IMU calibration. The V1 firmware declares all sensors READY after the calibration window closes; if the calibration is DEFERRED, the IMU is DEGRADED until the first calibration completes."
+
+  power_state_summary:
+    description: "How each sensor behaves in the V1 power states (per firmware/architecture.md section 8.1)."
+    table:
+      - { state: "BOOT",          sensors: ["all OFF except VBAT-powered"] }
+      - { state: "PAIRING",       sensors: ["BLE on; sensors still OFF (advertising only)"] }
+      - { state: "CONNECTED_IDLE", sensors: ["MAX17048 ON (1 Hz poll); DRV2605L standby; others OFF"] }
+      - { state: "CONNECTED_ACTIVE", sensors: ["IQS127D scanning 100 Hz; BMI270 FIFO 50 Hz; TMP117 1 Hz; MAX17048 1 Hz; DRV2605L standby"] }
+      - { state: "IDLE",          sensors: ["MAX17048 ON; others OFF"] }
+      - { state: "GESTURE",       sensors: ["IQS127D scanning; BMI270 FIFO; others OFF"] }
+      - { state: "HAPTIC",        sensors: ["DRV2605L active; others OFF"] }
+      - { state: "SENSING",       sensors: ["BMI270 FIFO; others OFF (V2 only)"] }
+      - { state: "SLEEP",         sensors: ["all OFF; nRF54L15 System OFF"] }
+      - { state: "CHARGING",      sensors: ["MCP73831 charging; nRF54L15 System OFF (pogo insertion is a wake source via STAT GPIO)"] }
+      - { state: "OTA",           sensors: ["all OFF except the BLE DFU"] }
+      - { state: "SHIPPING",      sensors: ["all OFF; nRF54L15 in deep power-down with GPIO lock"] }
+
+  known_uncertainties:
+    description: "Consolidated list of every hardware-dependent parameter that requires datasheet confirmation or prototype measurement. None of these are invented; each is preserved as a TBD with a reason."
+    i2c_addresses:
+      - { device: "BMI270", address: "TBD per Bosch BMI270 datasheet; expected 0x68 (SDO=GND); per electrical/sensor-interface.yaml section known_uncertainties" }
+      - { device: "IQS127D", address: "TBD per Azoteq IQS127D datasheet; expected 0x34; per electrical/sensor-interface.yaml section known_uncertainties" }
+      - { device: "TMP117", address: "TBD per TI TMP117 datasheet; expected 0x48 (A0=GND); per electrical/sensor-interface.yaml section known_uncertainties" }
+      - { device: "DRV2605L", address: "TBD per TI DRV2605L datasheet; expected 0x5A; per electrical/sensor-interface.yaml section known_uncertainties" }
+      - { device: "MAX86140 (V2 only)", address: "TBD per Maxim MAX86140 datasheet" }
+    register_addresses:
+      - { device: "BMI270", note: "every register address (CMD, ACC_CONF, GYR_CONF, ACC_RANGE, GYR_RANGE, FIFO_CONFIG_0, FIFO_CONFIG_1, INT1_IO_CTRL, INT1_MAP, INT2_IO_CTRL, INT2_MAP, status) is TBD per the Bosch BMI270 datasheet" }
+      - { device: "IQS127D", note: "every register address (chip ID, electrode config, threshold, scan rate, INT config) is TBD per the Azoteq IQS127D datasheet" }
+      - { device: "TMP117", note: "CONFIG register and OS-bit encoding are TBD per the TI TMP117 datasheet" }
+      - { device: "DRV2605L", note: "MODE, LIB_SEL, WAV_FRM_x, RATED_VOLTAGE registers are TBD per the TI DRV2605L datasheet" }
+      - { device: "MAX17048", note: "chip ID, ALERT threshold (RVAL/ATLD), MODELGAUGE registers are TBD per the ADI MAX17048 datasheet" }
+    power_on_timing:
+      - { device: "BMI270", note: "power-on-reset delay before first I2C transaction is TBD per the BMI270 datasheet" }
+      - { device: "IQS127D", note: "start-up time after VCC-1V8 stable is TBD per the IQS127D datasheet" }
+      - { device: "TMP117", note: "start-up time after VCC-1V8 stable is TBD per the TMP117 datasheet" }
+      - { device: "DRV2605L", note: "start-up time after VCC-1V8 + VBAT stable is TBD per the DRV2605L datasheet" }
+    sensor_configuration:
+      - { device: "BMI270", note: "configuration file version + content (Bosch-proprietary) is TBD; must be downloaded from Bosch's website; the file is loaded into the BMI270's internal RAM during init" }
+      - { device: "IQS127D", note: "electrode count (5-7) is TBD on mechanical/crown-layout.yaml; touch thresholds are TBD on prototype characterisation; INT polarity is TBD on IQS127D datasheet" }
+      - { device: "TMP117", note: "averaging mode is TBD on TMP117 datasheet; the V1 default is the datasheet default" }
+      - { device: "DRV2605L", note: "waveform library content (LRA library vs ERM library) is TBD on DRV2605L datasheet; rated voltage + overdrive voltage are TBD on prototype characterisation" }
+      - { device: "MAX17048", note: "battery model (MODELGAUGE register + supporting registers) is TBD on the actual cell from the battery manufacturer (EEMB-class)" }
+    measurement_range_and_resolution:
+      - { device: "BMI270", note: "accelerometer range (+/- 2/4/8/16 g) and gyroscope range (+/- 125/250/500/1000/2000 dps) are engineering starts; subject to prototype characterisation" }
+      - { device: "TMP117", note: "accuracy is datasheet-defined but must be verified against the actual V1 ring's thermal environment" }
+      - { device: "DRV2605L", note: "LRA drive voltage range (2.0-3.5 V) and drive current limit are engineering starts; subject to LRA + driver characterisation" }
+    interrupt_behavior:
+      - { device: "IQS127D", note: "INT polarity (active-high vs active-low) and latched-vs-pulsed are TBD on IQS127D datasheet" }
+      - { device: "DRV2605L", note: "fault GPIO behavior is TBD on DRV2605L datasheet" }
+    runtime_thresholds:
+      - { device: "all", note: "runtime health monitoring thresholds (I2C retry count, false-positive touch rate, FIFO overflow rate, SOC monotonicity threshold) are TBD on prototype characterisation" }
+    wear_state_thresholds:
+      - { device: "composite (IQS127D + BMI270)", note: "wear_put_on_imu_motion_threshold_g, wear_taken_off_imu_stillness_threshold_g are TBD per protocol/gesture-vocabulary.yaml section unresolved_gesture_parameters" }
+    mechanical_dependencies:
+      - { dependency: "crown_electrode_numbering", note: "TBD on mechanical/crown-layout.yaml; affects SWIPE_LEFT/RIGHT/UP/DOWN direction interpretation per protocol/gesture-vocabulary.yaml section 0x04..0x07" }
+      - { dependency: "BMI270 PCB mounting orientation", note: "TBD on schematic + mechanical/inner-band-layout.yaml; affects ROTATE_CW/ROTATE_CCW gyro Z sign convention per protocol/gesture-vocabulary.yaml section 0x08..0x09" }
+
+  cross_document_consistency:
+    description: "This section explicitly notes the consistency points between this document and the rest of the project. Any future edit must preserve these consistency points."
+    consistency_points:
+      - { artifact: "electrical/sensor-interface.yaml", point: "I2C addresses + voltage rails + GPIO allocation match; this document preserves electrical/sensor-interface.yaml as authoritative for wiring" }
+      - { artifact: "electrical/system-architecture.yaml", point: "V1 sensor scope (BMI270, IQS127D, TMP117, MAX17048, DRV2605L, MCP73831) matches; PPG is V2-only" }
+      - { artifact: "firmware/architecture.md", point: "sm_sample_header_t format, sm_port_t injection, drop counters, static buffers, worker priorities, ISR/worker boundaries all match" }
+      - { artifact: "protocol/gesture-vocabulary.yaml", point: "sampling rates (IQS127D 100 Hz, BMI270 50 Hz, TMP117 1 Hz), debounce constants, wear-state thresholds (TBD where noted) match" }
+      - { artifact: "protocol/ring-gatt-spec.yaml", point: "RR01..RR09 characteristic mapping matches; the haptic waveform slots (10) match the DRV2605L waveform library load" }
+      - { artifact: "components/*-selection.yaml", point: "selected parts + packages + current consumptions match; no substitutions" }
+
+  references:
+    - { ref: "electrical/sensor-interface.yaml", url: "internal", note: "Authoritative wiring + I2C topology + GPIO allocation" }
+    - { ref: "electrical/system-architecture.yaml", url: "internal", note: "V1 sensor scope + power rails" }
+    - { ref: "firmware/architecture.md", url: "internal", note: "Sensor manager + worker + drop-counter + static buffers" }
+    - { ref: "protocol/gesture-vocabulary.yaml", url: "internal", note: "Sampling rates + debounce + wear-state thresholds + recognition pipeline" }
+    - { ref: "protocol/ring-gatt-spec.yaml", url: "internal", note: "RR01..RR09 + haptic pattern table" }
+    - { ref: "components/imu-selection.yaml", url: "internal", note: "BMI270 selection" }
+    - { ref: "components/touch-selection.yaml", url: "internal", note: "IQS127D selection" }
+    - { ref: "components/temperature-selection.yaml", url: "internal", note: "TMP117 selection" }
+    - { ref: "components/battery-selection.yaml", url: "internal", note: "Battery cell + MAX17048 fuel gauge" }
+    - { ref: "components/charger-selection.yaml", url: "internal", note: "MCP73831 charger + pogo" }
+    - { ref: "components/haptic-selection.yaml", url: "internal", note: "DRV2605L + LRA selection" }
+    - { ref: "components/ppg-selection.yaml", url: "internal", note: "MAX86140 selection (V2 only)" }
+    - { ref: "Bosch BMI270 datasheet", url: "https://www.bosch-sensortec.com/products/smart-sensors/bmi270.html", note: "Authoritative for register addresses + init sequence + self-test; every BMI270 register address is TBD until this datasheet is consulted" }
+    - { ref: "Azoteq IQS127D datasheet", url: "https://www.azoteq.com/products/iqs127d", note: "Authoritative for register addresses + init sequence + INT polarity; every IQS127D register address is TBD until this datasheet is consulted" }
+    - { ref: "TI TMP117 datasheet", url: "https://www.ti.com/product/TMP117", note: "Authoritative for register addresses + conversion timing + ALERT encoding; every TMP117 register address is TBD until this datasheet is consulted" }
+    - { ref: "ADI MAX17048 datasheet", url: "https://www.analog.com/en/products/max17048.html", note: "Authoritative for register addresses + model load + ALERT encoding; every MAX17048 register address is TBD until this datasheet is consulted" }
+    - { ref: "TI DRV2605L datasheet", url: "https://www.ti.com/product/DRV2605L", note: "Authoritative for register addresses + waveform library + fault encoding; every DRV2605L register address is TBD until this datasheet is consulted" }
+    - { ref: "Maxim MAX86140 datasheet", url: "https://www.maximintegrated.com/en/products/sensors/MAX86140.html", note: "V2-only; placeholder for forward compatibility" }
+    - { ref: "Microchip MCP73831 datasheet", url: "https://www.microchip.com/en-us/product/MCP73831", note: "Passive charger; STAT GPIO encoding is the only firmware-visible signal" }
+
+
+

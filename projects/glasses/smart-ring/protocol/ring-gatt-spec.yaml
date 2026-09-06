@@ -1,0 +1,309 @@
+schema_version: 1
+ring_gatt_spec:
+  id: smart_ring_gatt_specification
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD / firmware files were modified.
+  parent_artifact: "electrical/ble-interface.yaml"
+  scope: "Formal GATT protocol specification for the V1 smart ring. This document is the authoritative reference for the ring's GATT services, characteristics, descriptors, and procedures. The companion artifact electrical/ble-interface.yaml documents the architecture and connection parameters; this document defines the wire-level protocol."
+
+  note: "The ring is a controller-only device. The GATT protocol is optimized for low-latency command-and-response (ring -> glasses) and configuration (phone -> ring). The ring never streams bulk sensor data in V1. V2 adds PPG streaming (see electrical/ble-interface.yaml, V2 characteristics RR08/RR09)."
+
+  ble_role_and_state:
+    description: "The ring is a GAP Peripheral. It advertises, accepts a single GAP Central connection at a time (V1), and exposes a small GATT server."
+
+    gap_role: "Peripheral"
+    gap_connectable_mode: "Undirected connectable advertising (ADV_IND) with a fast advertising interval for the first 30 s after wake, then a slow advertising interval for power saving."
+    advertising_intervals_ms:
+      fast_adv_initial_window_s: 30
+      fast_adv_interval_ms: 30   # 30 ms; covers the initial pairing window
+      slow_adv_interval_ms: 500  # 500 ms; long-term presence advertising
+    device_name: "V1 Ring"
+    appearance: "Generic Wearable (0x00C0; per the Bluetooth SIG assigned numbers)"
+    central_devices_supported: 2  # V1 stores up to 2 bonds: glasses (primary) and phone (secondary)
+    simultaneous_connections: false  # role-switched within 100 ms; see electrical/ble-interface.yaml
+
+  gatt_database_layout:
+    description: "The ring exposes ONE primary service (the proprietary Ring Control service, UUID 0x...RING...) plus the standard GAP and GATT services. No adopted Bluetooth SIG services are used in V1 (Battery Service 0x180F is intentionally NOT exposed; the custom characteristic RR03 carries the battery percentage so that the glasses + phone see a unified format)."
+
+    primary_services:
+      - { uuid: "0000RING-0000-1000-8000-00805F9B34FB", type: "proprietary", name: "Ring Control" }
+      - { uuid: "00001800-0000-1000-8000-00805F9B34FB", type: "standard", name: "Generic Access (GAP)" }
+      - { uuid: "00001801-0000-1000-8000-00805F9B34FB", type: "standard", name: "Generic Attribute (GATT)" }
+      - { uuid: "0000180A-0000-1000-8000-00805F9B34FB", type: "standard", name: "Device Information" }
+
+  ring_control_service:
+    description: "The Ring Control service contains every characteristic that the glasses (primary Central) and phone (secondary Central) consume. Characteristics are organised by latency class: notify-only gesture characteristics are at the top, configuration characteristics at the bottom."
+
+    characteristic_table:
+      - uuid: "0000RR01-0000-1000-8000-00805F9B34FB"
+        name: "Gesture Event"
+        direction: "ring -> central (notify only)"
+        properties: ["notify"]
+        size_bytes: 4
+        value_layout:
+          - { field: "gesture_id", offset_bits: 0,  width_bits: 8,  type: "uint8",  enum: "see gesture_vocabulary_table below" }
+          - { field: "confidence", offset_bits: 8,  width_bits: 8,  type: "uint8",  unit: "0-255 (255 = max confidence; 0 = no confidence)" }
+          - { field: "sequence",   offset_bits: 16, width_bits: 16, type: "uint16", unit: "monotonic; wraps at 65535; used for replay protection" }
+        cccd_descriptor: { uuid: "0x2902", value_init: [0x00, 0x00], access: "read+write; central writes 0x0001 to enable notify" }
+        security: "encrypted (LE Secure Connections); readable only after encryption is established"
+        notes: "Notify-only; the ring pushes a gesture event whenever a gesture is detected. The central acknowledges via the Gesture Confirm characteristic (RR02)."
+
+      - uuid: "0000RR02-0000-1000-8000-00805F9B34FB"
+        name: "Gesture Confirm"
+        direction: "central -> ring (write)"
+        properties: ["write", "write-without-response"]
+        size_bytes: 1
+        value_layout:
+          - { field: "ack", offset_bits: 0, width_bits: 8, type: "uint8", enum: "0x00 = NACK (central failed to process); 0x01 = ACK (central processed); 0x02..0xFF reserved" }
+        security: "encrypted"
+        notes: "Central writes ACK/NACK after consuming the gesture event. The ring uses this to advance its retry queue."
+
+      - uuid: "0000RR03-0000-1000-8000-00805F9B34FB"
+        name: "Battery"
+        direction: "ring -> central (read + notify)"
+        properties: ["read", "notify"]
+        size_bytes: 2
+        value_layout:
+          - { field: "percent",        offset_bits: 0, width_bits: 8, type: "uint8", unit: "0-100 (percent SoC; 0xFF = unknown)" }
+          - { field: "charging_state", offset_bits: 8, width_bits: 2, type: "uint2", enum: "0 = discharging; 1 = charging; 2 = full; 3 = fault" }
+          - { field: "reserved",       offset_bits: 10, width_bits: 6, type: "uint6", value: "0" }
+        cccd_descriptor: { uuid: "0x2902", value_init: [0x00, 0x00], access: "read+write" }
+        notify_trigger: "ring notifies on a >= 1 percent change OR on a charging_state edge transition; rate-limited to 1 Hz"
+        security: "encrypted"
+        notes: "Replaces the standard 0x180F Battery Service. The 2-byte format packs both percentage and charging state into a single characteristic."
+
+      - uuid: "0000RR04-0000-1000-8000-00805F9B34FB"
+        name: "Charging State"
+        direction: "ring -> central (read + notify)"
+        properties: ["read", "notify"]
+        size_bytes: 1
+        value_layout:
+          - { field: "state", offset_bits: 0, width_bits: 8, type: "uint8", enum: "0x00 = not charging (pogo disconnected); 0x01 = charging (CC); 0x02 = charging (CV); 0x03 = full (maintenance); 0x04 = fault (NTC over-temperature or charger timeout); 0x05..0xFF reserved" }
+        cccd_descriptor: { uuid: "0x2902", value_init: [0x00, 0x00], access: "read+write" }
+        notify_trigger: "ring notifies on every state transition; rate-limited to 1 Hz"
+        security: "encrypted"
+
+      - uuid: "0000RR05-0000-1000-8000-00805F9B34FB"
+        name: "Haptic Command"
+        direction: "central -> ring (write)"
+        properties: ["write", "write-without-response"]
+        size_bytes: 2
+        value_layout:
+          - { field: "haptic_id",     offset_bits: 0,  width_bits: 8, type: "uint8", enum: "see haptic_pattern_table below" }
+          - { field: "intensity",     offset_bits: 8,  width_bits: 8, type: "uint8", unit: "0-255 (255 = max amplitude)" }
+        security: "encrypted"
+        notes: "Central writes this to request a haptic. The ring acknowledges by driving the DRV2605L with the requested pattern and intensity. Multiple haptic commands within 100 ms are coalesced by the ring (the last one wins)."
+
+      - uuid: "0000RR06-0000-1000-8000-00805F9B34FB"
+        name: "Firmware Version"
+        direction: "ring -> central (read)"
+        properties: ["read"]
+        size_bytes: 4
+        value_layout:
+          - { field: "major", offset_bits: 0,  width_bits: 8,  type: "uint8" }
+          - { field: "minor", offset_bits: 8,  width_bits: 8,  type: "uint8" }
+          - { field: "patch", offset_bits: 16, width_bits: 8,  type: "uint8" }
+          - { field: "build", offset_bits: 24, width_bits: 8,  type: "uint8", unit: "build counter; 0 = developer build" }
+        encoding: "binary (semantic version; e.g. 1.0.0 build 7 = 0x01 0x00 0x00 0x07)"
+        security: "encrypted"
+        notes: "Central reads this after bonding to determine whether an OTA is available."
+
+      - uuid: "0000RR07-0000-1000-8000-00805F9B34FB"
+        name: "Configuration"
+        direction: "bidirectional (read + write)"
+        properties: ["read", "write"]
+        size_bytes: 32
+        value_layout:
+          - description: "32-byte TLV blob. The first 2 bytes are the version header; the remaining 30 bytes are configuration tags. Tags are added over time as the firmware evolves."
+          - { field: "version", offset_bytes: 0, width_bytes: 2, type: "uint16", unit: "TLV version; 0x0001 in V1" }
+          - { field: "tags",    offset_bytes: 2, width_bytes: 30, type: "TLV", unit: "type-length-value; types defined per firmware version" }
+        security: "encrypted; write requires bonded central"
+        notes: "Used for gesture thresholds, haptic defaults, advertising intervals, and power-mode tuning. The phone writes this; the ring reads it on every state-machine init."
+
+      - uuid: "0000RR08-0000-1000-8000-00805F9B34FB"
+        name: "Temperature (V2)"
+        direction: "ring -> central (read + notify)"
+        properties: ["read", "notify"]
+        size_bytes: 2
+        value_layout:
+          - { field: "temperature_c_centi", offset_bits: 0, width_bits: 16, type: "int16", unit: "0.01 C resolution; e.g. 3650 = 36.50 C; -2732 = -27.32 C" }
+        cccd_descriptor: { uuid: "0x2902", value_init: [0x00, 0x00], access: "read+write" }
+        notify_trigger: "V2 only; ring notifies on a >= 0.1 C change OR every 60 s, whichever comes first"
+        security: "encrypted"
+        notes: "V2. Present in the GATT database for forward compatibility but unused in V1 firmware."
+
+      - uuid: "0000RR09-0000-1000-8000-00805F9B34FB"
+        name: "PPG HR (V2)"
+        direction: "ring -> central (notify)"
+        properties: ["notify"]
+        size_bytes: 4
+        value_layout:
+          - { field: "hr_bpm_x100", offset_bits: 0,  width_bits: 16, type: "uint16", unit: "HR in 0.01 BPM (e.g. 7250 = 72.50 BPM); 0xFFFF = invalid" }
+          - { field: "rr_interval_ms", offset_bits: 16, width_bits: 16, type: "uint16", unit: "R-R interval in milliseconds; 0xFFFF = invalid" }
+        cccd_descriptor: { uuid: "0x2902", value_init: [0x00, 0x00], access: "read+write" }
+        notify_trigger: "V2 only; notify on every HR update from MAX86140"
+        security: "encrypted"
+        notes: "V2. Present for forward compatibility; unused in V1 firmware."
+
+  gesture_vocabulary_table:
+    description: "Canonical mapping from gesture_id (RR01 byte 0) to the gesture. The vocabulary is inspired by the Intring gesture set (Apache 2.0 reference; re-implemented, not copied). 0x00-0x0F are reserved for system events; 0x10-0x7F are user gestures; 0x80-0xFF are vendor-specific."
+
+    entries:
+      - { id: 0x00, name: "NO_EVENT",        confidence_min: 0,  notes: "Reserved; never sent over the air." }
+      - { id: 0x01, name: "TAP",              confidence_min: 64, notes: "Single tap on the crown." }
+      - { id: 0x02, name: "DOUBLE_TAP",      confidence_min: 64, notes: "Two taps within 300 ms." }
+      - { id: 0x03, name: "LONG_PRESS",      confidence_min: 32, notes: "Press >= 600 ms." }
+      - { id: 0x04, name: "SWIPE_LEFT",      confidence_min: 64, notes: "Touch slider swept from right to left." }
+      - { id: 0x05, name: "SWIPE_RIGHT",     confidence_min: 64, notes: "Touch slider swept from left to right." }
+      - { id: 0x06, name: "SWIPE_UP",        confidence_min: 64, notes: "Touch slider swept from down to up." }
+      - { id: 0x07, name: "SWIPE_DOWN",      confidence_min: 64, notes: "Touch slider swept from up to down." }
+      - { id: 0x08, name: "ROTATE_CW",       confidence_min: 32, notes: "Ring rotated clockwise around the finger axis (IMU-only; V1 evaluates; see known_uncertainties)." }
+      - { id: 0x09, name: "ROTATE_CCW",      confidence_min: 32, notes: "Ring rotated counter-clockwise around the finger axis." }
+      - { id: 0x0A, name: "AIR_MOUSE_DELTA", confidence_min: 0,  notes: "Reserved (not used in V1; Intring air-mouse is out of scope for V1)." }
+      - { id: 0x10, name: "WEAR_PUT_ON",     confidence_min: 32, notes: "Wear-detection event; ring placed on finger." }
+      - { id: 0x11, name: "WEAR_TAKEN_OFF",  confidence_min: 32, notes: "Wear-detection event; ring removed from finger." }
+      - { id: 0x20, name: "BUTTON_TAP",      confidence_min: 64, notes: "Mechanical button (V2 hardware button; not in V1)." }
+      - { id: 0x7F, name: "TEST_DIAGNOSTIC", confidence_min: 0,  notes: "Engineering-only; sent when the host-side test tool asserts a diagnostic." }
+
+  haptic_pattern_table:
+    description: "Canonical mapping from haptic_id (RR05 byte 0) to the haptic pattern. Patterns are described by name and approximate duration; the actual waveform is downloaded from the DRV2605L's internal ROM library (closed-loop LRA waveforms)."
+
+    entries:
+      - { id: 0x00, name: "NONE",                duration_ms: 0,   notes: "Reserved; no haptic." }
+      - { id: 0x01, name: "ONE_SHORT_PULSE",     duration_ms: 80,  notes: "Command accepted." }
+      - { id: 0x02, name: "TWO_SHORT_PULSES",    duration_ms: 240, notes: "Command complete (e.g. camera capture finished)." }
+      - { id: 0x03, name: "THREE_SHORT_PULSES",  duration_ms: 360, notes: "Low battery warning." }
+      - { id: 0x04, name: "LONG_PULSE",          duration_ms: 400, notes: "Error or failure." }
+      - { id: 0x05, name: "INCREASING_RAMP",     duration_ms: 500, notes: "Scroll forward / next." }
+      - { id: 0x06, name: "DECREASING_RAMP",     duration_ms: 500, notes: "Scroll backward / previous." }
+      - { id: 0x07, name: "DOUBLE_TAP_TICK",     duration_ms: 120, notes: "Tick on a discrete UI selection." }
+      - { id: 0x08, name: "BONDED",              duration_ms: 200, notes: "Pairing successful." }
+      - { id: 0x09, name: "UNBONDED",            duration_ms: 200, notes: "Pairing lost or factory reset." }
+
+  gatt_procedures:
+    description: "The high-level procedures that the central walks through. These are NOT GATT sub-procedures (the underlying read/write/notify sub-procedures are standard); these are the application-level flows that the glasses and phone firmware implement."
+
+    procedures:
+      - name: "Initial Pairing (Out-of-Band)"
+        flow:
+          - { step: 1, actor: "central", action: "scan; see 'V1 Ring' advertising with the manufacturer-specific AD element (Company ID 0xFFFF; payload = ring's 64-bit factory device ID)" }
+          - { step: 2, actor: "central", action: "initiate LE Secure Connections pairing with OOB data (the OOB data is exchanged via the NFC tap or QR code on the ring's box; the V1 box prints a QR code containing the ring's public key + random nonce)" }
+          - { step: 3, actor: "ring",    action: "complete LE Secure Connections; bond; store the central's IRK + LTK in the nRF54L15's internal flash (1 MB; ample)" }
+          - { step: 4, actor: "ring",    action: "notify on RR03 + RR04 (battery + charging) and on RR01 (gesture event, but only after the central writes 0x0001 to the RR01 CCCD)" }
+        expected_latency_ms: 1500
+        notes: "OOB pairing is the recommended path; numeric-comparison pairing is supported as a fallback (the glasses have a display; the ring does not)."
+
+      - name: "Reconnect (Bonded Central)"
+        flow:
+          - { step: 1, actor: "ring", action: "advertise with the bonded central's resolvable private address (RPA) seeded by the central's IRK; the central's scanner resolves the RPA and recognises the ring" }
+          - { step: 2, actor: "central", action: "connect; encryption is resumed using the stored LTK (no re-pairing required)" }
+          - { step: 3, actor: "central", action: "read RR06 (firmware version); write 0x0001 to the CCCDs of RR01, RR03, RR04" }
+        expected_latency_ms: 200
+
+      - name: "Gesture Delivery"
+        flow:
+          - { step: 1, actor: "ring", action: "touch IC (IQS127D) or IMU (BMI270) interrupt wakes the nRF54L15" }
+          - { step: 2, actor: "ring", action: "nRF54L15 runs the gesture state machine (see firmware/architecture.md); produces a gesture event with gesture_id, confidence, and sequence" }
+          - { step: 3, actor: "ring", action: "nRF54L15 notifies RR01 with the 4-byte gesture event payload" }
+          - { step: 4, actor: "central", action: "consume RR01; write RR02 with 0x01 (ACK); if RR02 is 0x00 (NACK) or if no RR02 arrives within 50 ms, the ring retries the notification up to 3 times" }
+        expected_latency_ms: 25  # ring -> central
+
+      - name: "Haptic Request (Glasses -> Ring)"
+        flow:
+          - { step: 1, actor: "central", action: "write RR05 with the requested haptic_id + intensity" }
+          - { step: 2, actor: "ring", action: "nRF54L15 queues the haptic; coalesces if another RR05 arrives within 100 ms (last write wins)" }
+          - { step: 3, actor: "ring", action: "nRF54L15 drives the DRV2605L via I2C with the requested waveform" }
+          - { step: 4, actor: "ring", action: "DRV2605L drives the LRA (Precision Microdrives 308-101) with auto-resonance tracking" }
+        expected_latency_ms: 15  # write -> LRA drive begins
+
+      - name: "Configuration Update (Phone -> Ring)"
+        flow:
+          - { step: 1, actor: "central", action: "write RR07 with the new TLV blob; the ring ACKs the write" }
+          - { step: 2, actor: "ring", action: "nRF54L15 validates the TLV (version header; tag length; tag values within allowed ranges); rejects malformed blobs" }
+          - { step: 3, actor: "ring", action: "nRF54L15 applies the new configuration on the next state-machine init; persists to internal flash if the blob includes a 'persist' tag" }
+        expected_latency_ms: 50
+
+      - name: "OTA (Firmware Update)"
+        flow:
+          - { step: 1, actor: "central", action: "read RR06; compare against the local firmware manifest; if newer, initiate OTA" }
+          - { step: 2, actor: "ring", action: "ring enters OTA mode; exposes the standard Device Firmware Update Service (DFUS, Nordic proprietary 0xFE59) for image download" }
+          - { step: 3, actor: "central", action: "transfer the signed image (Ed25519 or ECDSA P-256 signature) in chunks via DFUS" }
+          - { step: 4, actor: "ring", action: "MCUboot verifies the signature; on success, the new image is staged; on reboot, the new image is selected; rollback protection prevents downgrade" }
+        expected_duration_s: 90  # ~1 MB image at ~11 kB/s over BLE 5.4 2M PHY
+        notes: "Uses the Nordic DFU Service (0xFE59); see nRF Connect SDK documentation."
+
+  gatt_mtu_and_throughput:
+    description: "BLE 5.4 supports an MTU of up to 247 bytes (LE 2M PHY). The ring requests the maximum MTU during the MTU exchange sub-procedure. Characteristic values are kept <= 32 bytes for atomic writes and for low-latency notify throughput."
+
+    mtu_requested: 247
+    characteristic_max_value_size_bytes: 32
+    le_2m_phy: true  # ring uses the 2M PHY on the primary (glasses) connection for low-latency gesture events
+    le_coded_phy: false  # not used in V1; reserved for V2 long-range phone connection
+
+  connection_parameter_negotiation:
+    description: "The ring uses the standard Connection Parameter Update procedure (GAP) and the Connection Parameter Request (L2CAP). The glasses Central requests 7.5 ms connection interval for low-latency. The phone Central requests 30-100 ms connection interval for low-power."
+
+    glasses_connection_interval_ms: 7.5
+    glasses_connection_latency: 10  # 4 connection events per interval; allows the ring to sleep
+    glasses_connection_timeout_ms: 4000
+
+    phone_connection_interval_ms: 30
+    phone_connection_latency: 0
+    phone_connection_timeout_ms: 6000
+
+  advertising_payload:
+    description: "The advertising payload is minimal for low-power advertising. The full device name appears in the scan response, not in the primary advertising packet."
+
+    primary_advertising_packet:
+      - { type: "Flags",                            value: "0x06 (LE General Discoverable + BR/EDR not supported)" }
+      - { type: "Manufacturer Specific (0xFF)",     value: "Company ID 0xFFFF + 8-byte factory device ID (64-bit)" }
+      - { type: "Service UUID (0x03, incomplete)",  value: "0x...RING... (Ring Control service UUID)" }
+    scan_response_packet:
+      - { type: "Complete Local Name (0x09)",       value: "'V1 Ring'" }
+      - { type: "TX Power Level (0x0A)",            value: "0 dBm (per the nRF54L15's RADIO configuration)" }
+
+  security_and_pairing:
+    description: "Implemented per protocol/security guidance. Re-stated here for completeness; the detailed security analysis is in electrical/ble-interface.yaml."
+
+    pairing_method: "LE Secure Connections with OOB data (preferred) or numeric comparison (fallback; glasses have a display)"
+    bonding: true
+    encryption: "AES-128-CCM; encrypted GATT characteristics"
+    oob_data: "The ring's box includes a QR code containing the ring's public key + a random nonce; the central scans this QR code during pairing to authenticate the ring without prior trust."
+    identity: "nRF54L15's factory-stored 64-bit device ID; used for bond verification"
+    replay_protection: "16-bit sequence on every gesture event (RR01); the central verifies monotonic sequence; gaps indicate missed events"
+    ota_signing: "Ed25519 or ECDSA P-256; MCUboot verifies the signature before applying the update; rollback protection enabled"
+
+  error_handling:
+    description: "The ring uses standard GATT error codes (per the Bluetooth Core Specification 5.4) plus two application-specific error codes."
+
+    application_specific_error_codes:
+      - { code: 0x80, name: "ERR_GESTURE_QUEUE_FULL", meaning: "the ring's gesture event queue is full; the central should ACK or drop pending gestures" }
+      - { code: 0x81, name: "ERR_CONFIG_INVALID",     meaning: "the central wrote an invalid TLV to RR07; the ring rejected the write" }
+      - { code: 0x82, name: "ERR_HAPTIC_DRIVER_FAULT", meaning: "the DRV2605L reported a fault (over-current, under-voltage, or over-temperature)" }
+
+  versioning_policy:
+    description: "The GATT database is versioned by the firmware version (RR06). Adding a new characteristic is a minor-version bump. Changing the meaning of an existing field is a major-version bump."
+
+    rules:
+      - { change: "add a characteristic", version_bump: "minor" }
+      - { change: "add a field to an existing characteristic", version_bump: "minor" }
+      - { change: "change the meaning of an existing field", version_bump: "major (breaking)" }
+      - { change: "deprecate a characteristic (do not remove)", version_bump: "minor" }
+
+  known_uncertainties:
+    - { item: "RR01 gesture vocabulary (rotational CW/CCW)", status: "to be evaluated; the BMI270 supports rotational gestures but the recognition accuracy in V1 is TBD" }
+    - { item: "CCCD write timing on reconnect", status: "the glasses Central must write 0x0001 to RR01/RR03/RR04 CCCDs after every reconnect; the ring does NOT auto-enable notifications on reconnect" }
+    - { item: "OOB data format on the box QR code", status: "to be defined in mechanical/packaging-design.yaml" }
+    - { item: "RR07 TLV tag definitions", status: "to be defined in firmware/architecture.md as the firmware evolves; the V1 firmware supports gesture thresholds, haptic defaults, and advertising intervals" }
+    - { item: "OTA transfer time on real hardware", status: "estimate of 90 s; the actual time depends on the radio environment and the central's connection interval" }
+
+  references:
+    - { ref: "electrical/ble-interface.yaml", url: "internal", note: "Companion document; BLE architecture and connection parameters." }
+    - { ref: "Bluetooth Core Specification 5.4", url: "https://www.bluetooth.com/specifications/specs/core-specification/", note: "Authoritative reference for GATT sub-procedures, error codes, and security modes." }
+    - { ref: "Bluetooth SIG Assigned Numbers (0x180F Battery Service, 0x180A Device Information, 0xFE59 Nordic DFU)", url: "https://www.bluetooth.com/specifications/assigned-numbers/", note: "UUID + characteristic constants used in this spec." }
+    - { ref: "Nordic nRF54L15 Product Specification v1.0", url: "https://infocenter.nordicsemi.com/topic/struct_nrf54l15/struct_nrf54l15.html", note: "Radio + BLE + encryption + flash details." }
+    - { ref: "Azoteq IQS127D datasheet", url: "https://www.azoteq.com/products/iqs127d", note: "Touch IC interrupt behaviour." }
+    - { ref: "Bosch BMI270 datasheet", url: "https://www.bosch-sensortec.com/products/smart-sensors/bmi270.html", note: "IMU interrupt + FIFO behaviour." }
+    - { ref: "TI DRV2605L datasheet", url: "https://www.ti.com/product/DRV2605L", note: "Haptic driver + waveform library." }
+    - { ref: "Intring (Apache 2.0)", url: "https://github.com/weierruisi/Intring", note: "Gesture vocabulary inspiration; re-implemented under our own license." }
+    - { ref: "Even openCFW (MIT clean-room)", url: "https://github.com/kalanihelekunihi/evenRealities-openCFW", note: "Architecture and design-philosophy reference; not cloned." }

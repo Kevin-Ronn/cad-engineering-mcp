@@ -1,0 +1,53 @@
+schema_version: 1
+component:
+  id: generic_6x10_dynamic_micro_speaker
+  category: micro_speaker_dynamic_open_ear
+  units: mm
+  role: primary_speaker_candidate_generic
+
+source:
+  manufacturer: various (Sonion, Knowles, Foster, Bujeon, Fortech, Intertec, GE-Sound)
+  part_number: "generic 6 x 10 mm dynamic micro-speaker"
+  source_type: market_survey_no_single_pn
+  source_docs:
+    - description: "Market survey: 6 x 10 mm and 8 x 12 mm dynamic micro-speakers are the de-facto open-ear / TWS / hearing-aid receiver class. No single part number chosen."
+
+mechanical:
+  dimensions_mm: { width: 6.0, height: 10.0, depth: 3.0 }  # typical class envelope
+  weight_g: approximately 0.5 per driver
+  mounting: solder-pads or spring-contact to PCB / FPC
+  acoustic_port: front-side sound emission; back-volume enclosure required
+  source_for_mechanical: market survey (typical envelope, not per-part)
+
+electrical:
+  impedance_ohm: 32 (typical class); also 16 ohm and 50 ohm variants exist
+  rated_power_mw: 5 to 20 (continuous), 30 to 50 (short-term)
+  source_for_electrical: market survey
+
+acoustic:
+  sensitivity_db_spl_per_mw: 90 to 105 (depending on acoustic loading)
+  resonant_frequency_hz: 500 to 1200 (free-air)
+  frequency_response_hz: 300 to 10000 (free-air); with ear-canal coupling bass extends to ~80
+  thd_at_1khz_1mw_percent: less than 5 (typical class)
+  directivity: front-firing
+  leakage_tolerance: high (open-ear / glasses design)
+  source_for_acoustic: market survey
+
+purchase:
+  distributor: Sonion, Knowles, Foster, Bujeon (direct OEM); Fortech / Intertec / GE-Sound (Alibaba)
+  unit_price_usd: 0.30 to 5.00 (depending on vendor and quantity)
+  moq: 100+ for OEM direct; 1+ for Alibaba TWS replacement drivers
+  lead_time: 2 to 8 weeks
+  availability: in production; widely available
+  source_for_purchase: market survey
+
+confidence:
+  overall: MEDIUM (for the class); LOW (no specific part qualified)
+  sources: market_survey
+  gaps:
+    - "No specific part number chosen"
+    - "No datasheet for any specific part"
+    - "Acoustic response depends heavily on the back-volume enclosure and the open-ear acoustic load (which is unique to glasses)"
+
+constraints:
+  status: PRIMARY_CANDIDATE_CLASS — the 6 x 10 mm dynamic class is the de-facto open-ear speaker. A specific part must be selected and acoustically measured in a glasses-specific back-volume before adoption.

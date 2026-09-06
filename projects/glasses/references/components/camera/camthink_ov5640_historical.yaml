@@ -1,0 +1,39 @@
+schema_version: 1
+component:
+  id: camthink_ov5640_8p5
+  sensor: OV5640
+  type: compact_dvp_camera_module
+  manufacturer: CamThink
+interface:
+  host: ESP32-S3
+  bus: DVP
+  control: SCCB
+  data_width_bits: 8
+optical:
+  resolution_max:
+    width: 2592
+    height: 1944
+  fov_deg:
+    diagonal: 60
+  focal_length_mm: 3.97
+  aperture: f/2.4
+mechanical:
+  envelope_mm:
+    x: 8.5
+    y: 8.5
+    z: 6.5
+  envelope_source: CamThink OV5640 camera module specification
+  fpc_excluded_from_envelope: true
+  geometry_locked: true
+mounting:
+  location: main_frame
+  region: center_nose_bridge
+  orientation: forward
+  optical_axis: geometry_derived
+  mounting_strategy: dedicated_frame_mount
+constraints:
+  exact_module_geometry_required: true
+  dimension_guessing_forbidden: true
+  camera_keepout_required: true
+  lens_aperture_must_remain_clear: true
+  removable_front_must_not_interfere: true

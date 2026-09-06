@@ -1,0 +1,63 @@
+schema_version: 1
+component:
+  id: lipo_602535_550mah
+  category: li_poly_pouch_cell
+  units: mm
+  role: medium_capacity_candidate_wider_thinner
+
+source:
+  manufacturer: generic Chinese LiPo vendors (EEMB, LiPol, GMB, PKCELL, BAK, Grepow)
+  part_number: 602535 (6.0 mm thick x 25 mm wide x 35 mm long, ~550 mAh)
+  source_type: market_survey_generic_model_code
+  source_docs:
+    - url: https://www.eemb.com/
+      description: "EEMB (example vendor for this form factor)"
+  chemistry: lithium polymer (LiPo)
+  form_factor: pouch
+  protected: NO (bare cell)
+
+mechanical:
+  dimensions_mm: { thickness: 6.0, width: 25.0, length: 35.0 }
+  weight_g: approximately 11 to 14
+  volume_cm3: 5.25
+  energy_density_wh_per_kg: approximately 160
+  energy_density_wh_per_l: approximately 388
+  source_for_mechanical: model-number convention
+
+electrical:
+  nominal_voltage_v: 3.7
+  charge_voltage_max_v: 4.2
+  discharge_cutoff_v: 3.0
+  capacity_mah: 550
+  energy_wh: 2.035
+  standard_charge_current_ma: 275 (0.5C)
+  max_charge_current_ma: 550 (1C)
+  max_continuous_discharge_ma: 550 to 1100 (1C to 2C)
+
+environmental:
+  charge_temperature_c: { min: 0, max: 45 }
+  discharge_temperature_c: { min: -20, max: 60 }
+
+cycle_life:
+  cycles_to_80_percent_capacity: approximately 500
+
+connectors:
+  standard: JST PH-2 (verify per order)
+
+purchase:
+  distributor: EEMB, LiPol, GMB, PKCELL, BAK, Grepow; LCSC; Amazon; AliExpress
+  unit_price_usd: approximately 4 to 8 (single-piece); 2 to 5 in volume
+  moq: 1 to 10
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: market_survey_generic
+
+geometry_relevance:
+  temple_fit: "6.0 mm thick x 25 mm wide x 35 mm long. 6.0 mm is at the upper end of the 4-6 mm target (the brief says 'approximately 4-6 mm'). 25 mm width fits a Wayfarer-style temple pod."
+  two_battery_config: "Two cells in parallel = 1100 mAh / 4.07 Wh. Reasonable total energy."
+
+constraints:
+  status: SERIOUS — balanced envelope; capacity is moderate. 6.0 mm thickness is the upper limit of the brief's target.

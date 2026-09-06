@@ -1,0 +1,64 @@
+schema_version: 1
+component:
+  id: arducam_imx335_variants
+  category: mipi_csi2_camera_module
+  units: mm
+  role: higher_resolution_low_light_candidate
+
+source:
+  manufacturer: Arducam; Sony (sensor)
+  part_number: Arducam IMX335 family (B0340 M12, B0345 CS-mount, plus mini variants)
+  sensor: Sony IMX335 (1/2.8", 5 MP, 2.0 um pixel)
+  source_type: third_party_module_catalog
+  source_docs:
+    - url: https://docs.arducam.com/
+      description: "Arducam IMX335 family"
+
+mechanical:
+  pcb_dimensions_mm:
+    note: "Not in the catalog page. Arducam describes a 'Mini' variant as ~24 x 24 mm and a 'Standard' variant as ~38 x 38 mm; the catalog page does not publish per-SKU dimensions."
+    mini_dimensions_mm_if_correct: { width: 24.0, height: 24.0 }
+    standard_dimensions_mm_if_correct: { width: 38.0, height: 38.0 }
+  total_height_mm: UNKNOWN
+  ribbon_cable: typically 15-pin or 22-pin 1.0 mm FPC
+  source_for_mechanical: NOT_PUBLISHED in catalog
+
+optical:
+  sensor: Sony IMX335
+  resolution_megapixels: 5
+  active_pixels: 2592 x 1944
+  pixel_size_um: 2.0
+  sensor_format: 1/2.8"
+  output_format: RAW10
+  shutter_type: rolling
+  frame_rate_max_fps: 30 at full resolution
+  focus_type: fixed focus
+  ir_cut_filter: depends on SKU
+  field_of_view: depends on lens
+  source_for_optical: IMX335 sensor datasheet
+
+electrical:
+  interface: MIPI CSI-2 (2-lane)
+  source_for_electrical: IMX335 sensor datasheet
+
+environmental:
+  operating_temperature_c: UNKNOWN
+  source_for_environmental: NOT_PUBLISHED
+
+purchase:
+  distributor: Arducam
+  unit_price_usd: approximately 30 to 60
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: third_party_catalog
+  gaps:
+    - "Exact PCB dimensions per SKU not in catalog"
+    - "Power consumption not in catalog"
+
+geometry_relevance:
+  fit_assessment: "If the 24 x 24 mm mini variant exists, it is comparable to the RPi Camera Module 3. The 5 MP and 2.0 um pixel make it a middle ground between IMX708 (11.9 MP / 1.4 um) and IMX462 (2 MP / 2.9 um)."
+
+constraints:
+  status: SERIOUS_CANDIDATE — middle-ground option; need to confirm a specific mini SKU with documented dimensions

@@ -1,0 +1,51 @@
+schema_version: 1
+component:
+  id: st_lsm6dso
+  category: 6_axis_imu_accel_gyro
+  units: mm
+  role: secondary_imu_candidate_st_family
+
+source:
+  manufacturer: STMicroelectronics
+  part_number: LSM6DSO
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.st.com/en/mems-and-sensors/lsm6dso.html
+      description: "ST LSM6DSO product page"
+
+mechanical:
+  package: 14-pin LGA
+  dimensions_mm: { length: 2.5, width: 3.0, height: 0.83 }
+  source_for_mechanical: ST datasheet
+
+electrical:
+  supply_voltage_v: { min: 1.71, typ: 1.8, max: 3.6 }
+  interfaces: [I2C, SPI up to 10 MHz]
+  accelerometer_ranges_g: [2, 4, 8, 16]
+  gyroscope_ranges_dps: [125, 250, 500, 1000, 2000]
+  odr_max_hz: 6664 (gyro); 6664 (accel)
+  current_active_uA: 550 (accel + gyro, typical)
+  current_sleep_uA: 3
+  fifo_bytes: 1024
+  interrupts: 2
+  source_for_electrical: ST datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: ST eStore; Mouser; DigiKey; LCSC
+  unit_price_usd: 2 to 4 (single-piece retail); 1.20 in volume
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Specific Linux driver status: st_lsm6dsx driver in mainline Linux covers LSM6DSO, LSM6DSOX, ISM330DHCX, ASM330LHH, etc."
+
+constraints:
+  status: SERIOUS — well-supported in Linux; widely available; competitive pricing.
+  linux_support: "Mainline Linux IIO driver (st_lsm6dsx); device-tree binding exists."

@@ -1,0 +1,214 @@
+schema_version: 1
+v853_glasses_pin_assignment:
+  id: v853_glasses_pin_assignment
+  date: 2026-09-05
+  source: derived from projects/glasses/references/components/compute/v853/v853-ball-map.yaml
+  status: PERIPHERAL_LEVEL_ONLY
+  note: "The official V853 ball map (.sls file) was NOT available in this pass. The specific ball numbers for each signal are therefore listed as UNKNOWN/TBD. The peripheral block assignment and voltage domain ARE confirmed from the V853 datasheet (see v853-ball-map.yaml). The next step is to acquire the .sls file and fill in the per-ball assignments."
+
+  classification:
+    CONFIRMED: "peripheral is present, voltage domain is confirmed, signal name is documented in the V853 datasheet (NOT specific ball numbers)"
+    PROVISIONAL: "best guess at the GPIO bank; needs datasheet .sls verification"
+    UNKNOWN: "no specific ball or even bank can be assigned without the .sls file or the BSP device tree"
+
+  functional_assignment:
+
+    mipi_csi_camera_1:
+      function: "Left forward-facing camera, 2-lane MIPI CSI-2 sub-channel A"
+      peripheral: V853 CSI0
+      configuration: "1 of 2 sub-channels of the 1x 4-lane OR 2x 2-lane CSI block; per the V853 datasheet section 1.3.6.4, the 2x 2-lane mode is supported"
+      voltage_domain: VCC18-MCSI (1.8 V)
+      signals:
+        - { name: CSI_D0P, type: MIPI data lane 0+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CSI_D0N, type: MIPI data lane 0-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CSI_D1P, type: MIPI data lane 1+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CSI_D1N, type: MIPI data lane 1-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CSI_CLKP, type: MIPI clock lane+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CSI_CLKN, type: MIPI clock lane-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CAM1_SCL, type: I2C to camera sensor, voltage: "1.8 V", ball: UNKNOWN, peripheral: TWI0 (shared bus) }
+        - { name: CAM1_SDA, type: I2C to camera sensor, voltage: "1.8 V", ball: UNKNOWN, peripheral: TWI0 (shared bus) }
+        - { name: CAM1_RESET, type: GPIO, voltage: "1.8 V (VCC-PA or VCC-PC)", ball: UNKNOWN, peripheral: GPIO PA or PC }
+        - { name: CAM1_STANDBY, type: GPIO, voltage: "1.8 V", ball: UNKNOWN, peripheral: GPIO }
+        - { name: CAM1_MCLK, type: optional master clock to camera, voltage: "1.8 V", ball: UNKNOWN, peripheral: "GPIO or SoC clock output (MCLK); the IMX708 sensor does not require an external MCLK, so this signal is OPTIONAL" }
+      fpc_connector: "15-pin 1.0 mm pitch (RPi CM3 compatible; verify per camera SKU)"
+      notes: "The 2-lane sub-channel is the first half of the 4-lane CSI block per the V853 datasheet section 1.3.6.4. The exact lane mapping is in the V853/V853S_PINOUT.sls file (not in the PDF)."
+
+    mipi_csi_camera_2:
+      function: "Right forward-facing camera, 2-lane MIPI CSI-2 sub-channel B"
+      peripheral: V853 CSI0
+      configuration: "2 of 2 sub-channels of the 1x 4-lane OR 2x 2-lane CSI block"
+      voltage_domain: VCC18-MCSI (1.8 V)
+      signals:
+        - { name: CSI_D2P, type: MIPI data lane 2+ (shared with the 4-lane mode), voltage: "1.8 V", ball: UNKNOWN, note: "The 2-lane mode reuses the lower 2 data lanes of the 4-lane mode; the lane 2 and lane 3 balls are NOT used in 2-lane mode but are reserved" }
+        - { name: CSI_D2N, type: MIPI data lane 2-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CSI_D3P, type: MIPI data lane 3+ (NOT used in 2-lane mode; the 2-lane mode uses the same D0/D1 pair as the 4-lane mode with a virtual-channel split), voltage: "1.8 V", ball: UNKNOWN }
+        - { name: CSI_D3N, type: MIPI data lane 3-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: "CSI_CLK (shared with camera 1)", type: "MIPI clock lane (shared)", voltage: "1.8 V", ball: UNKNOWN, note: "Both sub-channels share one CSI clock lane per MIPI CSI-2 virtual-channel architecture" }
+        - { name: CAM2_SCL, type: I2C, voltage: "1.8 V", ball: UNKNOWN, peripheral: "TWI0 (shared)" }
+        - { name: CAM2_SDA, type: I2C, voltage: "1.8 V", ball: UNKNOWN, peripheral: "TWI0 (shared)" }
+        - { name: CAM2_RESET, type: GPIO, voltage: "1.8 V", ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: CAM2_STANDBY, type: GPIO, voltage: "1.8 V", ball: UNKNOWN, peripheral: "GPIO" }
+      fpc_connector: "15-pin 1.0 mm pitch"
+      notes: "The 2x 2-lane sub-channel configuration in MIPI CSI-2 uses virtual channels (VC). Both sub-channels share the D0/D1 data lanes + the clock lane. The SoC's CSI controller separates the two cameras by virtual channel ID. This is the standard MIPI CSI-2 virtual-channel mechanism. Both cameras MUST use the same data rate and the same lane clock."
+
+    mipi_dsi_display:
+      function: "Monocular 640x400 micro-OLED / waveguide display engine"
+      peripheral: V853 DSI0
+      configuration: 4-lane DSI, up to 1920 x 1200 @ 60 fps per datasheet section 1.3.5
+      voltage_domain: VCC18-MDSI (1.8 V)
+      signals:
+        - { name: DSI_D0P, type: MIPI DSI data 0+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_D0N, type: MIPI DSI data 0-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_D1P, type: MIPI DSI data 1+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_D1N, type: MIPI DSI data 1-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_D2P, type: MIPI DSI data 2+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_D2N, type: MIPI DSI data 2-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_D3P, type: MIPI DSI data 3+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_D3N, type: MIPI DSI data 3-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_CLKP, type: MIPI DSI clock+, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DSI_CLKN, type: MIPI DSI clock-, voltage: "1.8 V", ball: UNKNOWN }
+        - { name: DISP_TE, type: GPIO, voltage: "1.8 V", ball: UNKNOWN, peripheral: "GPIO", purpose: "Tearing-effect signal from the display; used to gate the DSI refresh" }
+        - { name: DISP_RESET, type: GPIO, voltage: "1.8 V", ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: DISP_BL_EN, type: GPIO, voltage: "1.8 V", ball: UNKNOWN, peripheral: "GPIO", purpose: "Backlight enable (for the LCoS engine; the micro-OLED does not need a backlight)" }
+      fpc_connector: "depends on the chosen display engine; Lumus DK-50 / DigiLens use a custom FPC with MIPI DSI + GPIO + power"
+
+    emmc:
+      function: "8 GB or 32 GB eMMC 5.1 storage"
+      peripheral: V853 SMHC0 (per the V853 datasheet's standard mapping; verify in BSP)
+      configuration: "8-bit data bus; HS400 / HS200 / DDR50 / SDR50 / SDR104 supported"
+      voltage_domain: "VCC-IO (3.3 V) for the I/O; VCC-DRAM (1.5 V or 1.35 V) for the internal pad; VDD18-DRAM (1.8 V) for the 1.8 V eMMC mode"
+      signals:
+        - { name: EMMC_D0, type: eMMC data 0, voltage: "1.8 V (HS200) or 3.3 V (legacy)", ball: UNKNOWN }
+        - { name: EMMC_D1, type: eMMC data 1, ball: UNKNOWN }
+        - { name: EMMC_D2, type: eMMC data 2, ball: UNKNOWN }
+        - { name: EMMC_D3, type: eMMC data 3, ball: UNKNOWN }
+        - { name: EMMC_D4, type: eMMC data 4, ball: UNKNOWN }
+        - { name: EMMC_D5, type: eMMC data 5, ball: UNKNOWN }
+        - { name: EMMC_D6, type: eMMC data 6, ball: UNKNOWN }
+        - { name: EMMC_D7, type: eMMC data 7, ball: UNKNOWN }
+        - { name: EMMC_CLK, type: eMMC clock, ball: UNKNOWN }
+        - { name: EMMC_CMD, type: eMMC command, ball: UNKNOWN }
+        - { name: EMMC_RSTN, type: eMMC reset, ball: UNKNOWN }
+        - { name: EMMC_DS, type: eMMC data strobe (HS400 only), ball: UNKNOWN }
+      notes: "The 8-bit bus requires 12 signals (D0-D7, CLK, CMD, RSTN). The DS signal is required for HS400 mode. eMMC 5.1 HS400 is the typical glasses target."
+
+    sdio_wifi:
+      function: "Wi-Fi / SDIO interface to the AW-CM276SM (or FN-LINK 6221 / Ampak AP6256) module"
+      peripheral: V853 SMHC1 (typical V-series mapping; verify in BSP)
+      configuration: "SDIO 2.0 or 3.0; 4-bit data bus"
+      voltage_domain: "VCC-IO (3.3 V) for SDIO 2.0 / 1.8 V for SDIO 3.0"
+      signals:
+        - { name: WIFI_SDIO_CLK, type: SDIO clock, ball: UNKNOWN }
+        - { name: WIFI_SDIO_CMD, type: SDIO command, ball: UNKNOWN }
+        - { name: WIFI_SDIO_D0, type: SDIO data 0, ball: UNKNOWN }
+        - { name: WIFI_SDIO_D1, type: SDIO data 1, ball: UNKNOWN }
+        - { name: WIFI_SDIO_D2, type: SDIO data 2, ball: UNKNOWN }
+        - { name: WIFI_SDIO_D3, type: SDIO data 3, ball: UNKNOWN }
+        - { name: WIFI_WAKE_HOST, type: GPIO (Wi-Fi wakes the SoC), ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: WIFI_HOST_WAKE, type: GPIO (SoC wakes the Wi-Fi module), ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: WIFI_CHIP_EN, type: GPIO (enable / disable the Wi-Fi module's regulator), ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: WIFI_REG_ON, type: GPIO (regulator on), ball: UNKNOWN, peripheral: "GPIO" }
+
+    uart_bluetooth:
+      function: "Bluetooth HCI (host-controller interface) to the Wi-Fi/BT module's Bluetooth UART"
+      peripheral: V853 UART0
+      configuration: "4-wire UART (TX, RX, RTS, CTS) or 2-wire (TX, RX only); the brief says UART for Bluetooth, so 2-wire is the minimum"
+      voltage_domain: "1.8 V (VCC-PA, VCC-PC, VCC-PD, VCC-PE, VCC-PG, or VCC-PI depending on the ball)"
+      signals:
+        - { name: BT_TX, type: UART TX from V853, ball: UNKNOWN }
+        - { name: BT_RX, type: UART RX into V853, ball: UNKNOWN }
+        - { name: BT_RTS, type: UART RTS (optional), ball: UNKNOWN }
+        - { name: BT_CTS, type: UART CTS (optional), ball: UNKNOWN }
+        - { name: BT_WAKE_HOST, type: GPIO (Bluetooth wakes the SoC), ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: BT_HOST_WAKE, type: GPIO (SoC wakes the Bluetooth), ball: UNKNOWN, peripheral: "GPIO" }
+      notes: "Bluetooth HCI over UART is the standard Linux approach. RTS/CTS is optional but recommended for high-throughput voice / data traffic."
+
+    i2c_shared:
+      function: "Shared I2C bus for IMU, ALS, 2x TMP117, fuel gauge, charger, PMIC"
+      peripheral: V853 TWI0
+      configuration: "Standard / Fast / Fast-Plus (100 kHz / 400 kHz / 1 MHz); 7-bit addresses"
+      voltage_domain: "1.8 V (VCC-PA or similar); the bus is 1.8 V pulled up to VCC-IO at 1.8 V mode"
+      pull_ups: "4.7 kohm to 1.8 V on SDA and SCL (one set for the whole bus)"
+      signals:
+        - { name: I2C0_SDA, ball: UNKNOWN, peripheral: "TWI0 SDA" }
+        - { name: I2C0_SCL, ball: UNKNOWN, peripheral: "TWI0 SCL" }
+      note: "All shared I2C devices (BMI270, VEML7700, 2x TMP117, MAX17048, BQ25185, AXP2101) have unique 7-bit addresses and support 1.8 V I/O. The I2C bus is 100/400 kHz. See i2c-audit (dual-csi-validation sister file in the same directory) for the per-device address and collision analysis."
+
+    spi_reserved:
+      function: "Reserved SPI (debug / optional haptic / future expansion)"
+      peripheral: V853 SPI0
+      voltage_domain: "1.8 V"
+      signals:
+        - { name: SPI0_CLK, ball: UNKNOWN }
+        - { name: SPI0_MOSI, ball: UNKNOWN }
+        - { name: SPI0_MISO, ball: UNKNOWN }
+        - { name: SPI0_CS0, ball: UNKNOWN }
+      note: "The BMI270 IMU supports SPI, but the glasses design uses I2C for the IMU. SPI is reserved for debug or future expansion (e.g. a SPI NOR flash for fast boot)."
+
+    i2s_audio_left:
+      function: "I2S to the left MAX98390 amplifier (temple-left speaker)"
+      peripheral: V853 I2S0
+      configuration: "3-wire I2S (BCLK, LRCLK, DIN); master mode (V853 is the BCLK / LRCLK master); 48 kHz / 16-bit / stereo frame"
+      voltage_domain: "1.8 V (verify MAX98390 I/O; the MAX98390 datasheet should confirm)"
+      signals:
+        - { name: I2S0_BCLK, ball: UNKNOWN, peripheral: "I2S0 BCLK" }
+        - { name: I2S0_LRCK, ball: UNKNOWN, peripheral: "I2S0 LRCLK (word select)" }
+        - { name: I2S0_DOUT, ball: UNKNOWN, peripheral: "I2S0 data out to the amplifier" }
+      note: "The MAX98390 is a mono amplifier; the SoC's I2S0 sends the LEFT channel data on the appropriate I2S time slot. One MAX98390 per temple."
+
+    i2s_audio_right:
+      function: "I2S to the right MAX98390 amplifier (temple-right speaker)"
+      peripheral: V853 I2S1
+      configuration: "3-wire I2S (BCLK, LRCLK, DIN); master mode (V853 is the BCLK / LRCLK master); 48 kHz / 16-bit / stereo frame"
+      voltage_domain: "1.8 V"
+      signals:
+        - { name: I2S1_BCLK, ball: UNKNOWN, peripheral: "I2S1 BCLK" }
+        - { name: I2S1_LRCK, ball: UNKNOWN, peripheral: "I2S1 LRCLK" }
+        - { name: I2S1_DOUT, ball: UNKNOWN, peripheral: "I2S1 data out to the amplifier" }
+      note: "See i2s-audit (display-electrical-validation sister file) for the 2-amp vs 1-stereo-amp analysis."
+
+    dmic:
+      function: "PDM microphone (ST MP23DB01HP, front-frame)"
+      peripheral: V853 DMIC
+      configuration: "PDM single-bit data + clock; 2.4 MHz or 3.072 MHz clock; up to 8 mics supported (we use 1)"
+      voltage_domain: "1.8 V (VCC-PA or similar)"
+      signals:
+        - { name: DMIC_DATA, ball: UNKNOWN, peripheral: "DMIC data" }
+        - { name: DMIC_CLK, ball: UNKNOWN, peripheral: "DMIC clock" }
+      note: "1 mic is sufficient for the glasses (mono voice). The DMIC block supports 2 mics on the same data line with software L/R select; we use 1."
+
+    usb:
+      function: "USB 2.0 DRD to the USB-C receptacle (5 V charging + USB 2.0 data + debug)"
+      peripheral: V853 USB0
+      configuration: "USB 2.0 DRD (device or host role; the glasses are a device, the host is the PC for charging + debug)"
+      voltage_domain: "VCC33_USB (3.3 V analog) + VDD09_USB (0.9 V digital)"
+      signals:
+        - { name: USB_DP, ball: UNKNOWN, peripheral: "USB0 DP" }
+        - { name: USB_DN, ball: UNKNOWN, peripheral: "USB0 DN" }
+        - { name: VBUS, type: "5 V input from USB-C", ball: "N/A (external pin on the USB-C receptacle; not a V853 ball)", peripheral: "USB-C receptacle" }
+        - { name: CC1, type: "USB-C CC1", ball: "N/A (external pin)", peripheral: "USB-C receptacle; 5.1 kohm to GND for UFP / device role" }
+        - { name: CC2, type: "USB-C CC2", ball: "N/A (external pin)", peripheral: "USB-C receptacle; 5.1 kohm to GND" }
+        - { name: USB_VBUS_DET, type: "GPIO (VBUS presence detect)", ball: UNKNOWN, peripheral: "GPIO", purpose: "SoC knows when USB is plugged in for charger / data path management" }
+
+    gpio_misc:
+      function: "Miscellaneous GPIO for IR LED, status, user button, sensor interrupts"
+      voltage_domain: "1.8 V (VCC-PA / VCC-PC / etc.)"
+      signals:
+        - { name: IMU_INT1, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: IMU_INT2, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: ALS_INT, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: TMP117_L_ALERT, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: TMP117_R_ALERT, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: FUEL_GAUGE_ALERT, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: CHARGER_INT, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: PMIC_IRQ, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: IR_LED_EN, ball: UNKNOWN, peripheral: "GPIO or PWM" }
+        - { name: IR_LED_PWM, ball: UNKNOWN, peripheral: "PWM (brightness control)" }
+        - { name: USER_BUTTON, ball: UNKNOWN, peripheral: "GPIO with internal pull-up" }
+        - { name: STATUS_LED, ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: HAPTIC_EN (optional), ball: UNKNOWN, peripheral: "GPIO" }
+        - { name: HAPTIC_PWM (optional), ball: UNKNOWN, peripheral: "PWM" }
+
+  summary:
+    total_signals_with_unknown_ball: "approximately 60+ signals (every CSI, DSI, eMMC, SDIO, UART, I2C, SPI, I2S, DMIC, USB, GPIO)"
+    pcb_routing_blocker: "Specific ball numbers are required to route the PCB. The ball numbers are in the V853/V853S_PINOUT.sls file (not in the PDF). Acquisition of the .sls file is the next critical step."

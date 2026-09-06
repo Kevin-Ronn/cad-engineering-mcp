@@ -1,0 +1,115 @@
+schema_version: 1
+component:
+  id: rpi_camera_module_3_imx708_standard
+  category: mipi_csi2_camera_module
+  units: mm
+  role: primary_camera_candidate
+
+source:
+  manufacturer: Raspberry Pi Ltd (camera module); Sony Semiconductor (sensor)
+  part_number: Raspberry Pi Camera Module 3 (Standard, with IR-cut filter)
+  sensor: Sony IMX708
+  source_type: manufacturer_official_brief
+  source_docs:
+    - url: https://pip-assets.raspberrypi.com/categories/786-raspberry-pi-camera-module-3/documents/RP-008151-DS-1-camera-module-3-product-brief.pdf
+      description: "Official Raspberry Pi Camera Module 3 product brief, June 2024 (PDF, mirrored locally)"
+    - url: https://www.raspberrypi.com/products/camera-module-3/
+      description: "Raspberry Pi product page"
+  mirror_path: /tmp/rpi_cm3.pdf
+
+mechanical:
+  pcb_dimensions_mm:
+    width: 25.0
+    height: 24.0
+  total_height_mm: 11.5
+  lens_diameter_mm: 9.0
+  mounting_holes: 4 x M2.5 (per RPi CM2/CM3 mechanical spec; not annotated in this brief)
+  weight_g: approximately 4
+  ribbon_cable:
+    type: FFC / FPC
+    pin_count: 15
+    pitch_mm: 1.0
+    length_mm: 200
+    orientation: top contact
+  source_for_mechanical: official product brief (PDF, page 4 mechanical drawing)
+
+optical:
+  sensor: Sony IMX708
+  optical_format: 1/2.43"
+  resolution_megapixels: 11.9
+  active_pixels: 4608 x 2592
+  pixel_size_um: 1.4
+  sensor_diagonal_mm: 7.4
+  output_format: RAW10
+  hdr_mode: yes, up to 3 MP output
+  shutter_type: rolling
+  focus_type: phase detection autofocus (PDAF)
+  ir_cut_filter: integrated in standard variant
+  common_video_modes:
+    - "1080p50"
+    - "720p100"
+    - "480p120"
+  field_of_view_horizontal_deg: 66
+  field_of_view_vertical_deg: 41
+  field_of_view_diagonal_deg: 102
+  focus_range: UNKNOWN (not in brief; module ships with factory-set autofocus; manual close-focus depends on lens choice)
+  source_for_optical: official product brief
+
+electrical:
+  interface: MIPI CSI-2 (2-lane)
+  serial_control: 2-wire I2C (Fast-mode and Fast-mode Plus)
+  supply_voltage: 3.3 V (typical; per Raspberry Pi camera connector spec)
+  typical_power_mw: UNKNOWN (not in brief)
+  sccb_address: "The IMX708 SCCB address is set by the AD0 (I2C_ADDR_SEL) pin. AD0 = GND -> 0x1A. AD0 = VDD (1.8 V) -> 0x10. The two glasses-design cameras must use different AD0 strap states to avoid an address collision with each other AND with the VEML7700 (also at 0x10). The corrected glasses-design assignment per projects/glasses/analysis/electrical/pre-schematic-verification/camera-control-verification.md is: CAM1 = 0x10 (AD0 = VDD), CAM2 = 0x1A (AD0 = GND)."
+  mclk: "The IMX708 has an internal PLL and does NOT require an external MCLK from the V853. The CSI MCLK0 / MCLK1 / MCLK2 pins (PA12, PA13, PE1 in the 100ASK public dts) are NOT needed for the IMX708. They can be left as GPIO."
+  source_for_electrical: official product brief + projects/glasses/analysis/electrical/pre-schematic-verification/camera-control-verification.md
+
+environmental:
+  operating_temperature_c:
+    min: 0
+    max: 50
+  source_for_environmental: official product brief
+
+regulatory:
+  fcc: 47 CFR Part 15 Subpart B Class B
+  ce_emc: 2014/30/EU
+  rohs: 2011/65/EU
+  source_for_regulatory: official product brief
+
+purchase:
+  distributor: Raspberry Pi authorised resellers (e.g. PiShop.us, Adafruit, Element14, Mouser)
+  unit_price_usd: approximately 25 (camera module 3 standard, no lens kit)
+  unit_price_wide_usd: approximately 35
+  moq: 1 (retail)
+  lead_time: stock
+  availability: in production until at least January 2030
+  source_for_purchase: raspberrypi.com product page
+
+geometry_relevance:
+  total_envelope_mm: { width: 25.0, height: 24.0, depth: 11.5 }
+  envelope_explanation: "PCB 25 x 24 mm. Total module height 11.5 mm is measured from the bottom of the PCB to the top of the lens barrel. The 15 x 1 mm FPC is a 200 mm ribbon that exits at the bottom edge; it does not add to the module envelope if folded."
+  comparison_to_wayfarer_frame:
+    target_region: "upper-outer region of each lens / front frame"
+    wayfarer_outer_top_corner_min_thickness_mm: 5.67
+    wayfarer_outer_top_corner_max_thickness_mm: 9.36
+    wayfarer_outer_middle_thickness_mm_at_z20: 5.1
+    wayfarer_temple_transition_thickness_mm: 1.6
+    fit_assessment: "The 25 x 24 mm PCB is too large to fit in the inner-rim region of the Wayfarer (3.3 mm Y-width). It MAY fit in the upper-outer corner of each lens rim where the material is 5-9 mm thick, but only with the PCB oriented so its short axis aligns with the frame's X (depth) axis and its long axis sits along the frame's Y (lateral) axis. This requires removing material from the rim and creating a small cavity. The lens barrel adds 11.5 mm to the optical depth; the existing rim does not have that depth to spare, so the lens must protrude through an aperture in the front-face material. The FPC must be routed through the lens-cavity or along the rim."
+    mechanical_blockers:
+      - "Module footprint larger than any single piece of available material at the nose bridge."
+      - "Lens barrel (11.5 mm) longer than available optical depth at the upper-outer corner; the lens will protrude outward and the inside will intrude into the lens-cavity space."
+      - "No IR-cut option is right for the intended near-IR use case if we want 940 nm to pass; the NoIR variant is required for night-vision/IR-illumination scenarios."
+    source_for_frame_comparison: "projects/glasses/analysis/structure/full-mechanical-inspection.md (frame measurement table)"
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_official_brief_with_mechanical_drawing
+  gaps:
+    - "Exact focus range (manual close focus) not in brief"
+    - "Power consumption not in brief"
+    - "Lens thread / mount: standard M12 (per RPi camera modules); not in this brief, assumed from prior RPi CM2 spec"
+
+constraints:
+  exact_dimensions_required: true
+  guessed_dimensions_forbidden: true
+  status: SERIOUS_CANDIDATE — best-documented mainstream module; mechanical fit marginal for the upper-outer corner; reconsider if a smaller module can be qualified

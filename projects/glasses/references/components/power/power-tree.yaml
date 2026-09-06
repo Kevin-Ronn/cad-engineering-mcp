@@ -1,0 +1,69 @@
+schema_version: 1
+power_tree:
+  id: v853_smart_glasses_power_tree
+  units: mm
+  source_voltage: 5 V (USB-C VBUS) or 3.0-4.2 V (Li-ion battery, single cell or parallel pair)
+  architecture: "5 V USB-C input -> charger IC (with power-path management) -> Li-ion cell(s) -> PMIC -> per-rail regulators for V853 + peripherals"
+
+rails:
+  - { name: VBUS_5V, voltage_v: 5.0, source: USB-C, current_ma_max: 1500, purpose: "Charger IC input, USB-PD not required" }
+  - { name: VBAT, voltage_v_range: [3.0, 4.2], source: Li-ion cell(s), purpose: "Charger IC battery terminal" }
+  - { name: SYS_3V8, voltage_v: 3.8, source: charger power-path output (VSYS), purpose: "PMIC input" }
+  - { name: VDD_CPU_V853, voltage_v: 0.9, current_ma_max: 1500, regulator: "AXP2101 DCDC1", purpose: "V853 application core" }
+  - { name: VDD_DRAM_V853, voltage_v: 1.1, current_ma_max: 1500, regulator: "AXP2101 DCDC2", purpose: "V853 DDR3L core" }
+  - { name: VDD_GPU_V853, voltage_v: 0.9, current_ma_max: 1500, regulator: "AXP2101 DCDC3", purpose: "V853 GPU / ISP" }
+  - { name: VDDQ_DDR3L, voltage_v: 1.35, current_ma_max: 500, regulator: "AXP2101 DCDC4", purpose: "DDR3L SDRAM I/O" }
+  - { name: VDD_PLL_V853, voltage_v: 1.0, current_ma_max: 200, regulator: "AXP2101 DCDC5 or LDO1", purpose: "V853 PLL / analog" }
+  - { name: VDD_IO_V853, voltage_v: 1.8, current_ma_max: 300, regulator: "AXP2101 LDO1 or LDO2", purpose: "V853 I/O + camera + display + audio I2S" }
+  - { name: VDD_RTC_V853, voltage_v: 0.9, current_ma_max: 50, regulator: "AXP2101 LDO dedicated RTC", purpose: "V853 RTC + backup coin-cell" }
+  - { name: AVDD_CAMERA, voltage_v: 1.8, current_ma_max: 200, regulator: "AXP2101 LDO3", purpose: "2x camera analog + MIPI" }
+  - { name: AVDD_DISPLAY, voltage_v: 1.8, current_ma_max: 200, regulator: "AXP2101 LDO4", purpose: "micro-OLED + waveguide display" }
+  - { name: AVDD_AUDIO, voltage_v: 3.3, current_ma_max: 100, regulator: "external LDO or AXP2101 LDO", purpose: "audio codec / class-D amp logic" }
+  - { name: AUDIO_PVDD, voltage_v: 3.6, current_ma_max: 500, regulator: "direct from VSYS", purpose: "class-D amp output stage" }
+  - { name: WIFI_VBAT, voltage_v: 3.6, current_ma_max: 400, regulator: "direct from VSYS", purpose: "XR829 Wi-Fi/BT peak current" }
+  - { name: LED_IR, voltage_v: 5.0, current_ma_max: 120, regulator: "Boost converter from VSYS (3.6-4.2 V) to 5 V (TPS61236P-class), then per-LED current-limit resistor (180 ohm) + N-MOSFET switch (2N7002-class) per LED", purpose: "940 nm IR LED chain (6 LEDs; 4 temple + 2 front); CORRECTED to 20 mA per LED (was 50 mA) per projects/glasses/analysis/electrical/pre-schematic-verification/ir-illumination-power-verification.md; the 50 mA assumption saturated the IMX708 camera at 10 cm; the 20 mA assumption is just-enough illumination" }
+  - { name: USB_5V_VBUS, voltage_v: 5.0, current_ma_max: 500, regulator: "USB-C VBUS", purpose: "USB 2.0 data (D+, D-) to V853 USB 2.0 DRD" }
+
+components:
+  charger_ic: ti_bq25185
+  pmic: axp2101
+  fuel_gauge: max17048
+  usb_c: usb_c_16pin_midmount
+  protection:
+    - overcharge_voltage: 4.30 V (per AXP2101 / BQ25185)
+    - overdischarge_voltage: 3.0 V (per cell)
+    - short_circuit_protection: yes (per AXP2101 + BQ25185)
+    - thermal_protection: yes (per AXP2101 + BQ25185)
+    - input_overvoltage: 5.5 V max on VBUS (BQ25185 OVP)
+  esd:
+    - usb_c_cc_lines: TVS array (5.5 V working, 15 kV ESD rating)
+    - usb_c_dp_dn_lines: TVS array
+    - vbat_lines: TVS array (optional, for hot-plug protection)
+
+estimated_total_pcb_area:
+  - axp2101_qfn32: 5 x 5 = 25 mm2
+  - bq25185_wcsp: 1.6 x 1.6 = 2.6 mm2
+  - max17048_tdfn8: 2.5 x 2.5 = 6.25 mm2
+  - usb_c_16pin_midmount: 8.94 x 7.35 = 65.7 mm2
+  - passives (caps, inductors, sense): 20 to 30 mm2
+  - total: approximately 120 to 150 mm2
+
+estimated_efficiency:
+  - 5V_usb_to_battery: 85 to 92% (BQ25185 charge path)
+  - battery_to_sys_3v8: 92 to 96% (BQ25185 power path)
+  - sys_3v8_to_vdd_cpu_0v9: 85 to 92% (AXP2101 DCDC1 buck)
+  - sys_3v8_to_avdd_io_1v8: 70 to 85% (AXP2101 LDO)
+  - total_chain_efficiency_estimate: 65 to 80% from VBUS to V853 core
+
+constraints:
+  - "5 V USB-C charging is sufficient; no USB-PD required"
+  - "Single Li-ion cell (or parallel pair in each temple) is sufficient; no balancing required if cells are paralleled and matched"
+  - "AXP2101 is the right PMIC for V853; proven in ProjectYosemite"
+  - "Total compute-PCB power-component area is ~120-150 mm2, fits comfortably in a temple pod"
+
+source_priority:
+  - 1: Allwinner V853 datasheet (AVCC, VCC-IO, VCC-DRAM, VCC18-MCSI, VCC18-MDSI rails)
+  - 2: AXP2101 datasheet (output rail list)
+  - 3: BQ25185 datasheet (charger input range, charge current)
+  - 4: MAX17048 datasheet (fuel gauge supply range)
+  - 5: USB Type-C specification (5 V default, CC pull-down values)

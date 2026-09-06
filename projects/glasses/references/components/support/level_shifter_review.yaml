@@ -1,0 +1,86 @@
+schema_version: 1
+component:
+  id: level_shifter_review
+  category: voltage_translation
+  units: mm
+  role: voltage_translation_decision
+
+source:
+  manufacturer: various (TI, NXP, Diodes Inc, onsemi, Microchip)
+  part_number: representative examples: TXS0102 (TI), TXS0108E (TI), PI4ULS3V204 (Diodes Inc), MAX3370 (ADI), LTC4317 (ADI)
+  source_type: market_survey
+  source_docs:
+    - url: https://www.ti.com/
+      description: "TI product line"
+
+mechanical:
+  typical_package: WSON, WLCSP, or small QFN
+  typical_dimensions_mm: 1.5 x 1.5 to 3.0 x 3.0 (WLCSP class) or 3.0 x 3.0 (QFN)
+  source_for_mechanical: typical
+
+electrical:
+  typical_supply_v: 1.2 to 5.5 (both rails)
+  interface: I2C, SPI, GPIO, UART
+  direction: bidirectional (auto-direction sensing on TXS class)
+  source_for_mechanical: typical
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: Mouser; DigiKey; LCSC
+  unit_price_usd: 0.50 to 2.00 (single-piece)
+  moq: 1
+
+confidence:
+  overall: HIGH
+
+constraints:
+  status: REVIEW_REQUIRED — only add a level shifter if the chosen component's I/O voltage does not match the V853's I/O rail.
+
+level_translation_requirements_analysis:
+  - signal: "V853 I/O (VDD_IO = 1.8 V)"
+  - imu_supply: "1.8 V"
+  - imu_io: "1.8 V"
+  - level_shifter_required: NO (1.8 V matches 1.8 V)
+
+  - signal: "V853 I/O (1.8 V)"
+  - mic_supply: "1.8 V"
+  - mic_io: "1.8 V"
+  - level_shifter_required: NO (1.8 V matches 1.8 V)
+
+  - signal: "V853 I/O (1.8 V)"
+  - class_d_amp_supply: "3.3 V (logic) / 3.6 V (output stage)"
+  - class_d_amp_io: "1.8 V (I2S is 1.8 V compatible; verify per MAX98390 datasheet)"
+  - level_shifter_required: NO if MAX98390 I/O is 1.8 V compatible; YES if 3.3 V logic (verify per datasheet)
+
+  - signal: "V853 USB 2.0 DRD"
+  - usb_io: "3.3 V (typical USB-C USB 2.0 D+/D- lines)"
+  - level_shifter_required: NO (V853 USB 2.0 DRD I/O is 3.3 V tolerant per datasheet section 1.3.8)
+
+  - signal: "V853 I2C to IMU, mic, fuel gauge, charger, PMIC"
+  - level_shifter_required: NO (all these devices support 1.8 V I2C)
+
+  - signal: "V853 I2S to audio amplifier"
+  - level_shifter_required: DEPENDS_ON_AMP_IO_VOLTAGE (verify MAX98390 / MAX98357A / TAS2562 datasheet)
+
+  - signal: "V853 SPI to display, IMU (some IMUs SPI-only)"
+  - level_shifter_required: NO (1.8 V)
+
+  - signal: "V853 SDIO to XR829 Wi-Fi/BT"
+  - level_shifter_required: NO (XR829 SDIO is 1.8 V or 3.3 V; verify per datasheet)
+
+  - signal: "V853 MIPI CSI / DSI"
+  - level_shifter_required: NO (MIPI is defined by standard; V853 PHY is 1.8 V / 0.9 V; cameras and display are MIPI-standard)
+
+  - signal: "V853 GPIO to IR LED driver"
+  - level_shifter_required: NO if the IR LED driver is a logic-level MOSFET controlled by 1.8 V GPIO
+
+  - signal: "V853 GPIO to haptic driver (TI DRV2605)"
+  - level_shifter_required: DEPENDS_ON_DRIVER_IO_VOLTAGE (DRV2605 is 1.8 V compatible; verify)
+
+conclusion:
+  - Most V853 interfaces operate at 1.8 V; the chosen I2C / SPI / IMU / mic / charger / PMIC / fuel-gauge / display / audio amp / Wi-Fi parts all support 1.8 V.
+  - The USB 2.0 D+/D- lines are 3.3 V on the V853; the USB-C receptacle is wired to the V853 directly (no level shifter needed for the data lines).
+  - **The most likely level-shifter requirement is the audio amplifier I2S lines**, if the chosen amp (MAX98390 / MAX98357A / TAS2562) has 3.3 V I/O. This must be verified per amplifier datasheet.
+  - **No bulk level-shifter purchase is justified**; defer until the final amplifier / haptic driver choice is locked.

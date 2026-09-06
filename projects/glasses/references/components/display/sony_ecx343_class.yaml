@@ -1,0 +1,82 @@
+schema_version: 1
+component:
+  id: sony_ecx343_class_panel
+  category: oled_microdisplay_panel_no_optics
+  units: mm
+  role: candidate_panel_for_custom_optical_engine
+
+source:
+  manufacturer: Sony Semiconductor Solutions
+  part_number: ECX343-class (Sony's smaller micro-OLED panel family, 0.23-0.39 inch class)
+  source_type: manufacturer_panel_only_no_reference_engine
+  source_docs:
+    - url: https://www.sony-semicon.co.jp/products/IS/sensor3.html
+      description: "Sony Semiconductor Solutions microdisplay product line"
+  notes: "Sony's ECX339A (0.5 inch 1600x1200) is publicly documented. The ECX343-class smaller panels (0.23-0.39 inch) are referenced in Sony's product line but full datasheets are gated by Sony and not publicly downloadable. The Sony OLED panel is the OLED; the optical engine (collimator + waveguide) is a separate, third-party design that pairs with the panel. There is no public reference engine that combines a 0.23 inch Sony ECX343-class OLED with a waveguide and ships as a buyable OEM module."
+
+optical:
+  display_technology: Sony micro-OLED (silicon-based OLED, top emission)
+  resolution: NOT_PUBLIC for the 0.23 inch class; ECX339A class is 1600x1200
+  diagonal_size_inch: 0.23 to 0.39 (class; exact class model not identified)
+  aspect_ratio: NOT_PUBLIC for the 0.23 inch class
+  fov_horizontal_deg: N/A (panel only; no engine)
+  fov_vertical_deg: N/A
+  waveguide_technology: N/A (panel only)
+  waveguide_thickness_mm: N/A
+  waveguide_dimensions_mm: N/A
+  eyebox: N/A
+  eye_relief_mm: N/A
+  exit_pupil: N/A
+  brightness_nits: NOT_PUBLIC (Sony micro-OLEDs are typically 1000-5000 nits)
+  contrast: NOT_PUBLIC (typically > 10000:1 for Sony micro-OLEDs)
+  colors: NOT_PUBLIC
+  transparency_transmittance: N/A
+  refresh_rate_hz: NOT_PUBLIC
+  distortion: N/A
+  focus_distance: N/A
+  source_for_optical: manufacturer public catalog only
+
+mechanical:
+  display_panel_dimensions_mm: NOT_PUBLIC for the 0.23 inch class
+  display_panel_weight_g: NOT_PUBLIC
+  complete_module_dimensions_mm: N/A (panel only)
+  source_for_mechanical: NOT_PUBLIC
+
+electronics:
+  interface: sub-LVDS or MIPI DSI (Sony micro-OLED driver interface; varies by panel)
+  mipi_dsi_lanes: NOT_PUBLIC for the 0.23 inch class; Sony's micro-OLEDs are typically sub-LVDS, not native MIPI DSI
+  controller_driver_ic: Sony CXD5600-class or similar; not confirmed for 0.23 inch class
+  required_supply_voltages: NOT_PUBLIC
+  power_consumption: NOT_PUBLIC
+  connector_type: NOT_PUBLIC
+  fpc_dimensions: NOT_PUBLIC
+  fpc_length_mm: NOT_PUBLIC
+  pin_count: NOT_PUBLIC
+  source_for_electronics: NOT_PUBLIC
+
+purchase:
+  distributor: Sony direct (gated; OEM sales only)
+  unit_price_usd: NOT_PUBLIC (Sony micro-OLEDs are typically $50-200 for the panel alone, plus the optical engine cost)
+  moq: typically 100+ for direct Sony sales
+  lead_time: 8-12 weeks
+  availability: production
+  source_for_purchase: Sony Semiconductor Solutions direct
+
+confidence:
+  overall: LOW_for_glasses_integration
+  sources: manufacturer_public_catalog_only
+  gaps:
+    - "No public datasheet for the 0.23 inch class"
+    - "No public reference engine combining this panel with a waveguide"
+    - "No public pricing"
+    - "Sony's micro-OLED driver interface is typically sub-LVDS, requiring a bridge to the V853's MIPI DSI"
+    - "No waveguide is included; a separate optical engine + waveguide must be designed and sourced"
+
+constraints:
+  status: NOT_RECOMMENDED_AS_PRIMARY — the panel is high quality but no turnkey optical engine + waveguide exists for the 0.23 inch 640x400 form factor that ships as a buyable OEM module.
+  risk: "Designing a custom optical engine + waveguide around a Sony ECX343-class panel is a 6-12 month optical-mechanical engineering project with NRE cost in the $100k-500k range and a 6-12 month optical-tooling lead time. Out of scope for a glasses prototype."
+
+geometry_relevance:
+  conceptual_fit_against_wayfarer:
+    note: "If a custom engine could be designed, the panel itself is small enough (sub-10 mm) to fit in the upper-bridge area. But the optical engine and waveguide are the larger items and require custom development."
+    source_for_frame_comparison: projects/glasses/analysis/structure/full-mechanical-inspection.md

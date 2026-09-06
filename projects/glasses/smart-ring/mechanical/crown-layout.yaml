@@ -1,0 +1,411 @@
+schema_version: 1
+ring_crown_layout:
+  id: smart_ring_crown_layout
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / KiCad / FreeCAD / STEP / STL files are created by this artifact. This is an engineering specification, not a final CAD model.
+
+  note: "Mechanical/electrode interface specification for the V1 ring crown. Establishes the physical coordinate system, electrode layout, gesture mapping, and IMU orientation that the firmware needs to produce correct gesture outputs. Resolves the crown_electrode_numbering TBD from protocol/gesture-vocabulary.yaml §0x04..0x07 and the BMI270 PCB mounting orientation TBD from §0x08..0x09. Mechanical dimensions (electrode size, crown radius, band thickness, PCB size, antenna keepout, battery dimensions) remain TBD until the mechanical/industrial-design artifact is created."
+
+  parent_artifacts:
+    - "components/touch-selection.yaml"        # 5-7 electrode crown; IQS127D driver
+    - "components/imu-selection.yaml"          # BMI270 + 6-axis convention
+    - "electrical/sensor-interface.yaml"       # I2C topology + GPIO allocation
+    - "electrical/sensor-interface_part2.yaml" # IQS127D bring-up TBDs
+    - "firmware/architecture.md"               # gesture FSM + IMU rotation
+    - "protocol/gesture-vocabulary.yaml"       # SWIPE_LEFT/RIGHT/UP/DOWN + ROTATE_CW/CCW vocabulary
+    - "research/even-r1-reference.md"          # industrial-design reference (no geometry copying)
+
+  # =========================================================================
+  # 1. Ring coordinate system
+  # =========================================================================
+  ring_coordinate_system:
+    description: "Right-handed coordinate system fixed to the ring. The origin is at the geometric centre of the ring band (the centre of the ring's circular cross-section). The axes are defined relative to a right-handed ring worn on the LEFT hand of an observer facing the wearer. Right-hand wear is the mirror image and reverses one axis (see §1.5)."
+
+    axes:
+      - { axis: "X+", direction: "from ring centre toward the wearer's RIGHT (pinky side; in left-hand wear, X+ points to the wearer's right hand)", positive: "rightward around the ring circumference", notes: "the LEFT/RIGHT axis used for SWIPE_LEFT / SWIPE_RIGHT gesture interpretation" }
+      - { axis: "Y+", direction: "from ring centre toward the CROWN (top of the ring; the face of the ring that points UP when the hand is held naturally with the palm facing the body)", positive: "outward (away from the finger)", notes: "the UP/DOWN axis for SWIPE_UP / SWIPE_DOWN gesture interpretation" }
+      - { axis: "Z+", direction: "from ring centre along the FINGER AXIS toward the FINGER TIP (distal phalanx); Z- points toward the palm/wrist", positive: "toward the finger tip", notes: "the FINGER-AXIS used for gyro rotation (ROTATE_CW / ROTATE_CCW) interpretation" }
+
+    rotations:
+      - { name: "roll", axis: "Z (finger axis)", positive: "right-hand rule around Z+: thumb points Z+, fingers curl in the positive roll direction", notes: "roll is the rotation the user performs when they twist the ring around the finger; this is the rotation measured by ROTATE_CW / ROTATE_CCW" }
+      - { name: "pitch", axis: "X (rightward)", positive: "right-hand rule around X+", notes: "pitch is the rotation the user performs when they tilt the ring forward/backward; not used for gestures in V1" }
+      - { name: "yaw", axis: "Y (crown)", positive: "right-hand rule around Y+", notes: "yaw is the rotation around the crown axis; not used for gestures in V1" }
+
+    handedness:
+      default: "left-hand wear"
+      notes: "V1 firmware assumes left-hand wear by default. Right-hand wear requires swapping the X axis (see §1.5). The wear-side may be detected at runtime by the WEAR_PUT_ON gesture's IMU motion signature (TBD; not a V1 requirement)."
+
+    finger_facing_direction:
+      direction: "-Y (toward the finger; the inner band is on the -Y side of the origin)"
+      notes: "the inner band faces the finger skin; the outer band faces the world; the crown (Y+) is on the top of the ring when the hand is held naturally"
+
+    coordinate_conventions:
+      - { convention: "right-handed", applies_to: "all three axes X, Y, Z" }
+      - { convention: "units in mm", applies_to: "all lengths in this document" }
+      - { convention: "units in deg/s for gyro, g for accel", applies_to: "IMU readings" }
+
+    # --- 1.5 right-hand wear handling ---
+    right_hand_wear:
+      note: "For right-hand wear, the X axis is mirrored: X+ points to the wearer's LEFT (pinky side on the right hand). The crown, IMU, and gesture vocabulary all behave symmetrically; the firmware does NOT need a 'right-hand' build flag, only a sign flip on X in the gesture-direction lookup. This is a software-only decision and is NOT a hardware difference."
+      axes_affected: ["X"]
+      axes_unaffected: ["Y", "Z"]
+      software_handling: "the gesture FSM (per firmware/architecture.md §5) treats SWIPE_LEFT as 'motion toward X-' regardless of which hand the ring is worn on; the electrode-to-direction mapping (see §3) is independent of hand-side"
+
+  # =========================================================================
+  # 2. Crown geometry (physical interface)
+  # =========================================================================
+  crown_geometry:
+    description: "The crown is the capacitive-touch-sensitive surface on the top of the ring (Y+ side). It is the only user-input region for touch gestures in V1. The crown geometry is determined by the IQS127D electrode layout; this document specifies the logical layout, not the final mechanical dimensions."
+
+    crown_interaction_area:
+      description: "the user touches the crown with the pad of the THUMB (per research/even-r1-reference.md §2 'tap / double-tap / long-press'; the Even R1 is the industrial-design reference, not a geometry clone). The crown may also be touched with the index finger of the OPPOSITE hand for select actions."
+      shape: "an arc (or curved rectangle) on the top of the ring band; the curvature matches the ring's outer radius"
+      extent_along_ring: "TBD on industrial-design artifact (this document does not invent a value)"
+      extent_across_ring: "TBD on industrial-design artifact"
+      position: "centered on Y+; the centre of the crown is at (0, R_crown, 0) where R_crown is the ring's outer radius"
+
+    electrode_placement_zones:
+      description: "The crown is divided into electrode placement zones. The number of electrodes is 5 to 7 per components/touch-selection.yaml §crown_geometry (the IQS127D supports up to 7 self-capacitance electrodes). The exact count is TBD on prototype characterisation; the firmware supports 5 (4-directional slider + centre) and 7 (4-directional slider + centre + 2 secondary) configurations."
+      zones:
+        - { zone_id: "E0", position: "X- extreme (left end of the crown)", role: "LEFT electrode" }
+        - { zone_id: "E1", position: "left-of-centre", role: "intermediate; present in the 7-electrode layout only" }
+        - { zone_id: "E2", position: "centre of the crown (the topmost point of the ring)", role: "CENTRE electrode" }
+        - { zone_id: "E3", position: "right-of-centre", role: "intermediate; present in the 7-electrode layout only" }
+        - { zone_id: "E4", position: "X+ extreme (right end of the crown)", role: "RIGHT electrode" }
+        - { zone_id: "E5", position: "Z+ extreme (finger-tip side of the crown)", role: "FRONT electrode (the SWIPE_UP direction)" }
+        - { zone_id: "E6", position: "Z- extreme (palm side of the crown)", role: "BACK electrode (the SWIPE_DOWN direction)" }
+      layout_diagram:
+        description: "schematic (top-down view of the crown with the finger axis vertical in the page; the ring band curves out of the page)"
+        text_diagram: |
+          Z+ (finger tip)
+              |
+              |  E5 (FRONT)
+              |
+          E0--E1--E2--E3--E4      X axis (rightward)
+              |
+              |  E6 (BACK)
+              |
+          Z- (palm / wrist)
+
+    electrode_count:
+      configurations:
+        - { name: "5-electrode", electrodes: ["E0", "E2", "E4", "E5", "E6"], description: "LEFT, CENTRE, RIGHT, FRONT, BACK. The simplest V1 layout; supports 4-direction swipe + centre tap." }
+        - { name: "7-electrode", electrodes: ["E0", "E1", "E2", "E3", "E4", "E5", "E6"], description: "LEFT, LEFT-OF-CENTRE, CENTRE, RIGHT-OF-CENTRE, RIGHT, FRONT, BACK. Adds the intermediate electrodes for smoother swipe tracking; per components/touch-selection.yaml §crown_geometry the V1 may use this configuration." }
+      recommended_for_v1: "7-electrode (per components/touch-selection.yaml §design_notes; supports the secondary actions)"
+      tbd: "the exact electrode count chosen for the V1 prototype is TBD on industrial-design + IQS127D datasheet confirmation; the firmware supports both configurations via a compile-time switch"
+
+    electrode_numbering:
+      description: "Physical electrode numbering is independent of logical gesture interpretation. The IQS127D's internal electrode IDs (per the Azoteq datasheet) are mapped to the logical zones E0..E6 via a software lookup table. This separation allows the firmware to change electrode assignments without changing gesture vocabulary."
+      physical_id_to_zone:
+        - { physical_electrode_id: "TBD per Azoteq IQS127D datasheet (the datasheet defines which channel numbers exist; V1 supports channels 0..6)", zone_id: "E0 (LEFT)" }
+        - { physical_electrode_id: "TBD per Azoteq IQS127D datasheet", zone_id: "E1 (LEFT-OF-CENTRE)" }
+        - { physical_electrode_id: "TBD per Azoteq IQS127D datasheet", zone_id: "E2 (CENTRE)" }
+        - { physical_electrode_id: "TBD per Azoteq IQS127D datasheet", zone_id: "E3 (RIGHT-OF-CENTRE)" }
+        - { physical_electrode_id: "TBD per Azoteq IQS127D datasheet", zone_id: "E4 (RIGHT)" }
+        - { physical_electrode_id: "TBD per Azoteq IQS127D datasheet", zone_id: "E5 (FRONT)" }
+        - { physical_electrode_id: "TBD per Azoteq IQS127D datasheet", zone_id: "E6 (BACK)" }
+      notes: "the exact IQS127D channel-to-zone mapping is TBD until the datasheet is consulted; the firmware uses a compile-time lookup table (zone_to_iqs127d_channel_t) that is filled in once the schematic is finalised"
+
+    electrode_adjacency:
+      description: "Two electrodes are adjacent if they can both be touched by a single finger pad during a normal swipe. Adjacency is used by the firmware's swipe detector (per protocol/gesture-vocabulary.yaml §0x04..0x07) to validate that a swipe crosses contiguous electrodes."
+      adjacency_table_5_electrode:
+        - { from: "E0 (LEFT)", adjacent_to: ["E2 (CENTRE) via diagonal; not direct"] }
+        - { from: "E2 (CENTRE)", adjacent_to: ["E0 (LEFT)", "E4 (RIGHT)", "E5 (FRONT)", "E6 (BACK)"] }
+        - { from: "E4 (RIGHT)", adjacent_to: ["E2 (CENTRE) via diagonal; not direct"] }
+        - { from: "E5 (FRONT)", adjacent_to: ["E2 (CENTRE) via diagonal; not direct"] }
+        - { from: "E6 (BACK)", adjacent_to: ["E2 (CENTRE) via diagonal; not direct"] }
+        - { note: "in the 5-electrode layout, only E2 is adjacent to all other electrodes; E0, E4, E5, E6 are NOT directly adjacent to each other (a swipe between E0 and E4 must cross E2)" }
+      adjacency_table_7_electrode:
+        - { from: "E0 (LEFT)", adjacent_to: ["E1 (LEFT-OF-CENTRE)"] }
+        - { from: "E1 (LEFT-OF-CENTRE)", adjacent_to: ["E0 (LEFT)", "E2 (CENTRE)"] }
+        - { from: "E2 (CENTRE)", adjacent_to: ["E1 (LEFT-OF-CENTRE)", "E3 (RIGHT-OF-CENTRE)", "E5 (FRONT)", "E6 (BACK)"] }
+        - { from: "E3 (RIGHT-OF-CENTRE)", adjacent_to: ["E2 (CENTRE)", "E4 (RIGHT)"] }
+        - { from: "E4 (RIGHT)", adjacent_to: ["E3 (RIGHT-OF-CENTRE)"] }
+        - { from: "E5 (FRONT)", adjacent_to: ["E2 (CENTRE)"] }
+        - { from: "E6 (BACK)", adjacent_to: ["E2 (CENTRE)"] }
+      notes: "in the 7-electrode layout, a swipe between E0 and E4 traverses E0 -> E1 -> E2 -> E3 -> E4, which is a 4-electrode-span swipe"
+
+    physical_swipe_directions:
+      description: "The four physical swipe directions, defined by the motion of the user's thumb across the crown. Each direction is a movement from one electrode to another, ending when the user's thumb releases. The direction is determined by the sequence of TOUCH_MOVE events from the IQS127D."
+      directions:
+        - { name: "RIGHT_TO_LEFT", from_electrodes: ["E4", "E3", "E2", "E1", "E0"], to_electrodes: ["E3", "E2", "E1", "E0"], logical_gesture: "SWIPE_LEFT", min_electrode_span: 2 }
+        - { name: "LEFT_TO_RIGHT", from_electrodes: ["E0", "E1", "E2", "E3", "E4"], to_electrodes: ["E1", "E2", "E3", "E4"], logical_gesture: "SWIPE_RIGHT", min_electrode_span: 2 }
+        - { name: "BACK_TO_FRONT", from_electrodes: ["E6", "E2", "E5"], to_electrodes: ["E2", "E5"], logical_gesture: "SWIPE_UP (toward the finger tip)", min_electrode_span: 2 }
+        - { name: "FRONT_TO_BACK", from_electrodes: ["E5", "E2", "E6"], to_electrodes: ["E2", "E6"], logical_gesture: "SWIPE_DOWN (toward the palm / wrist)", min_electrode_span: 2 }
+      notes: "the SWIPE_UP and SWIPE_DOWN direction names refer to the direction of MOTION (toward the finger tip = UP; toward the wrist = DOWN); the gesture-vocabulary.yaml §0x06 and §0x07 entries use these same directions. The naming is from the wearer's perspective."
+
+  # =========================================================================
+  # 3. IQS127D electrode mapping (physical to logical)
+  # =========================================================================
+  iqs127d_electrode_mapping:
+    description: "Maps the IQS127D's physical electrode channels to the logical zones E0..E6 defined in §2. The mapping is a compile-time lookup table in the firmware; it can be reconfigured without changing the gesture vocabulary."
+    mapping_table:
+      - { zone_id: "E0 (LEFT)",        iqs127d_channel: "TBD per Azoteq IQS127D datasheet",  role: "left end of the crown; participates in SWIPE_LEFT and SWIPE_RIGHT" }
+      - { zone_id: "E1 (LEFT-OF-CENTRE)", iqs127d_channel: "TBD per Azoteq IQS127D datasheet",  role: "intermediate; 7-electrode layout only; participates in SWIPE_LEFT and SWIPE_RIGHT" }
+      - { zone_id: "E2 (CENTRE)",      iqs127d_channel: "TBD per Azoteq IQS127D datasheet",  role: "centre of the crown; participates in TAP, DOUBLE_TAP, LONG_PRESS, and all 4-direction swipes (as the pivot)" }
+      - { zone_id: "E3 (RIGHT-OF-CENTRE)", iqs127d_channel: "TBD per Azoteq IQS127D datasheet",  role: "intermediate; 7-electrode layout only" }
+      - { zone_id: "E4 (RIGHT)",       iqs127d_channel: "TBD per Azoteq IQS127D datasheet",  role: "right end of the crown" }
+      - { zone_id: "E5 (FRONT)",       iqs127d_channel: "TBD per Azoteq IQS127D datasheet",  role: "finger-tip side of the crown; participates in SWIPE_UP and SWIPE_DOWN" }
+      - { zone_id: "E6 (BACK)",        iqs127d_channel: "TBD per Azoteq IQS127D datasheet",  role: "palm side of the crown" }
+    notes: "the exact IQS127D channel numbers are TBD until the Azoteq datasheet is consulted. The firmware uses a compile-time lookup table `zone_to_iqs127d_channel_t[7]` and `iqs127d_channel_to_zone_t[7]` (only as many entries as the chosen electrode count). The table is filled in by the schematic designer, not by the gesture vocabulary."
+
+  # =========================================================================
+  # 4. Gesture mapping (logical to physical)
+  # =========================================================================
+  gesture_mapping:
+    description: "Explicitly maps each touch-based gesture to the physical electrode sequence that produces it. IMU-based gestures (ROTATE_*) are in §5. The mapping is consistent with protocol/gesture-vocabulary.yaml §0x01..0x09."
+
+    TAP:
+      gesture_id: 0x01
+      physical_definition: "any single electrode (E0, E1, E2, E3, E4, E5, or E6) reports TOUCH_PRESS followed by TOUCH_RELEASE within long_press_ms (600 ms)"
+      electrode_span: 1
+      directionless: true
+      firmware_handling: "the firmware does not require a specific electrode for TAP; any electrode qualifies (per protocol/gesture-vocabulary.yaml §0x01 §directional_interpretation)"
+      confidence_default: 80
+
+    DOUBLE_TAP:
+      gesture_id: 0x02
+      physical_definition: "two TAPs on the same electrode (or on adjacent electrodes within 1 electrode) within double_tap_window_ms (300 ms)"
+      electrode_span: 1 or 2
+      directionless: true
+      firmware_handling: "per protocol/gesture-vocabulary.yaml §0x02"
+      confidence_default: 220
+
+    LONG_PRESS:
+      gesture_id: 0x03
+      physical_definition: "any single electrode (or any combination) reports TOUCH_PRESS sustained for >= long_press_ms (600 ms)"
+      electrode_span: any
+      directionless: true
+      firmware_handling: "per protocol/gesture-vocabulary.yaml §0x03"
+      confidence_default: 200
+
+    SWIPE_LEFT:
+      gesture_id: 0x04
+      physical_definition: "the user's thumb moves from the RIGHT side of the crown toward the LEFT side; the TOUCH_MOVE sequence is E4 -> E3 -> E2 -> E1 -> E0 (or any sub-sequence that ends at E0 with a span >= 2)"
+      electrode_sequence: ["E4", "E3", "E2", "E1", "E0"]
+      direction: "negative X (X-)"
+      wearable_perspective: "the wearer's thumb moves from the wearer's RIGHT to the wearer's LEFT (in left-hand wear; right-hand wear reverses the wearer's left/right but the gesture vocabulary is unchanged)"
+      firmware_handling: "per protocol/gesture-vocabulary.yaml §0x04"
+      confidence_default: 160
+
+    SWIPE_RIGHT:
+      gesture_id: 0x05
+      physical_definition: "the user's thumb moves from the LEFT side of the crown toward the RIGHT side; the TOUCH_MOVE sequence is E0 -> E1 -> E2 -> E3 -> E4"
+      electrode_sequence: ["E0", "E1", "E2", "E3", "E4"]
+      direction: "positive X (X+)"
+      wearable_perspective: "the wearer's thumb moves from the wearer's LEFT to the wearer's RIGHT"
+      firmware_handling: "per protocol/gesture-vocabulary.yaml §0x05"
+      confidence_default: 160
+
+    SWIPE_UP:
+      gesture_id: 0x06
+      physical_definition: "the user's thumb moves from the BACK side of the crown toward the FRONT side (toward the finger tip); the TOUCH_MOVE sequence is E6 -> E2 -> E5"
+      electrode_sequence: ["E6", "E2", "E5"]
+      direction: "positive Z (Z+) toward the finger tip"
+      wearable_perspective: "the wearer's thumb moves from the palm side toward the finger tip"
+      firmware_handling: "per protocol/gesture-vocabulary.yaml §0x06"
+      confidence_default: 160
+
+    SWIPE_DOWN:
+      gesture_id: 0x07
+      physical_definition: "the user's thumb moves from the FRONT side of the crown toward the BACK side (toward the wrist); the TOUCH_MOVE sequence is E5 -> E2 -> E6"
+      electrode_sequence: ["E5", "E2", "E6"]
+      direction: "negative Z (Z-) toward the wrist"
+      wearable_perspective: "the wearer's thumb moves from the finger-tip side toward the wrist"
+      firmware_handling: "per protocol/gesture-vocabulary.yaml §0x07"
+      confidence_default: 160
+
+    note_on_direction_naming:
+      description: "the names SWIPE_UP and SWIPE_DOWN refer to motion toward the finger tip (UP) and toward the wrist (DOWN); this matches the wearer's mental model and is consistent with protocol/gesture-vocabulary.yaml §0x06 and §0x07. The names are NOT tied to the Y axis."
+
+  # =========================================================================
+  # 5. IMU coordinate orientation
+  # =========================================================================
+  imu_orientation:
+    description: "Defines how the BMI270's accelerometer + gyroscope axes map to the ring coordinate system defined in §1. This determines the CW/CCW convention for ROTATE_CW / ROTATE_CCW."
+
+    pcb_placement:
+      description: "the BMI270 is mounted on the ring's rigid PCB (per electrical/sensor-interface.yaml §sensor_signal_table). The PCB is inside the ring band, parallel to the X-Z plane (i.e. the PCB's normal is the Y axis). The BMI270's package is LGA-2.5x3.0x0.8 mm; the orientation of the LGA package on the PCB is determined by the schematic."
+      pcb_normal: "Y (the PCB lies in the X-Z plane)"
+      pcb_position: "TBD on schematic; the BMI270 is mounted near the centre of the ring (within the band) to minimise angular offset from the ring's rotation axis"
+      pcb_orientation_reference: "the BMI270's pin 1 marker (or equivalent) faces the +Z direction (toward the finger tip); the X axis of the BMI270 faces +X (rightward)"
+
+    accelerometer_axis_mapping:
+      description: "maps the BMI270's accelerometer axes to the ring coordinate system. The mapping is the canonical Z-up convention (Z+ is the gravity-up axis when the ring is held with the crown up)."
+      mapping:
+        - { bmi270_axis: "ACC_X", ring_axis: "X+", notes: "rightward (pinky side)" }
+        - { bmi270_axis: "ACC_Y", ring_axis: "Y+", notes: "outward (crown; gravity-up when the ring is held naturally)" }
+        - { bmi270_axis: "ACC_Z", ring_axis: "Z+", notes: "forward (toward the finger tip)" }
+      gravity_reference:
+        when_hand_held_naturally: "ACC_Y reads approximately +1 g (gravity-up)"
+        when_ring_is_lying_flat_crown_up: "ACC_Y reads +1 g; ACC_X and ACC_Z read approximately 0"
+        when_ring_is_lying_flat_crown_down: "ACC_Y reads -1 g"
+
+    gyroscope_axis_mapping:
+      description: "maps the BMI270's gyroscope axes to the ring coordinate system. The gyroscope measures angular velocity in deg/s."
+      mapping:
+        - { bmi270_axis: "GYR_X", ring_axis: "rotation around X+ (pitch)", notes: "tilting the ring forward/backward rotates the crown toward/away from the finger tip" }
+        - { bmi270_axis: "GYR_Y", ring_axis: "rotation around Y+ (yaw)", notes: "rotating the ring around the crown axis (yaw); not used for V1 gestures" }
+        - { bmi270_axis: "GYR_Z", ring_axis: "rotation around Z+ (roll)", notes: "THIS IS THE PRIMARY ROTATION AXIS for ROTATE_CW / ROTATE_CCW (see §5.4)" }
+
+    rotation_convention:
+      description: "the ROTATE_CW and ROTATE_CCW gestures are defined by the sign of the GYR_Z reading. The convention is right-hand-rule around Z+: thumb points Z+ (toward the finger tip), fingers curl in the positive rotation direction."
+      CW_definition:
+        gesture_id: 0x08
+        physical_definition: "the user rotates the ring around the finger axis (Z axis) in the CLOCKWISE direction (when viewed from the finger tip looking toward the palm)"
+        gyro_signal: "GYR_Z > +rotate_cw_ccw_threshold_dps for >= 200 ms"
+        threshold_dps: "TBD on prototype characterisation (per protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters)"
+      CCW_definition:
+        gesture_id: 0x09
+        physical_definition: "the user rotates the ring around the finger axis in the COUNTER-CLOCKWISE direction (when viewed from the finger tip looking toward the palm)"
+        gyro_signal: "GYR_Z < -rotate_cw_ccw_threshold_dps for >= 200 ms"
+        threshold_dps: "TBD on prototype characterisation"
+
+    wear_state_implications:
+      put_on:
+        description: "WEAR_PUT_ON (gesture 0x10) is detected by sustained touch + IMU motion (per protocol/gesture-vocabulary.yaml §0x10). The IMU motion is the magnitude of ACC_X + ACC_Y + ACC_Z combined; the threshold is TBD on prototype characterisation."
+      taken_off:
+        description: "WEAR_TAKEN_OFF (gesture 0x11) is detected by absence of touch + IMU stillness (per protocol/gesture-vocabulary.yaml §0x11). The stillness threshold is on the magnitude of ACC_X + ACC_Y + ACC_Z; TBD on prototype characterisation."
+
+  # =========================================================================
+  # 6. Mechanical-to-electrical interface
+  # =========================================================================
+  mechanical_to_electrical_interface:
+    description: "How the crown's mechanical features connect to the electrical components. The PCB and antenna are inside the ring band; the IQS127D's electrodes are on the crown surface (or just below the crown surface) and connect to the IQS127D via traces on the PCB (or via a flex circuit)."
+
+    electrode_routing:
+      description: "Each of the 5-7 crown electrodes must be electrically connected to one of the IQS127D's channel pins. The routing is on the ring's PCB (or flex)."
+      routing_constraints:
+        - "trace length must be short (< 10 mm; per IQS127D noise-immunity guidance; TBD on datasheet)"
+        - "trace width must be sufficient for the IQS127D's capacitive-sensing signal integrity (per datasheet TBD)"
+        - "no sharp bends in the capacitive-sensing traces (per datasheet TBD)"
+      electrode_to_iqs127d:
+        layout_assumption: "the IQS127D is mounted on the rigid PCB, with the electrodes routed via traces on the PCB or via a flex; the exact routing is TBD on the mechanical/industrial-design artifact"
+
+    sensor_placement_assumptions:
+      BMI270:
+        location: "on the rigid PCB inside the ring band; PCB normal aligned with Y axis"
+        keepout: "5 mm from all other sensors and from the antenna (per the antenna's datasheet TBD on Johanson 2450AT18B100)"
+      IQS127D:
+        location: "on the rigid PCB; the electrodes are on the crown (Y+ side)"
+        keepout: "no metallic structures near the electrodes (per IQS127D datasheet TBD); the antenna is on the inner band (opposite side from the crown) per electrical/sensor-interface.yaml"
+      TMP117:
+        location: "on the rigid PCB; thermal isolation from the battery and the nRF54L15; on the inner band (per components/temperature-selection.yaml §placement)"
+        keepout: "no heat-generating components adjacent; the TMP117 is the finger-temperature sensor"
+      MAX17048:
+        location: "on the rigid PCB; near the battery for accurate cell-voltage measurement"
+      DRV2605L:
+        location: "on the rigid PCB; the LRA itself is on the inner band (in direct contact with the finger) per components/haptic-selection.yaml §mounting"
+      antenna:
+        location: "on the inner band (per electrical/sensor-interface.yaml); keepout of 5 mm in all directions per the Johanson 2450AT18B100 datasheet TBD"
+
+    minimum_separation_requirements:
+      description: "Only separation requirements supported by existing documentation are listed. Other separations are TBD on the mechanical/industrial-design artifact."
+      documented_requirements:
+        - { item: "antenna keepout", value: "5 mm in all directions (per antenna-selection.yaml §reason; TBD on Johanson datasheet)" }
+        - { item: "TMP117 thermal isolation", value: "the TMP117 is on the inner band, NOT inside the battery compartment (per components/temperature-selection.yaml §placement)" }
+        - { item: "IQS127D electrode noise", value: "no metallic structures near the electrodes (per IQS127D datasheet TBD)" }
+
+    pcb_flex_placement:
+      pcb_shape: "TBD on the mechanical/industrial-design artifact; expected to be a curved or segmented rigid PCB that fits inside the ring band"
+      flex_circuit: "TBD on the industrial-design artifact; V1 may use a single rigid PCB (no flex) per components/ppg-selection.yaml §V1 (the same rationale applies to V1 PCB complexity)"
+      electrode_to_pcb_connection: "electrodes are part of the PCB copper layers (outer layer) or a flex tail that extends to the crown; exact method TBD"
+
+  # =========================================================================
+  # 7. Human interaction assumptions
+  # =========================================================================
+  human_interaction_assumptions:
+    description: "Assumptions about how the user touches the crown. These are ENGINEERING ASSUMPTIONS, not validated measurements. They are flagged as such and must be verified on a prototype."
+
+    expected_finger_contact_region:
+      contact_region: "the pad of the THUMB (per research/even-r1-reference.md §2 'tap / double-tap / long-press'); the thumb is the most dexterous finger for fine gestures and is on the OPPOSITE hand from the ring-wearing hand"
+      assumptions:
+        - "the thumb can comfortably reach the entire crown area (E0..E6) by rotating the wrist"
+        - "the thumb's contact area is approximately 15-20 mm in diameter (engineering assumption; TBD on prototype characterisation)"
+        - "the thumb's contact pressure is sufficient to trigger the IQS127D's capacitive-sensing threshold (threshold TBD on IQS127D datasheet + prototype characterisation)"
+
+    intended_interactions:
+      tap: "a quick press on the crown with the thumb pad"
+      double_tap: "two taps within 300 ms"
+      long_press: "a sustained press for 600 ms or more"
+      swipe_left_right: "the thumb slides across the crown from RIGHT to LEFT or LEFT to RIGHT"
+      swipe_up_down: "the thumb slides across the crown from the palm side (BACK) to the finger-tip side (FRONT) or vice versa"
+
+    contact_sequence_assumptions:
+      single_touch: "the user touches one electrode at a time; multi-touch is possible but is treated as a single touch in V1 (per IQS127D's limited multi-touch support per components/touch-selection.yaml)"
+      swipe_speed: "the user completes a swipe in approximately 50-150 ms (engineering assumption; consistent with protocol/gesture-vocabulary.yaml §swipe_commit_ms)"
+      rotate_speed: "the user completes a ring rotation in approximately 200-1000 ms (engineering assumption; per protocol/gesture-vocabulary.yaml §rotation_min_duration_ms and §rotation_max_duration_ms)"
+
+    distinguishing_assumptions_from_validated_measurements:
+      rule: "every item in this section is an ASSUMPTION; it has not been measured on a prototype. The brief says: 'do not claim hardware validation where none exists.' These assumptions are starting points; the V1 firmware tolerates a range of values around them via the gesture FSM's confidence-validation rules."
+      assumptions_to_validate:
+        - { assumption: "thumb can reach the entire crown", method: "wear test on a 3D-printed prototype ring with a mock crown" }
+        - { assumption: "swipe speed is 50-150 ms", method: "instrumented test with the V1 firmware logging touch timestamps" }
+        - { assumption: "thumb contact area is 15-20 mm", method: "capacitive-touch characterisation on a flat test PCB" }
+
+  # =========================================================================
+  # 8. Mechanical TBDs (explicit)
+  # =========================================================================
+  mechanical_tbds:
+    description: "Unresolved mechanical dimensions. Each is a TBD that requires industrial-design or prototype measurement. None are invented here."
+
+    tbds:
+      - { parameter: "electrode_dimensions", reason: "size + shape of each E0..E6 electrode pad; determined by the IQS127D datasheet + the industrial-design artifact" }
+      - { parameter: "electrode_spacing", reason: "centre-to-centre distance between adjacent electrodes; determined by electrode_dimensions + crown size" }
+      - { parameter: "crown_radius", reason: "the outer radius of the crown's interaction area; equal to the ring's outer radius (TBD on industrial-design)" }
+      - { parameter: "band_thickness", reason: "the radial thickness of the ring band (Y dimension); determined by PCB thickness + battery thickness + electrode_overlay" }
+      - { parameter: "pcb_dimensions", reason: "length + width of the rigid PCB; determined by the components inside the ring band (BMI270, IQS127D, TMP117, MAX17048, DRV2605L, antenna) and the band's inner diameter" }
+      - { parameter: "antenna_keepout", reason: "the exact keepout around the antenna; the Johanson 2450AT18B100 datasheet specifies 5 mm in all directions per antenna-selection.yaml; the mechanical implementation may require more or less depending on the PCB stackup" }
+      - { parameter: "battery_dimensions", reason: "the curved LiPo cell's dimensions; determined by the battery manufacturer (EEMB-class per components/battery-selection.yaml) and the inner-band geometry" }
+      - { parameter: "pogo_charger_geometry", reason: "the magnetic pogo's position on the ring band; determined by the industrial-design artifact + the charger_selection.yaml" }
+      - { parameter: "ring_size_range", reason: "the ring sizes supported (US6..US13 per research/smart-ring-landscape.md §1 Open Ring form factor); the V1 may target a subset" }
+      - { parameter: "iqs127d_electrode_to_channel_mapping", reason: "the exact IQS127D channel number (0..6) for each of E0..E6; per the Azoteq IQS127D datasheet" }
+      - { parameter: "iqs127d_electrode_count_for_v1", reason: "whether V1 uses the 5-electrode or 7-electrode configuration; determined by prototype characterisation" }
+
+  # =========================================================================
+  # 9. Cross-document consistency check
+  # =========================================================================
+  cross_document_consistency:
+    description: "Explicitly notes the consistency points between this document and the rest of the project. Any future edit must preserve these points."
+
+    consistency_points:
+      - { artifact: "protocol/gesture-vocabulary.yaml", point: "all 16 gesture IDs are documented; SWIPE_LEFT/RIGHT/UP/DOWN have explicit physical-to-logical mappings consistent with §0x04..0x07; TAP/DOUBLE_TAP/LONG_PRESS are directionless and consistent with §0x01..0x03; ROTATE_CW/CCW are consistent with §0x08..0x09 (the GYR_Z sign convention resolves the §unresolved_gesture_parameters.rotate_cw_ccw_gyro_sign_convention TBD)" }
+      - { artifact: "electrical/sensor-interface_part2.yaml", point: "the IQS127D electrode count (5 or 7) and the channel mapping TBDs are mirrored in §unresolved_gesture_parameters and §mechanical_tbds; the bring-up state machine is independent of the crown layout" }
+      - { artifact: "electrical/sensor-interface.yaml", point: "I2C topology + GPIO allocation match; the IQS127D's INT GPIO is consistent with §sensor_signal_table" }
+      - { artifact: "firmware/architecture.md", point: "the gesture FSM (section 5) is unchanged; the FSM's inputs are now (TOUCH_PRESS + electrode_id) pairs, which are produced by the IQS127D via the mapping in §3" }
+      - { artifact: "components/touch-selection.yaml", point: "the 5-7 electrode recommendation is mirrored in §2.3; the IQS127D-00200 is the selected driver" }
+      - { artifact: "components/imu-selection.yaml", point: "the BMI270 is the selected IMU; the axis mapping in §5 is consistent with the BMI270's data sheet conventions" }
+      - { artifact: "research/even-r1-reference.md", point: "the Even R1 is used as an industrial-design + interaction-philosophy reference ONLY (no geometry cloning); the thumb-pad touch assumption in §7 is consistent with the Even R1 interaction vocabulary" }
+
+    resolved_tbds:
+      description: "TBDs from other documents that this artifact resolves."
+      resolutions:
+        - { tbd_from: "protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters.crown_electrode_numbering", resolved_by: "this document §2.2 (electrode placement zones E0..E6) + §3 (IQS127D electrode mapping)" }
+        - { tbd_from: "protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters.rotate_cw_ccw_gyro_sign_convention", resolved_by: "this document §5.4 (GYR_Z sign convention)" }
+        - { tbd_from: "electrical/sensor-interface_part2.yaml §known_uncertainties.mechanical_dependencies.crown_electrode_numbering", resolved_by: "this document §2.2 + §3" }
+        - { tbd_from: "electrical/sensor-interface_part2.yaml §known_uncertainties.mechanical_dependencies.BMI270_PCB_mounting_orientation", resolved_by: "this document §5.1 (PCB placement) + §5.2 (accelerometer mapping) + §5.3 (gyroscope mapping)" }
+
+    remaining_cross_document_tbds:
+      description: "TBDs that this artifact does NOT resolve; they remain TBD in other documents and are explicitly tracked here."
+      tbd_list:
+        - "rotate_cw_ccw_threshold_dps (per protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters)"
+        - "wear_put_on_imu_motion_threshold_g (per protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters)"
+        - "wear_taken_off_imu_stillness_threshold_g (per protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters)"
+        - "swipe_min_ms_lower_bound (per protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters)"
+        - "all BMI270 / IQS127D / TMP117 / DRV2605L register addresses (per electrical/sensor-interface_part2.yaml §known_uncertainties.register_addresses)"
+        - "all I2C addresses except MAX17048 (per electrical/sensor-interface_part2.yaml §known_uncertainties.i2c_addresses)"
+        - "all electrode dimensions, crown radius, band thickness, PCB dimensions, antenna keepout, battery dimensions, ring size range (per this document §8 mechanical_tbds)"
+
+  references:
+    - { ref: "components/touch-selection.yaml", url: "internal", note: "5-7 electrode crown + IQS127D driver" }
+    - { ref: "components/imu-selection.yaml", url: "internal", note: "BMI270 + 6-axis convention" }
+    - { ref: "components/antenna-selection.yaml", url: "internal", note: "Antenna keepout" }
+    - { ref: "components/battery-selection.yaml", url: "internal", note: "Battery dimensions TBD on manufacturer" }
+    - { ref: "components/haptic-selection.yaml", url: "internal", note: "LRA mounting location" }
+    - { ref: "electrical/sensor-interface.yaml", url: "internal", note: "I2C topology + GPIO allocation" }
+    - { ref: "electrical/sensor-interface_part2.yaml", url: "internal", note: "IQS127D bring-up + TBD register addresses" }
+    - { ref: "firmware/architecture.md", url: "internal", note: "Gesture FSM + IMU rotation" }
+    - { ref: "protocol/gesture-vocabulary.yaml", url: "internal", note: "SWIPE_LEFT/RIGHT/UP/DOWN + ROTATE_CW/CCW vocabulary" }
+    - { ref: "research/even-r1-reference.md", url: "internal", note: "Industrial-design reference (no geometry cloning)" }
+    - { ref: "Azoteq IQS127D datasheet", url: "https://www.azoteq.com/products/iqs127d", note: "Authoritative for electrode channel numbers + sensing thresholds; every channel mapping in this document is TBD until this datasheet is consulted" }
+    - { ref: "Bosch BMI270 datasheet", url: "https://www.bosch-sensortec.com/products/smart-sensors/bmi270.html", note: "Authoritative for accelerometer + gyroscope axis definitions and sign conventions" }

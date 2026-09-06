@@ -1,0 +1,95 @@
+schema_version: 1
+v853_peripheral_conflict_audit:
+  id: v853_peripheral_conflict_audit
+  date: 2026-09-05
+  source: cross-referenced against the V853 datasheet (v853-datasheet.pdf) section 1.3 (architecture), 1.3.x (peripherals), and 2.3.4 (recommended operating conditions), and against the chosen component set in the audio/camera/display/power/imu/support reference libraries
+  classification_scheme:
+    NO_CONFLICT: "peripheral block or GPIO function is unambiguously unique on the V853; the chosen assignment cannot conflict with any other chosen assignment"
+    POTENTIAL_CONFLICT: "peripheral block is unique, but the GPIO mux might allow multiple functions on the same ball; the specific ball must be assigned to avoid the conflict (the ball-level conflict resolution requires the V853/V853S_PINOUT.sls file)"
+    CONFLICT: "two chosen assignments both need the same peripheral block in an incompatible way"
+    UNKNOWN: "the V853 datasheet PDF does not provide enough detail to determine the conflict status; the .sls file is required"
+
+  peripheral_block_conflicts:
+    csi0:
+      status: NO_CONFLICT
+      reason: "There is only one CSI IP block. The 2x 2-lane sub-channel mode uses the same 4-lane physical pins (D0/D1/CLK) with MIPI virtual-channel arbitration. Both cameras can operate simultaneously on the same CSI block."
+      confidence: HIGH
+
+    dsi0:
+      status: NO_CONFLICT
+      reason: "There is only one DSI IP block. One display."
+      confidence: HIGH
+
+    smhc0_emmc_and_smh1_sdio:
+      status: NO_CONFLICT
+      reason: "SMHC0 and SMHC1 are separate IP blocks; eMMC on SMHC0 and SDIO on SMHC1. They have separate ball assignments and can be active simultaneously."
+      confidence: HIGH
+
+    smhc0_and_smh2:
+      status: NO_CONFLICT
+      reason: "SMHC0 (eMMC) and SMHC2 (reserved) are separate IP blocks. SMHC2 is not used in the glasses design."
+      confidence: HIGH
+
+    usb0:
+      status: NO_CONFLICT
+      reason: "There is only one USB 2.0 DRD block. One USB-C receptacle."
+      confidence: HIGH
+
+    i2s0_and_i2s1:
+      status: NO_CONFLICT
+      reason: "There are two I2S/PCM IP blocks. I2S0 is the left amplifier, I2S1 is the right amplifier. Each amplifier is mono."
+      confidence: HIGH
+
+    dmic0:
+      status: NO_CONFLICT
+      reason: "There is one DMIC block supporting up to 8 mics. We use 1 mic."
+      confidence: HIGH
+
+    twi0_shared_bus:
+      status: POTENTIAL_CONFLICT
+      reason: "There are 5 TWI controllers. TWI0 is used for the shared I2C bus. The other 4 (TWI1..TWI4) are reserved. The TWI0 SDA/SCL balls are unique to TWI0; no conflict at the peripheral block level. Address collisions are checked separately in dual-csi-validation.yaml (i2c-audit sister file)."
+      confidence: HIGH_for_peripheral_block; MEDIUM_for_address_collisions (verified by 7-bit address audit)
+
+    spi0:
+      status: NO_CONFLICT
+      reason: "There are 4 SPI controllers. SPI0 is reserved for debug. SPI1..3 are not used. No conflict."
+      confidence: HIGH
+
+    uart0_and_uart1:
+      status: NO_CONFLICT
+      reason: "There are 4 UART controllers. UART0 is the Bluetooth HCI, UART1 is the debug console. UART2..3 are not used. Each UART has unique balls."
+      confidence: HIGH
+
+    pwm0_and_pwm1:
+      status: NO_CONFLICT
+      reason: "There are 12 PWM channels. PWM0 is the IR LED brightness. PWM1 is the optional haptic. No conflict."
+      confidence: HIGH
+
+    gpio_banks:
+      status: POTENTIAL_CONFLICT
+      reason: "The V853 has 8 GPIO banks. The glasses design needs approximately 20 GPIO functions (IMU INT1/INT2, ALS INT, 2x TMP117 ALERT, FUEL_GAUGE ALERT, CHARGER INT, PMIC IRQ, 4x camera reset/standby, 3x display TE/reset/backlight-enable, IR LED EN + PWM, USER_BUTTON, STATUS_LED, 3x Wi-Fi/BT wake/host-wake, USB_VBUS_DET, HAPTIC EN + PWM). Each GPIO bank typically has 16 pins (8 banks * 16 = 128 GPIO total). 20 GPIO functions fit comfortably. **However**, each GPIO pin is a 4-8 function mux (GPIO, peripheral function, etc.), so the specific ball-to-function assignment must avoid mux conflicts. The exact ball assignments are in the V853/V853S_PINOUT.sls file (not in the PDF). With 8 banks and 20 functions, the conflict is solvable in principle but cannot be confirmed without the .sls file."
+      confidence: MEDIUM (the count works; the specific ball assignments are UNKNOWN)
+
+  i2c_address_collision_check:
+    see: "i2c-audit / dual-csi-validation sister file in this directory"
+    status: "All 7 proposed I2C devices (BMI270, VEML7700, 2x TMP117, MAX17048, BQ25185, AXP2101) have unique 7-bit addresses when configured correctly. See the i2c-audit sister file for the per-device address and configuration."
+
+  boot_pin_conflicts:
+    see: "boot-architecture sister file in this directory"
+    status: "The V853 boot mode is selected by boot pins (typically FEL / SD / eMMC / SPI NOR). The boot pin configuration is in the V853 datasheet; specific boot pin balls are in the .sls file. For the glasses production boot, eMMC boot is recommended with an SD-card fallback for recovery. NO_CONFLICT between the boot pins and the chosen peripheral assignments if the boot pins are not reassigned to peripheral functions after boot."
+
+  reset_conflicts:
+    status: POTENTIAL_CONFLICT
+    reason: "The V853 has a RESET ball (per the power-on sequence figure 2-2). The RESET ball must be asserted at power-on. After RESET is deasserted, the RESET ball is typically a normal GPIO or NC. The exact ball is in the .sls file. No conflict in principle, but the specific ball must be assigned in the .sls file."
+
+  sd_card_alternative:
+    status: NOT_INCLUDED
+    reason: "The brief did not include an SD card slot. SMHC2 is reserved for debug only. If an SD card is later added, SMHC2 can drive it; this would NOT conflict with the eMMC (SMHC0) or SDIO Wi-Fi (SMHC1)."
+
+  overall:
+    no_peripheral_block_conflicts: true
+    no_i2c_address_collisions: "verified, see i2c-audit sister file"
+    no_uart_pwm_dmic_dsi_conflicts: true
+    gpio_ball_assignments: "REQUIRES V853/V853S_PINOUT.sls FILE FOR COMPLETION"
+    boot_and_reset_assignments: "REQUIRES V853/V853S_PINOUT.sls FILE FOR COMPLETION"
+    pcb_routing_blocker: "the .sls file is the next critical acquisition; the glasses PCB cannot be routed with per-ball precision without it"

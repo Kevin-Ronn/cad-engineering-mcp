@@ -1,0 +1,58 @@
+schema_version: 1
+component:
+  id: murata_1xkl_earbeat
+  category: wifi_bt_module_sdio_uar_smallest
+  units: mm
+  role: smallest_wifi_bt_module_candidate
+
+source:
+  manufacturer: Murata Electronics
+  part_number: Type 1XK (EARBEAT series; CYW43012-class chipset from Cypress/Infineon)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.murata.com/products/connectivity/wifi-bluetooth
+      description: "Murata connectivity product line"
+
+mechanical:
+  package: stamp module (castellated)
+  dimensions_mm: { length: 7.0, width: 7.0, height: 1.1 }  # typical Murata 1XK / EARBEAT
+  source_for_mechanical: Murata datasheet summary
+
+electrical:
+  chipset: Infineon / Cypress CYW43012
+  wifi_standard: 802.11 b/g/n (Wi-Fi 4)
+  wifi_band: 2.4 GHz single-band
+  wifi_interface: SDIO 2.0
+  bluetooth: BT 5.0 BR/EDR/LE
+  bluetooth_interface: UART (HCI)
+  supply_voltage_v: 3.3
+  peak_current_ma: approximately 400
+  sleep_current_ua: 50
+  antenna_type: 1x1 SISO; antenna pin
+  source_for_electrical: Murata datasheet summary
+
+linux_driver:
+  chipset_typical: Infineon / Cypress CYW43012
+  status: "Mainline Linux uses the brcmfmac driver (CYW43xx is a Broadcom-derived chipset); support from kernel 4.x onward. Verify on the target kernel."
+  source_for_linux_driver: kernel.org (brcmfmac)
+
+regulatory:
+  fcc_id: typically certified per Murata module variant
+  ce: typically certified
+  telec: typically certified
+
+purchase:
+  distributor: Murata direct; Mouser; DigiKey
+  unit_price_usd: 5 to 10 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Wi-Fi 4 only (no 5 GHz); 2.4 GHz is sufficient for the phone-tethered glasses use case"
+
+constraints:
+  status: SERIOUS_ALTERNATIVE — smallest stamp module (7 x 7 x 1.1 mm), 2.4 GHz only, Bluetooth 5.0, well-supported in mainline Linux via brcmfmac.

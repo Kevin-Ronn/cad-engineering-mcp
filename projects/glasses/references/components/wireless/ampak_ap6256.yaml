@@ -1,0 +1,55 @@
+schema_version: 1
+component:
+  id: ampak_ap6256
+  category: wifi_bt_module_sdio
+  units: mm
+  role: secondary_wifi_bt_candidate_ampak
+
+source:
+  manufacturer: Ampak Technology
+  part_number: AP6256 (or AP6256S variant; Broadcom BCM43456-class chipset)
+  source_type: distributor_listing
+  source_docs:
+    - url: https://www.ampaktech.com/
+      description: "Ampak Technology official site"
+
+mechanical:
+  package: stamp module (castellated)
+  dimensions_mm: { length: 10.0, width: 10.0, height: 1.2 }  # typical AP62xx series
+  source_for_mechanical: Ampak datasheet summary
+
+electrical:
+  chipset: Broadcom BCM43456 (Wi-Fi 5) or BCM43460-class
+  wifi_standard: 802.11 a/b/g/n/ac (Wi-Fi 5)
+  wifi_band: 2.4 / 5 GHz dual-band
+  wifi_interface: SDIO 2.0 / 3.0
+  bluetooth: BT 4.2 / 5.0 BR/EDR/LE (depends on the variant)
+  bluetooth_interface: UART (HCI)
+  supply_voltage_v: 3.3
+  peak_current_ma: approximately 500
+  sleep_current_ua: 50
+  antenna_type: 1x1 SISO
+  source_for_electrical: Ampak datasheet summary
+
+linux_driver:
+  chipset_typical: Broadcom BCM43456
+  status: "Mainline Linux uses the brcmfmac driver; brcmfmac supports BCM43456 from kernel 5.x onward. Verify on the target kernel."
+  source_for_linux_driver: kernel.org (brcmfmac)
+
+regulatory:
+  fcc_id: typically certified per Ampak module variant
+  ce: typically certified
+
+purchase:
+  distributor: Ampak direct; LCSC; Mouser
+  unit_price_usd: 5 to 10 (single-piece retail)
+  moq: 1
+
+confidence:
+  overall: MEDIUM
+  sources: distributor_listing
+  gaps:
+    - "Exact chipset and Bluetooth version per specific Ampak part number"
+
+constraints:
+  status: SERIOUS_SECONDARY — smaller 10 x 10 mm stamp module; Broadcom chipset with mainline Linux brcmfmac driver.

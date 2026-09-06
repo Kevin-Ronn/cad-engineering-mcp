@@ -1,0 +1,34 @@
+schema_version: 1
+imu_selection:
+  id: smart_ring_imu_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "Using BMI270 in both the ring and the glasses simplifies the software architecture (single driver for both devices)."
+
+  candidates:
+
+    - { part: "Bosch BMI270", package: "LGA-2.5x3.0x0.8 mm (BEST for ring)", ram: "1 KB FIFO", interfaces: "I2C + SPI", supply: "1.71-3.6 V", current_active_uA: 685 (accel + gyro), current_sleep_uA: 3, odr_max_hz: 6400, fifo_bytes: 1024, interrupts: 2 (INT1 + INT2), gesture: "on-chip step counter, gesture recognition, activity recognition", driver: "mainline Linux IIO (bmi160 / bmi270)", notes: "Smallest in the candidate set; the lowest active current; well-documented; on-chip gesture and activity recognition. RECOMMENDED for both the glasses and the ring." }
+
+    - { part: "Bosch BMI323", package: "LGA-2.0x2.0x0.8 mm (smaller than BMI270 but newer and less mature)", ram: "FIFO", interfaces: "I2C + SPI", supply: "1.71-3.6 V", current_active_uA: 600 (typical), current_sleep_uA: 3, odr_max_hz: 6400, fifo_bytes: 1024, interrupts: 2, gesture: "on-chip gesture and activity recognition", driver: "mainline Linux IIO (newer)", notes: "Newer than BMI270; smaller package; lower active current; less mature driver; choose only if the smaller package is required (ring is not extremely tight; BMI270 is fine)" }
+
+    - { part: "TDK ICM-42688-P", package: "LGA-2.5x3.0x0.8 mm (same as BMI270)", ram: "2 KB FIFO", interfaces: "I2C + SPI", supply: "1.71-3.6 V", current_active_uA: 700, current_sleep_uA: 8, odr_max_hz: 32000, fifo_bytes: 2048, interrupts: 2, gesture: "on-chip AP (sensor fusion + activity recognition)", driver: "mainline Linux IIO (icm42600 family)", notes: "Higher ODR (32 kHz); on-chip AP for advanced pipelines; slightly higher sleep current; RECOMMENDED for high-end pipelines" }
+
+    - { part: "TDK ICM-20948 (RRing uses this)", package: "QFN-24 (3x3x1 mm)", ram: "FIFO", interfaces: "I2C + SPI", supply: "1.71-3.6 V", current_active_uA: 3000 (9-axis), current_sleep_uA: 8, odr_max_hz: 1100, fifo_bytes: 4096, interrupts: 2, gesture: "9-axis (accel + gyro + mag)", driver: "mainline Linux IIO (icm20948)", notes: "RRing uses this; 9-axis includes magnetometer; larger package (QFN-24, 3x3 mm) than BMI270 / ICM-42688-P; higher active current (3 mA for 9-axis vs 0.7 mA for 6-axis); NOT recommended for the ring (larger and higher-power)" }
+
+  recommended:
+    part: "Bosch BMI270"
+    package: "LGA-2.5x3.0x0.8 mm"
+    reason: "Smallest in the candidate set; the lowest active current; well-documented; on-chip gesture and activity recognition; mainline Linux IIO driver; the SAME driver as the glasses (simplifies software architecture)."
+    notes: "Using BMI270 in both the ring and the glasses means a single I2C bus driver, a single device tree binding, and a single set of kernel modules. This is a significant software-architecture simplification."
+    sources:
+      - { ref: "BMI270 datasheet", url: "https://www.bosch-sensortec.com/products/smart-sensors/bmi270.html", note: "Verify exact dimensions and current before committing." }
+
+  shared_with_glasses: true
+  shared_reason: "Both the ring and the glasses use BMI270; a single I2C bus driver, a single device tree binding, and a single set of kernel modules."
+
+  alternative: "ICM-42688-P for higher-end pipelines (32 kHz ODR; on-chip AP)"
+
+  rejected:
+    - { part: "ICM-20948", reason: "Larger (QFN-24, 3x3 mm); higher active current (3 mA for 9-axis); 9-axis is unnecessary for the ring (a 6-axis is sufficient); RRing uses this but our V1 is more power-conscious." }
+    - { part: "BMI323", reason: "Newer than BMI270; smaller package; less mature driver; choose only if the smaller package is required." }

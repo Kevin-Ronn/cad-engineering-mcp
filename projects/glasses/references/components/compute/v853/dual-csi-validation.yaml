@@ -1,0 +1,49 @@
+schema_version: 1
+dual_csi_validation:
+  id: v853_dual_camera_csi_validation
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, sections 1.3.6.4 (MIPI CSI configurations) and 1.2 (V853 AI vision solution)
+
+  conclusion:
+    dual_camera_simultaneously_supported: YES (in 2x 2-lane sub-channel mode)
+    confidence: HIGH
+    per_datasheet_quote: "V853 supports 1*4-lane/2x2-lane MIPI CSI configuration (per datasheet section 1.2 application diagram and section 1.3.6.4)."
+
+  csi_ip_block_summary:
+    ip_block_count: 1 (CSIC, section 6.1 of datasheet)
+    lane_architecture:
+      mode_1: "1x 4-lane: one camera uses all 4 data lanes + 1 clock lane"
+      mode_2: "2x 2-lane: two cameras each use 2 data lanes + 1 shared clock lane; MIPI virtual-channel separates the two streams"
+    clock_lane: "shared between the two sub-channels in 2x 2-lane mode"
+    power_domain: "VCC18-MCSI (1.8 V); VCC18-MDSI (1.8 V) also powers the DSI block, NOT the CSI"
+
+  2x_2_lane_mode_details:
+    physical_pins_used:
+      - "CSI_D0P, CSI_D0N (data lane 0, shared between sub-channels)"
+      - "CSI_D1P, CSI_D1N (data lane 1, shared between sub-channels)"
+      - "CSI_CLKP, CSI_CLKN (clock lane, shared)"
+    virtual_channel_arbitration: "MIPI CSI-2 virtual channel ID is set by each camera sensor's SCCB/I2C initialization; the V853's CSI parser separates the streams by virtual channel ID"
+    lane_rate: "up to 1.2 Gbps/lane per datasheet section 1.3.6.4"
+    per_camera_data_rate: "up to 2.4 Gbps aggregate (2 lanes * 1.2 Gbps)"
+    video_capture_resolution: "up to 5 MP @ 30 fps per camera (per datasheet section 1.3.6.4; the capture is per-camera and the aggregate is 2x 5 MP = 10 MP aggregate)"
+
+  linux_support:
+    mainline_status: "The Allwinner V853 is supported in the mainline Linux kernel via the Allwinner camera ISP / CSI driver chain (drivers/media/platform/sunxi/sunxi-csi/). The Tina Linux SDK (Allwinner's downstream) supports the 2x 2-lane mode. Mainline Linux 6.x has the sunxi-csi driver; the 2x 2-lane mode requires the device tree to be configured for two sub-nodes under the csi node."
+    driver_chain: "Sensor subdev -> CSI parser -> CSI DMA -> V4L2 mem2mem / capture device"
+    simultaneous_capture: "Yes, with the right device-tree configuration and V4L2 multi-stream setup. The V853's ISP is single-instance; the 2x 2-lane mode is virtual-channel demux, not a second ISP. Both cameras share the same ISP pipeline; the maximum aggregate resolution is bounded by the ISP's 5M @ 30 fps spec (per datasheet section 1.3.6.1). The TWO cameras cannot both stream at 5 MP / 30 fps simultaneously through a single ISP. The aggregate is approximately 5 MP / 30 fps total, with the two cameras sharing the ISP's bandwidth."
+
+  imx708_compatibility:
+    sensor: "Sony IMX708 (Raspberry Pi Camera Module 3)"
+    resolution: "11.9 MP (4608 x 2592) at up to 10 fps in 2-lane mode, or 1080p at 47 fps"
+    compatibility: "the IMX708 in 2-lane mode runs at ~1.5 Gbps/lane, well within the 1.2 Gbps/lane CSI spec; the 11.9 MP at 10 fps is fine for the glasses"
+    note: "If the glasses need higher frame rates at full resolution, the cameras should be operated at 1080p (which is well within the 1.2 Gbps/lane spec)"
+    v853_lane_constraint: "2x 2-lane aggregate = 4 lanes total, but the 2-lane mode is virtual-channel demux on the same 2 physical lanes; each camera gets the full 2.4 Gbps, NOT half. The per-camera bandwidth is up to 2.4 Gbps."
+
+  constraints:
+    isp_share: "Both cameras share the V853's single ISP. The aggregate ISP throughput is 5 MP / 30 fps. If both cameras stream 5 MP at 30 fps, the ISP cannot keep up. The glasses design should operate both cameras at 1080p (which is 2 MP per camera) for comfortable ISP throughput."
+    lane_count_confusion: "There is NO mux chip needed for 2x 2-lane sub-channels; the V853's CSI block does this internally. The '4-lane vs 2x 2-lane' is a CSI controller configuration, not a hardware mux."
+    physical_caveat: "The two sub-channels share the D0/D1/CLK physical pins. The camera FPCs connect to these shared pins through a PCB trace fan-out. The two cameras are NOT connected to different physical pins."
+
+  risk:
+    - "The CSI block supports 2x 2-lane virtual-channel mode per the datasheet. The Linux driver chain supports the configuration. The ISP bandwidth is the bottleneck, not the CSI bandwidth."
+    - "The IMX708's I2C addresses (the SCCB address) MUST be different for the two cameras. The IMX708's SCCB address is 0x1A or 0x10 depending on the variant. The ProjectYosemite EPCB has two cameras on the same I2C bus; verify the address selection on the actual glasses-design camera FPC."

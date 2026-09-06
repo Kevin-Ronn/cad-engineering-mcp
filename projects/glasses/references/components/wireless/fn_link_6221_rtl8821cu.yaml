@@ -1,0 +1,59 @@
+schema_version: 1
+component:
+  id: fn_link_6221_rtl8821cu
+  category: wifi_bt_module_sdio_uart
+  units: mm
+  role: secondary_wifi_bt_candidate
+
+source:
+  manufacturer: FN-LINK Technology
+  part_number: 6221C-UUB (or similar; FN-LINK 6221 series, Realtek RTL8821CU chipset)
+  source_type: distributor_listing
+  source_docs:
+    - url: https://www.fn-link.com/
+      description: "FN-LINK official site"
+
+mechanical:
+  package: stamp module (castellated)
+  dimensions_mm: { length: 12.0, width: 12.0, height: 1.5 }  # typical FN-LINK 6221 series
+  source_for_mechanical: FN-LINK datasheet summary
+
+electrical:
+  chipset: Realtek RTL8821CU
+  wifi_standard: 802.11 a/b/g/n/ac (Wi-Fi 5)
+  wifi_band: 2.4 / 5 GHz dual-band
+  wifi_interface: SDIO 2.0 (or 3.0; verify) or USB 2.0
+  bluetooth: BT 5.0 BR/EDR/LE
+  bluetooth_interface: UART (HCI)
+  supply_voltage_v: 3.3
+  peak_current_ma: approximately 500 (Wi-Fi TX, 2.4 GHz, 1x1)
+  sleep_current_ua: 100 (typical)
+  antenna_type: 1x1 SISO; antenna pin or trace
+  source_for_electrical: FN-LINK datasheet summary
+
+linux_driver:
+  chipset_typical: Realtek RTL8821CU
+  status: "Mainline kernel has the rtw88 driver for RTL8821CU as of kernel 5.19+; older kernels need the out-of-tree `github.com/brektrou/rtl8821cu` driver. Verify on the target kernel."
+  source_for_linux_driver: kernel.org, brektrou/rtl8821cu
+
+regulatory:
+  fcc_id: typically certified per FN-LINK module variant
+  ce: typically certified
+  source_for_regulatory: FN-LINK datasheet
+
+purchase:
+  distributor: FN-LINK direct; LCSC; AliExpress; Taobao
+  unit_price_usd: 4 to 8 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: distributor_listing
+  gaps:
+    - "Specific FN-LINK model number must be confirmed; the 6221 family has many variants"
+    - "Linux driver is in mainline as of kernel 5.19+; older kernels need out-of-tree"
+
+constraints:
+  status: SERIOUS — RTL8821CU is well-known, well-supported in mainline Linux. 12 x 12 mm stamp module fits a temple pod. Cheaper than AzureWave.

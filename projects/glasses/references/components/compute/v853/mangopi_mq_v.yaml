@@ -1,0 +1,81 @@
+schema_version: 1
+component:
+  id: mangopi_mq_v
+  category: system_on_module_or_sbc
+  units: mm
+  role: compute_candidate_investigated_but_not_yet_confirmed
+
+source:
+  manufacturer: MangoPi (Widora)
+  part_number: MQ-V (announced as V853-based; sometimes referred to as MQ-V or V853 module)
+  source_type: third_party_module_announcement
+  source_docs:
+    - url: https://twitter.com/mangopi_sbc/status/1522230307826458624
+      description: "MangoPi Twitter announcement of the V853 module (May 2022)"
+    - url: https://www.cnx-software.com/2022/05/06/allwinner-v853-arm-cortex-a7-risc-v-soc-comes-with-1-tops-npu-for-ai-vision-applications/
+      description: "CNX-Software article referencing the MangoPi module"
+    - url: https://mangopi.org/
+      description: "MangoPi product family page (MangoPi currently publishes D1-based boards, e.g. MQ-Pro; V853 module page not located)"
+
+mechanical:
+  dimensions_mm:
+    width: UNKNOWN
+    height: UNKNOWN
+  pcb_thickness_mm: UNKNOWN
+  max_component_height_mm: UNKNOWN
+  weight_g: UNKNOWN
+  mounting_holes: UNKNOWN
+  connectors: UNKNOWN
+  source_for_mechanical: NOT_PUBLICLY_AVAILABLE
+  note: "The MangoPi V853 SoM was announced in May 2022 on MangoPi's Twitter and covered in CNX-Software, but a public product page with a mechanical drawing has not been located. The current MangoPi site focuses on the D1-based MQ-Pro (65 x 30 mm) and other RISC-V boards. The V853 SoM may be a MangoPi-internal reference design, a Taobao-only product, or simply no longer in production."
+
+electrical:
+  soc: allwinner_v853_soc
+  pmic: UNKNOWN (CNX-Software notes the module uses AXP2101; not independently confirmed in this inspection)
+  ram_options: UNKNOWN
+  emmc_options: UNKNOWN
+
+video_input:
+  mipi_csi: UNKNOWN
+  video_input_use_for_glasses: UNKNOWN
+
+video_output:
+  mipi_dsi: UNKNOWN
+  video_output_use_for_glasses: UNKNOWN
+
+audio:
+  interfaces: UNKNOWN
+  glasses_use_case: UNKNOWN
+
+wireless:
+  module: UNKNOWN
+  glasses_use_case: UNKNOWN
+
+usb:
+  count: UNKNOWN
+  glasses_use_case: UNKNOWN
+
+purchase:
+  available: UNKNOWN
+  taobao_listing: NOT_LOCATED_in_this_inspection
+  source_for_purchase: UNKNOWN
+
+confidence:
+  overall: LOW
+  sources: third_party_press_tweet
+  gaps:
+    - "Mechanical drawing: not located"
+    - "Connector pinout: not located"
+    - "Price and availability (2026): not located"
+    - "Whether the product is still being manufactured: not located"
+    - "MangoPi product page for the V853 SoM: not located"
+
+constraints:
+  exact_dimensions_required: true
+  guessed_dimensions_forbidden: true
+  current_status_for_glasses: "BLOCKED. Cannot adopt without a public mechanical drawing. Worth re-checking in 60 days in case MangoPi publishes the SoM specs, or contacting Widora/MangoPi directly."
+
+contact_for_drawing:
+  vendor: MangoPi (Widora)
+  url: https://mangopi.org/
+  ask_for: "MQ-V SoM STEP / 2D mechanical drawing; 2D footprint with mounting holes and connector pattern."

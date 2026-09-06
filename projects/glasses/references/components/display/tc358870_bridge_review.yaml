@@ -1,0 +1,42 @@
+schema_version: 1
+component:
+  id: tc358870_bridge_review
+  category: hdmi_to_mipi_dsi_bridge
+  units: mm
+  role: display_bridge_evaluation_record
+
+source:
+  manufacturer: Toshiba Electronic Devices & Storage (some variants via Microchip)
+  part_number: TC358870XBG
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - description: "Toshiba datasheet; product history circa 2013-2018 (originally for tablet applications)"
+
+mechanical:
+  package: LFBGA-64
+  dimensions_mm: { length: 7.0, width: 7.0, height: 1.0 }  # typical; verify per datasheet
+  source_for_mechanical: Toshiba datasheet summary
+
+electrical:
+  input: HDMI 1.4 (up to 1080p60 / 4k30)
+  output: MIPI DSI (up to 4 lanes, 1 Gbps/lane)
+  supply_voltage_v: { core: 1.2, io: 3.3 }
+  source_for_electrical: Toshiba datasheet summary
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Part is NRND / EOL in some channels (per the press; verify with Toshiba/Microchip)"
+    - "Linux driver: out-of-tree drivers for the Raspberry Pi 7-inch DSI touchscreen use the TC358870; check kernel"
+
+constraints:
+  status: EVALUATED_REJECTED_FOR_GLASSES
+  evaluation: "The TC358870 converts HDMI-to-DSI, not a useful bridge for the glasses because the V853's native output is MIPI DSI (4-lane) — no bridge is needed. The bridge would be needed only if the display engine has an HDMI / LVDS / RGB input. Most 0.23 640x400 micro-OLED panels have MIPI DSI input directly (e.g. Sony ECX336-class)."
+
+conclusion:
+  - "V853 native MIPI DSI 4-lane output (1920 x 1200 @ 60 fps per datasheet section 1.3.5) is compatible with most 0.23 640x400 micro-OLED panels that have a MIPI DSI input."
+  - "For a 0.23 640x400 micro-OLED with MIPI DSI input: V853 DSI 4-lane directly to the display; NO BRIDGE NEEDED."
+  - "For an LCoS engine with parallel RGB / LVDS input: an RGB-to-DSI bridge would be needed (e.g. Toshiba TC358778, Lontium LT8912B, or ITE IT6505)."
+  - "For a micro-OLED with sub-LVDS input (typical of Sony ECX336-class): a sub-LVDS-to-DSI bridge is needed (no widely-available commercial IC at this time; this is a custom design project)."
+  - "The TC358870 is therefore EVALUATED_REJECTED for the glasses, unless a specific display engine with HDMI input is selected."

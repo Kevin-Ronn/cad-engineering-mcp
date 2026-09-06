@@ -1,0 +1,47 @@
+schema_version: 1
+component:
+  id: microchip_mcp73871
+  category: single_cell_li_ion_charger_with_load_sharing
+  units: mm
+  role: alternative_charger_candidate_with_load_sharing
+
+source:
+  manufacturer: Microchip Technology
+  part_number: MCP73871
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.microchip.com/en-us/product/MCP73871
+      description: "MCP73871 product page and datasheet"
+
+mechanical:
+  package: MSOP-10 or 3x3 DFN
+  dimensions_mm: approximately 3.0 x 3.0 (DFN-10) or 3.0 x 3.0 (MSOP-10)
+  source_for_mechanical: typical DFN/MSOP
+
+electrical:
+  input_voltage_v: { min: 4.5, typ: 5.0, max: 6.0 }
+  charge_current_ma: up to approximately 1000 (set by external resistor)
+  charge_voltage_v: 4.2 (Li-ion) / 4.35/4.4 (Li-poly) selectable
+  interface: NONE (standalone)
+  power_path_management: yes (load-sharing between input and battery; charges the battery while powering the system)
+  thermal_regulation: yes
+  safety_timers: yes (programmable)
+  battery_protection_features: overcharge, overdischarge, overcurrent, thermal
+  source_for_electrical: MCP73871 datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: Microchip direct; Mouser; DigiKey
+  unit_price_usd: approximately 1.50 to 2.50 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+
+constraints:
+  status: ALTERNATIVE — load-sharing / power-path management without I2C. Cheaper than BQ25185; larger package.

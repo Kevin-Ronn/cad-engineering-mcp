@@ -1,0 +1,132 @@
+schema_version: 1
+power_budget:
+  id: v853_smart_glasses_power_budget
+  units: mw
+  source_confidence:
+    measured: "V853 datasheet (typical values for ARM-A7 + RISC-V E907 + 1 TOPS NPU; verify with Allwinner FAE for production)"
+    datasheet_max: "component datasheets (max values)"
+    engineering_estimate: "Wi-Fi/BT, IR LEDs, audio amp, IMU typical values; not measured for this specific design"
+
+  voltage_assumption: 3.8 V (battery nominal through VSYS)
+  efficiency_assumption: 80% total chain (VSYS to component rails; AXP2101 buck + LDO losses)
+
+  components:
+
+    v853_idle:
+      typical_mw: 250
+      source: V853 datasheet engineering estimate (Cortex-A7 idle + RISC-V sleep + 1 TOPS NPU gated)
+      confidence: low
+
+    v853_camera_active_one:
+      typical_mw: 600
+      source: V853 + ISP + 1 camera CSI-2 active
+      confidence: low
+
+    v853_camera_active_two:
+      typical_mw: 900
+      source: V853 + ISP + 2 cameras CSI-2 active
+      confidence: low
+
+    v853_wifi_active:
+      typical_mw: 800
+      source: XR829 Wi-Fi 4 TX burst, 2.4 GHz
+      confidence: medium
+
+    v853_bluetooth_active:
+      typical_mw: 150
+      source: XR829 BT 4.2
+      confidence: medium
+
+    v853_mic_active:
+      typical_mw: 5
+      source: ST MP23DB01HP @ 1.8 V, 650 uA
+      confidence: high
+
+    v853_emmc_active:
+      typical_mw: 200
+      source: typical eMMC 5.1 active read/write
+      confidence: medium
+
+    audio_amp_idle:
+      typical_mw: 20
+      source: ADI MAX98390 idle / no audio
+      confidence: medium
+
+    audio_amp_voice_playback:
+      typical_mw: 200
+      source: ADI MAX98390 + 6x10mm 32 ohm speaker, 50 mW acoustic
+      confidence: medium
+
+    imu_active:
+      typical_mw: 30
+      source: typical 6-axis IMU at 200 Hz ODR
+      confidence: medium
+
+    display_active:
+      typical_mw: 500
+      source: micro-OLED 0.23" + waveguide; varies widely with brightness
+      confidence: low
+
+    ir_leds_active:
+      typical_mw: 300
+      source: 6x VSMA1094750X02 LEDs at 50 mA each, with current-limit resistor
+      confidence: medium
+
+    pmic_losses:
+      typical_mw: 200
+      source: AXP2101 buck + LDO efficiency losses (sum across rails)
+      confidence: medium
+
+  system_scenarios:
+
+    light_use:
+      description: "V853 idle, BT only, no camera, no display, audio off, IMU on"
+      components_active: [v853_idle, v853_bluetooth_active, imu_active, audio_amp_idle, pmic_losses]
+      typical_mw: 250 + 150 + 30 + 20 + 200 = 650
+      typical_mw_with_efficiency: 650 / 0.8 = 813
+      estimate: 800 mW
+
+    normal_mixed_use:
+      description: "V853 active, one camera on, BT + Wi-Fi intermittent, display occasionally on, audio idle"
+      components_active: [v853_camera_active_one, v853_bluetooth_active, v853_wifi_active @ 25% duty, imu_active, audio_amp_idle, pmic_losses]
+      typical_mw: 600 + 150 + 200 + 30 + 20 + 200 = 1200
+      typical_mw_with_efficiency: 1200 / 0.8 = 1500
+      estimate: 1500 mW
+
+    continuous_camera_wireless_display:
+      description: "V853 + both cameras, Wi-Fi streaming, display on, audio off, IMU on"
+      components_active: [v853_camera_active_two, v853_wifi_active, display_active, imu_active, audio_amp_idle, pmic_losses]
+      typical_mw: 900 + 800 + 500 + 30 + 20 + 200 = 2450
+      typical_mw_with_efficiency: 2450 / 0.8 = 3063
+      estimate: 3000 mW
+
+    high_load_scenario:
+      description: "All subsystems active: both cameras, Wi-Fi streaming, display on, audio playback, IMU, IR LEDs occasionally"
+      components_active: [v853_camera_active_two, v853_wifi_active, display_active, audio_amp_voice_playback, imu_active, ir_leds_active @ 50% duty, pmic_losses]
+      typical_mw: 900 + 800 + 500 + 200 + 30 + 150 + 200 = 2780
+      typical_mw_with_efficiency: 2780 / 0.8 = 3475
+      estimate: 3500 mW
+
+    peak_transient:
+      description: "Wi-Fi TX burst + camera + display + audio peak + IR LEDs + PMIC"
+      peak_components: [v853_camera_active_two, v853_wifi_active, display_active, audio_amp_voice_playback, ir_leds_active, pmic_losses]
+      peak_mw: 900 + 1000 + 600 + 250 + 300 + 250 = 3300
+      peak_mw_with_efficiency: 3300 / 0.8 = 4125
+      estimate: 4100 mW (transient; must be within PMIC and battery peak current limits)
+
+  source_priority:
+    - 1: V853 datasheet for V853 + ISP + NPU typical values
+    - 2: XR829 datasheet for Wi-Fi/BT peak
+    - 3: AXP2101 datasheet for buck/LDO efficiency
+    - 4: ADI MAX98390 datasheet for amplifier efficiency
+    - 5: Industry typical for eMMC, IMU, MEMS mic
+
+  confidence:
+    overall: LOW_TO_MEDIUM
+    rationale: "V853 specific power numbers are engineering estimates based on the V853 datasheet (which does not publish a system-level power table). Per-component typicals are well-known. The total system power is the dominant unknown; the actual measurement on a real glasses prototype will likely differ by 20-40% from these estimates. The battery life section uses the same estimates and notes that the estimates are not measured."
+
+  notes:
+    - "Heavy AI inference is OFFLOADED to the phone (per the brief). On-device NPU usage is limited. This significantly reduces the worst-case power."
+    - "V853 NPU peak is ~1 TOPS; not all 1 TOPS is used continuously. A typical AI prefilter or AE/AWB pre-stat uses < 100 mW of NPU power."
+    - "Display brightness drives a wide range; a 1400-nit daylight display at 100% brightness can exceed 1 W; a dim indoor display at 50% is 200-300 mW."
+    - "The system is a wearable; the typical use case is 10-20% camera-on, 5-10% display-on, 50% idle, 20% BT/Wi-Fi."

@@ -1,0 +1,33 @@
+schema_version: 1
+ppg_selection:
+  id: smart_ring_ppg_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified. Health-sensing claims are not made.
+
+  note: "PPG is OPTIONAL for V1. If PPG makes the first prototype substantially harder, recommend V1 = controller ring, V2 = health ring. The brief also says: do not select a PPG sensor merely because another open project uses it."
+
+  recommendation: "V1 = controller ring (NO PPG). V2 = health ring (WITH PPG)."
+
+  candidates:
+
+    - { part: "Maxim Integrated MAX86140 / MAX86141", package: "OLGA-3.1x4.7x0.8 mm (BEST for ring)", interfaces: "I2C + SPI", supply: "1.8 V (VDD); 3.3 V (VDDA for LEDs)", led_drivers: "3 (RED + IR + GREEN)", photodiode: "external", notes: "Industry-standard PPG sensor; small; 3 LEDs (RED, IR, GREEN) for SpO2; good documentation; the MAX86141 adds an ECG front-end" }
+
+    - { part: "Maxim Integrated MAXM86161", package: "OLGA-2.9x4.0x0.8 mm", interfaces: "I2C + SPI", supply: "1.71 V (VDD); 3.3 V (VDDA for LEDs)", led_drivers: "2 (RED + IR)", photodiode: "external", notes: "Smaller than MAX86140; 2 LEDs (RED, IR); good for HR but not for SpO2" }
+
+    - { part: "Maxim Integrated MAX86150", package: "OLGA-2.9x4.0x0.8 mm", interfaces: "I2C + SPI", supply: "1.8 V (VDD); 3.3 V (VDDA)", led_drivers: "2 (RED + IR)", photodiode: "external", notes: "Older generation; superseded by MAX86140/MAXM86161" }
+
+  rejected:
+    - { part: "Other", reason: "The brief says: 'do not select a PPG sensor merely because another open project uses it'. We have NOT used NERVA_Ring's PPG sensor selection as a reference (NERVA_Ring's license is UNKNOWN per the license audit). We have selected based on size, LED driver count, and Linux driver availability." }
+
+  decision:
+    V1: "no PPG. The ring is a controller-only device. The V1 PCB has a small capacitive touch crown, a BMI270 IMU, an nRF54L15 SoC, a BQ25185 charger, a MAX17048 fuel gauge, an LRA haptic, a curved LiPo battery, a 2.4 GHz chip antenna, and a TMP117 temperature sensor. The PPG sensor is excluded from V1."
+    V2: "add the MAX86140 PPG sensor. The V2 PCB adds a MAX86140 + RED LED + IR LED + photodiode on the inner band. The V2 software adds a motion-artifact filter (IMU data cancels the motion artifact) and an HR / SpO2 / HRV algorithm. The V2 sensor placement is the same as NERVA_Ring's (inner band, between the IMU and the touch IC)."
+
+  cost:
+    V1_ppg_cost: 0 (no PPG)
+    V2_ppg_cost: "approximately 5-7 USD (MAX86140 + LED + photodiode + assembly)"
+
+  sources:
+    - { ref: "MAX86140 datasheet", url: "https://www.maximintegrated.com/en/products/sensors/MAX86140.html", note: "Verify exact dimensions and pinout before committing." }
+    - { ref: "MAXM86161 datasheet", url: "https://www.maximintegrated.com/en/products/sensors/MAXM86161.html", note: "Same." }
+    - { ref: "NERVA_Ring (reference-only; license unknown)", url: "https://github.com/NRG24/NERVA_Ring", note: "NERVA's documentation has known discrepancies per the brief; we do not copy NERVA's BOM." }

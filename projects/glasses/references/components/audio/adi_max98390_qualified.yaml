@@ -1,0 +1,63 @@
+schema_version: 1
+component:
+  id: adi_max98390
+  category: class_d_audio_amplifier_i2s
+  units: mm
+  role: primary_amplifier_candidate
+
+source:
+  manufacturer: Analog Devices (formerly Maxim Integrated)
+  part_number: MAX98390
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.analog.com/en/products/max98390.html
+      description: "MAX98390 product page and datasheet"
+
+mechanical:
+  package: 16-bump WLP, 0.4 mm pitch
+  dimensions_mm: { length: 1.33, height: 1.33, depth: 0.5 }
+  source_for_mechanical: ADI datasheet
+
+electrical:
+  interface: I2S (standard 3-wire: BCLK, LRCLK, DIN)
+  supply_voltage_v: { min: 2.65, typ: 3.6, max: 5.5 }  # PVDD; logic 1.8 V
+  io_voltage_v: 1.8 (1.8 V I/O compatible per ADI datasheet; verify exact)
+  output_power_w: 2.5 (typ into 8 ohm at 10% THD+N)
+  efficiency_percent: 90 (typical class-D)
+  quiescent_current_ma: UNKNOWN (verify per datasheet)
+  shutdown_current_na: less than 1 (per ADI class)
+  load_impedance_ohm: 4 to 8 (recommended)
+  filterless: yes
+  thermal_protection: yes (junction-temperature-regulated)
+  speaker_protection: no (no IV sense; thermal only)
+  source_for_electrical: ADI datasheet
+
+acoustic:
+  thd_plus_n_percent: less than 0.1 (typ, 1 kHz, 1 W into 8 ohm)
+  source_for_acoustic: ADI datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: ADI datasheet
+
+purchase:
+  distributor: ADI direct; Mouser; DigiKey
+  unit_price_usd: 2.50 to 3.50 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production (some Maxim part numbers are NRND; verify at distributor)
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact quiescent current not in the summary"
+    - "I/O voltage must be verified in the ADI datasheet PDF (the 1.8 V I/O is per the previous research pass; the official datasheet should confirm)"
+
+constraints:
+  status: SERIOUS_PRIMARY — smallest class-D I2S amplifier in the 1.33 x 1.33 mm class, 2.5 W into 8 ohm, filterless, I2S interface matches V853 I2S0/I2S1 directly. The glasses only need speech and modest media playback (typically 10-30 mW acoustic), so 2.5 W is more than enough.
+  v853_connection: "I2S BCLK, LRCLK, DIN connect directly to V853 I2S0 or I2S1. No level shifter needed if the I/O voltage is 1.8 V (verify)."
+
+geometry_relevance:
+  total_envelope_mm: { length: 1.33, height: 1.33, depth: 0.5 }
+  fit_assessment: "Trivially fits in the compute-PCB (temple). One per temple (2x total). Use 2x for stereo."

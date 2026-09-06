@@ -1,0 +1,56 @@
+schema_version: 1
+component:
+  id: ti_cc3301mod
+  category: wifi_bt_module
+  units: mm
+  role: alt_wifi_5_bt_5_4
+
+source:
+  manufacturer: Texas Instruments
+  part_number: CC3301MOD (or CC3301MOD-class; TI SimpleLink family, Wi-Fi 5 + BT 5.4)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.ti.com/product/CC3301MOD
+      description: "TI CC3301MOD product page"
+
+mechanical:
+  package: stamp module
+  dimensions_mm: approximately 16 x 14 x 1.5 (verify)
+  source_for_mechanical: TI datasheet summary
+
+electrical:
+  chipset: TI CC3301 (Wi-Fi 5 + BT 5.4)
+  wifi_standard: 802.11 a/b/g/n/ac (Wi-Fi 5)
+  wifi_band: 2.4 / 5 GHz dual-band
+  wifi_interface: SDIO 2.0 or SPI (host-selectable)
+  bluetooth: BT 5.4 LE (and BT 5.x BR/EDR/LE)
+  bluetooth_interface: UART (HCI)
+  supply_voltage_v: 3.3
+  peak_current_ma: approximately 500
+  sleep_current_ua: 50
+  antenna_type: 1x1 SISO
+  source_for_electrical: TI datasheet summary
+
+linux_driver:
+  chipset_typical: TI CC3301
+  status: "Mainline Linux uses the ti/cc33xx driver; check kernel version. TI provides a driver for the host interface."
+  source_for_linux_driver: kernel.org (ti/cc33xx); TI driver page
+
+regulatory:
+  fcc_id: certified per TI module variant
+  ce: certified
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey
+  unit_price_usd: 6 to 10 (single-piece retail)
+  moq: 1
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Linux driver maturity is younger than the Broadcom/Realtek families"
+    - "Form factor 16 x 14 mm is on the larger side"
+
+constraints:
+  status: ALTERNATIVE — newer TI CC33xx family; BT 5.4 is the latest. Linux driver is younger.

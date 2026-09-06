@@ -1,0 +1,66 @@
+schema_version: 1
+ring_ble_interface:
+  id: smart_ring_ble_interface
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "The ring connects to BOTH the glasses and the phone. The V1 ring uses a fast role-switch (within 100 ms) between the glasses and the phone. V2 may support simultaneous connections (BLE 5.x supports multiple connections, but maintaining two simultaneous connections costs power)."
+
+  ble_architecture:
+    primary_connection: "ring <-> glasses (BLE 5.4; low-latency commands; 7.5 ms connection interval; for the V1 use case)"
+    secondary_connection: "ring <-> phone (BLE 5.4; long-range data; 30-100 ms connection interval; for application / health data in V2)"
+    simultaneous_connections: false  # V1
+    role_switch_time_ms: 100
+    connection_parameters:
+      primary_glasses_connection_interval_ms: 7.5
+      primary_glasses_latency_ms: 10  # 4 connection events per interval
+      primary_glasses_throughput_kbps: 100  # 1-2 gesture events per second; throughput is not the bottleneck
+      phone_connection_interval_ms: 30
+      phone_throughput_kbps: 50
+
+  gatt_services:
+    description: "The V1 ring exposes a small set of GATT services. V1 is a controller, so the services are optimized for low-latency command-and-response, not for streaming data."
+
+    services:
+      - service_uuid: "0000RING-0000-1000-8000-00805F9B34FB"
+        name: "Ring Control"
+        characteristics:
+          - { name: "Gesture Event",          uuid: "0000RR01-0000-1000-8000-00805F9B34FB", direction: "notify", size_bytes: 4, properties: "8-bit gesture ID + 8-bit confidence + 16-bit sequence number; event-driven; notify only", encoding: "binary (compact)" }
+          - { name: "Gesture Confirm",          uuid: "0000RR02-0000-1000-8000-00805F9B34FB", direction: "write", size_bytes: 1, properties: "1-byte ack / nack; written by the glasses to confirm receipt", encoding: "binary" }
+          - { name: "Battery",                  uuid: "0000RR03-0000-1000-8000-00805F9B34FB", direction: "read + notify", size_bytes: 2, properties: "8-bit percentage + 2-bit charging state (0=discharging, 1=charging, 2=full, 3=fault) + 6-bit reserved; notify on change; bit-layout authoritative reference: protocol/ring-gatt-spec.yaml §ring_control_service.RR03", encoding: "binary" }
+          - { name: "Charging State",            uuid: "0000RR04-0000-1000-8000-00805F9B34FB", direction: "read + notify", size_bytes: 1, properties: "0=not charging; 1=charging; 2=full; 3=fault; notify on state change", encoding: "binary" }
+          - { name: "Haptic Command",            uuid: "0000RR05-0000-1000-8000-00805F9B34FB", direction: "write", size_bytes: 2, properties: "8-bit haptic ID + 8-bit intensity; written by the glasses to trigger a haptic", encoding: "binary" }
+          - { name: "Firmware Version",          uuid: "0000RR06-0000-1000-8000-00805F9B34FB", direction: "read", size_bytes: 4, properties: "32-bit semantic version (e.g. 1.0.0)", encoding: "binary" }
+          - { name: "Configuration",            uuid: "0000RR07-0000-1000-8000-00805F9B34FB", direction: "read + write", size_bytes: 32, properties: "configuration blob (e.g. gesture thresholds, haptic patterns); written by the phone", encoding: "binary (TLV)" }
+          - { name: "Temperature (V2)",         uuid: "0000RR08-0000-1000-8000-00805F9B34FB", direction: "read + notify", size_bytes: 2, properties: "16-bit signed temperature in 0.01 C units; notify on change", encoding: "binary" }
+          - { name: "PPG HR (V2)",              uuid: "0000RR09-0000-1000-8000-00805F9B34FB", direction: "notify", size_bytes: 4, properties: "16-bit HR + 16-bit RR interval", encoding: "binary" }
+
+  protocol_message_format:
+    description: "All messages are compact binary for low-latency and low-power."
+
+    gesture_event: "1-byte gesture ID + 1-byte confidence (0-255) + 2-byte sequence number (wraps; detects missed events)"
+    haptic_command: "1-byte haptic ID + 1-byte intensity (0-255)"
+    battery: "2-byte packed: 8-bit percentage + 2-bit charging state + 6-bit reserved (per protocol/ring-gatt-spec.yaml §ring_control_service.RR03)"
+    configuration: "TLV (type-length-value) blob; types defined per firmware version"
+
+  security:
+    description: "Implemented per protocol/security guidance."
+
+    pairing: "authenticated pairing (LE Legacy Pairing with OOB data; or LE Secure Connections with numeric comparison if the glasses have a display)"
+    bonding: "bonding enabled; the ring stores 1-2 bonds (glasses + phone) in the nRF54L15's internal flash (1 MB; ample for bonding data)"
+    encryption: "LE Secure Connections; AES-128-CCM; encrypted GATT characteristics"
+    ota: "signed firmware images (Ed25519 or ECDSA P-256); MCUboot verifies the signature before applying the update; rollback protection enabled"
+    device_identity: "the nRF54L15's factory-stored 64-bit device ID; used for bond verification"
+    replay_protection: "16-bit sequence number on every gesture event; the glasses verify the sequence is monotonic; a gap indicates missed events"
+
+  power_impact:
+    ble_active_current_ma: 5  # nRF54L15 typical at 0 dBm TX, 1 Mbps
+    ble_idle_connection_current_ma: 0.05  # nRF54L15 typical in connected state, no TX/RX
+    ble_advertising_current_ma: 0.5  # nRF54L15 typical in advertising state
+    role_switch_overhead_ma_per_hour: 0.005  # 50 role switches per hour at 100 ms each; negligible
+
+  references:
+    - { ref: "Bluetooth Core Specification 5.4", url: "https://www.bluetooth.com/specifications/specs/core-specification/", note: "The BLE protocol is the standard; the GATT services are V1-specific." }
+    - { ref: "Even R1 (clean-room reference; MIT)", url: "https://github.com/kalanihelekunihi/evenRealities-openCFW", note: "Architecture patterns; not copy." }
+    - { ref: "Smart Ring Digital Twin (license unknown)", url: "https://github.com/w1ne/smart-ring-digital-twin", note: "Sensor manager patterns; reference-only." }
+    - { ref: "Intring (Apache 2.0)", url: "https://github.com/weierruisi/Intring", note: "BLE HID service patterns; re-implement." }

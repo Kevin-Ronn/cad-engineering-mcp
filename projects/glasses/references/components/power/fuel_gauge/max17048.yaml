@@ -1,0 +1,45 @@
+schema_version: 1
+component:
+  id: max17048
+  category: single_cell_fuel_gauge_modelgauge
+  units: mm
+  role: primary_fuel_gauge_candidate
+
+source:
+  manufacturer: Analog Devices (formerly Maxim Integrated)
+  part_number: MAX17048
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.analog.com/en/products/max17048.html
+      description: "MAX17048 product page and datasheet"
+
+mechanical:
+  package: TDFN-8
+  dimensions_mm: { length: 2.5, width: 2.5, height: 0.8 }
+  source_for_mechanical: MAX17048 datasheet
+
+electrical:
+  interface: I2C
+  supply_voltage_v: { min: 2.5, typ: 3.7, max: 4.5 }
+  quiescent_current_ua: 23 (active); 1 (sleep)
+  sense_resistor: NOT REQUIRED (ModelGauge; uses internal battery model)
+  accuracy_percent: 1 (typical for ModelGauge)
+  source_for_electrical: MAX17048 datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: MAX17048 datasheet
+
+purchase:
+  distributor: ADI direct; Mouser; DigiKey; LCSC
+  unit_price_usd: approximately 2 to 4 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+
+constraints:
+  status: SERIOUS_PRIMARY — ModelGauge is well-known to work with Linux power-supply class drivers; no sense resistor saves PCB area; 2.5 x 2.5 mm TDFN fits anywhere.

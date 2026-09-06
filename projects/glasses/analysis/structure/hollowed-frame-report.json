@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "report_status": "PARTIAL",
+  "stage": "hollowed_main_frame",
+  "report_written_at_iso": "2026-09-02T12:55:00Z",
+  "blocking_issue": {
+    "summary": "FreeCAD GUI thread is stuck on a Python ray-casting validation loop and cannot be cancelled from the MCP side. The MCP server reported 'restart FreeCAD if it remains stuck' at 1144s elapsed. The session has been hung for 22+ minutes. All subsequent GUI operations will fail until the user restarts FreeCAD.",
+    "failed_operation": "execute_code (Python per-facet ray-casting loop over 21882 facets)",
+    "duration_elapsed_seconds": 1321,
+    "remediation_required": "User must restart FreeCAD, then resume this task in a new session. The in-memory 'GlassesFrame' document state is unknown; on restart the document may need to be reloaded or rebuilt from Step 1."
+  },
+  "completed_steps": {
+    "step_0_reference_snapshot": {
+      "status": "COMPLETE",
+      "reference_path": "projects/glasses/references/silhouette/wayfarer/ray-ban-frame.stl",
+      "snapshot": {
+        "size_bytes": 1094184,
+        "mtime_epoch": 1788129263,
+        "md5": "b92d18fd8995dafa7a274e504ff8191f"
+      },
+      "verified_untouched_at_report_time": true,
+      "verified_untouched_md5": "b92d18fd8995dafa7a274e504ff8191f"
+    },
+    "step_1_create_document": {
+      "status": "COMPLETE",
+      "document_name": "GlassesFrame",
+      "open_in_session_at_block": "UNKNOWN - GUI is stuck; document state on disk is unsaved (per user instruction)"
+    },
+    "step_2_outer_solid": {
+      "status": "COMPLETE",
+      "object_name": "OuterShell",
+      "is_valid": true,
+      "num_solids": 1,
+      "volume_mm3": 6067.699,
+      "bbox_mm": {
+        "min": [156.812, 78.500, 0.000],
+        "max": [174.539, 221.500, 42.846],
+        "size": [17.727, 143.000, 42.846]
+      },
+      "shell_is_closed": true,
+      "shell_face_count": 21882,
+      "source_mesh": {
+        "facets": 21882,
+        "points": 10939,
+        "volume_mm3_from_mesh_only": 6065.223
+      }
+    },
+    "step_3_cavity_box": {
+      "status": "COMPLETE",
+      "object_name": "CavityMain",
+      "is_valid": true,
+      "volume_mm3": 71477.814,
+      "bbox_mm": {
+        "min": [158.312, 89.097, 1.500],
+        "max": [173.039, 210.904, 41.346],
+        "size": [14.727, 121.807, 39.846]
+      },
+      "constants": {
+        "CAV_X_MIN": 158.312,
+        "CAV_X_MAX": 173.039,
+        "CAV_Y_MIN": 89.097,
+        "CAV_Y_MAX": 210.904,
+        "CAV_Z_MIN": 1.5,
+        "CAV_Z_MAX": 41.346,
+        "baseline_wall_mm": 1.5
+      }
+    },
+    "step_4_preservers": {
+      "status": "PARTIAL",
+      "preservers_built": 7,
+      "preservers_clipped_to_empty": 4,
+      "preservers_retained": [
+        {"name": "RightHinge", "volume_mm3": 1334.301, "bbox_mm": [[170.539, 93.896, 0.001], [174.539, 206.105, 42.763]]},
+        {"name": "NoseBridge", "volume_mm3": 245.593, "bbox_mm": [[164.188, 141.501, 16.984], [169.667, 158.499, 32.093]]},
+        {"name": "CameraMount", "volume_mm3": 3.986, "bbox_mm": [[161.890, 89.097, 19.502], [166.857, 89.786, 31.502]]},
+        {"name": "FrontClipPlane", "volume_mm3": 128.537, "bbox_mm": [[161.208, 89.097, 6.653], [169.692, 90.597, 41.346]]},
+        {"name": "TopRimRib", "volume_mm3": 242.341, "bbox_mm": [[163.703, 90.052, 41.346], [171.738, 209.949, 42.846]]},
+        {"name": "BottomRimRib", "volume_mm3": 139.091, "bbox_mm": [[167.762, 99.527, 0.000], [173.039, 200.473, 1.500]]}
+      ],
+      "preservers_clipped_empty": [
+        {"name": "LeftHinge", "reason": "Outer solid's -X face at this Y range is at X>=164, not X=156.812; the bbox min X is a single vertex, not a flat face. The preserver volume is outside the actual outer envelope."},
+        {"name": "PcbMountFL", "reason": "PCB boss at (159.81, 211.30, 3.0) falls outside the outer solid's Y range at that X position. The outer solid does not extend to Y=211.3 at X=159.81; the back-face Y range is much narrower at the corners."},
+        {"name": "PcbMountFR", "reason": "Same as PcbMountFL, mirror."},
+        {"name": "PcbMountBL", "reason": "Same as PcbMountFL, Z=39.0 corner."},
+        {"name": "PcbMountBR", "reason": "Same."}
+      ],
+      "preservers_retention_total_volume_mm3": 2093.848,
+      "blocking_observations": "Several preserver boxes were placed assuming the outer solid extended to its bbox min/max on every face. In reality, the outer solid's faces are highly curved: the -X face is mostly between X=164 and X=170 (the frame's lens-side curvature), the +X face is similar, and the back face Y range narrows at the X corners. The 1.5 mm baseline wall cannot be achieved on the X faces because the outer face is already 6+ mm inset from the bbox at most Y,Z. CameraMount was clipped to 3.986 mm3 (0.5% of intended), which means the outer solid barely extends into the intended camera-mount zone."
+    }
+  },
+  "critical_geometric_findings": {
+    "summary": "The reference Wayfarer STL bbox (X: 156.812-174.539, Y: 78.500-221.500, Z: 0.000-42.846) is misleading for cavity design. The mesh vertices span the full X range, but the outer surface is heavily curved and the actual frame material is concentrated in: (1) the nose-bridge strip (X 164-170), (2) the top rim (Z 35-43), (3) the bottom rim (Z 0-7), and (4) thin side stubs at the lens openings. The cavity region between the lens openings is mostly hollow in the source mesh already.",
+    "evidence": {
+      "x_distribution": "Vertex X distribution is roughly uniform 156.8-174.5 with a peak at X=165-166 (nose-bridge strip), not a flat face.",
+      "outer_face_x_at_y150_z21": "Closest point on outer to a probe at (140, 150, 21) is (164.17, 142.60, 22.86) - the -X face is at X=164 at this Y/Z, not X=156.8. Bbox min X is a single vertex at the back-bottom corner, not a face location.",
+      "outer_face_x_at_z5": "The -X face X position varies from X=164.4 (at y=80) through X=170.9 (at y=120, 180) back to X=164.9 (at y=210). The frame's lens-side surface is a complex curve, not a flat slab."
+    },
+    "implications": [
+      "A 1.5 mm uniform baseline wall on the X faces is unachievable at most Y because the outer face is already deeply curved. A realistic baseline wall is 0.5-1.0 mm at frame-center, with explicit boss blocks needed at hinge and load-bearing zones.",
+      "The cavity cannot be a wide box at the lens-cavity Y range. The cavity must follow the actual material layout: a central bridge cavity around X=165-167 (the nose-bridge area), a top-rim cavity, a bottom-rim cavity, and small side cavities at the lens-opening stubs.",
+      "PCB fitting becomes harder. The PCB envelope (15.73 x 40.85 mm) cannot fit in the available cross-section at the frame's lens-cavity Y range. The PCB must be mounted higher (near the top rim) or lower (near the bottom rim), or split into smaller modules.",
+      "Several preserver boxes in the plan (LeftHinge, all PcbMounts) cannot be placed as planned because the outer solid does not extend to those locations in the way the bbox suggests. The structural design needs to be re-derived from the actual material distribution, not the bbox."
+    ]
+  },
+  "blocked_steps": {
+    "step_5_outer_with_preservers": "NOT EXECUTED - waiting for GUI recovery",
+    "step_6_cavity_fused": "NOT EXECUTED - cavity is a single box, this step is trivial",
+    "step_7_hollowed_frame": "NOT EXECUTED - depends on step 5",
+    "step_8_outward_thickening": "NOT EXECUTED - depends on step 7",
+    "step_9_cross_sections": "NOT EXECUTED - depends on step 7",
+    "step_10_wall_thickness_ray_cast": "NOT EXECUTED - this was the operation that hung the GUI",
+    "step_11_cavity_inside_volume": "NOT EXECUTED - depends on step 7",
+    "step_12_topology_validation": "NOT EXECUTED - depends on step 7",
+    "step_13_silhouette_preservation": "NOT EXECUTED - depends on step 7",
+    "step_15_save_or_no_save": "PER USER INSTRUCTION: document is NOT saved"
+  },
+  "deliverables_status": {
+    "free_cad_document": {
+      "name": "GlassesFrame",
+      "in_memory_at_block": "UNKNOWN - GUI is hung",
+      "saved_to_disk": false,
+      "saved_at_block": "n/a (per user instruction: do not save)"
+    },
+    "outer_solid_in_doc": "OuterShell - committed to doc, isValid=True, volume=6067.7 mm3",
+    "cavity_in_doc": "CavityMain - committed to doc, isValid=True, volume=71477.8 mm3",
+    "preservers_in_doc": "6 of 11 committed (LeftHinge, PcbMountFL/FR/BL/BR clipped to empty; CameraMount retained but only 3.986 mm3 after clipping)"
+  },
+  "engineer_to_engineer_notes": [
+    "The plan as written underestimated how curved the frame's -X and +X faces are. The bbox min/max X are not face locations; they are extreme vertices on a complex curved surface.",
+    "A 1.5 mm uniform wall on every X face was not achievable. A more realistic strategy is: (a) a narrow central cavity following the nose-bridge strip, (b) top-rim and bottom-rim cavity slots for components, and (c) explicit additive reinforcement (mount bosses) at hinge/PCB/camera/clip zones rather than a uniform baseline wall.",
+    "PCB fitting requires re-derivation. The PCB envelope (15.73 x 40.85 mm) is wider than the available cross-section at most Y values in the lens-cavity range. The PCB must be moved (e.g., to the top rim or split into multiple smaller modules), or the cavity must be widened through the lens openings (which adds DFM/DFA complexity).",
+    "The hang in this session is a known issue: Python per-facet ray-casting is O(N*M) and 22k facets x 100+ probes is too slow. Future wall-thickness checks must use the BRep's native `distToShape` method on a small set of surface sample points, NOT a Python loop over mesh facets.",
+    "FreeCAD's BRep `isInside` is also slow when called many times. A better approach is to use `BRepExtrema` once with a single shape and iterate over the resulting distances."
+  ],
+  "next_session_instructions": [
+    "1. The user must restart FreeCAD. The 'GlassesFrame' document state in memory is unknown after the hang; on restart it may be empty or partially populated.",
+    "2. Before resuming: re-read this report and re-derive the cavity geometry based on the actual outer surface (not the bbox).",
+    "3. Recompute the outer surface X position at every (Y, Z) sample, then choose a cavity X range that fits inside the actual material.",
+    "4. Reconsider the preserver list. The left-hinge and PCB-mount bosses at the X corners cannot be placed as planned; relocate them to where material actually exists (the nose-bridge strip and the top/bottom rim areas).",
+    "5. Use BRep `distToShape` with shape inputs (not per-facet Python loops) for wall-thickness validation.",
+    "6. After hollowing, run silhouette preservation by computing the bbox of the hollowed frame and comparing to the original bbox; do not iterate over vertices.",
+    "7. Consider using `Part.Offset` (offset of the entire outer shell inward by 1.5 mm) as an alternative strategy for the cavity. This may give cleaner results than a box-cut approach because it follows the actual outer curvature."
+  ],
+  "user_acknowledgment_required": true
+}

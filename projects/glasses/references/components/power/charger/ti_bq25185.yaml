@@ -1,0 +1,51 @@
+schema_version: 1
+component:
+  id: ti_bq25185
+  category: single_cell_li_ion_charger_i2c_powerpath
+  units: mm
+  role: primary_charger_candidate
+
+source:
+  manufacturer: Texas Instruments
+  part_number: BQ25185
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.ti.com/product/BQ25185
+      description: "TI BQ25185 product page and datasheet"
+
+mechanical:
+  package: WCSP (wafer chip scale package)
+  dimensions_mm: approximately 1.6 x 1.6 (typical WCSP class for this part; verify per datasheet)
+  source_for_mechanical: TI datasheet summary
+
+electrical:
+  input_voltage_v: { min: 1.8, typ: 5.0, max: 5.5 }
+  charge_current_ma: { min: UNKNOWN, typ: UNKNOWN, max: 1000 }
+  charge_voltage_v: 4.2 (single-cell Li-ion, fixed)
+  interface: I2C
+  power_path_management: yes (typically for this TI family; verify)
+  thermal_regulation: yes (junction-temperature-regulated charge current)
+  safety_timers: yes (programmable)
+  battery_protection_features: overcharge, overdischarge, overcurrent, thermal
+  source_for_electrical: TI BQ25185 datasheet summary
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: TI datasheet summary
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey
+  unit_price_usd: approximately 1.50 to 3.00 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact WCSP dimensions and pin count need datasheet verification"
+    - "Power-path management details need datasheet verification"
+
+constraints:
+  status: SERIOUS_PRIMARY — TI BQ25185 is a modern, compact, I2C-programmable charger with power-path management. Excellent for the glasses.

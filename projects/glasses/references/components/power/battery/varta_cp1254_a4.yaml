@@ -1,0 +1,69 @@
+schema_version: 1
+component:
+  id: varta_cp1254_a4
+  category: li_ion_button_cell_rechargeable
+  units: mm
+  role: button_cell_alternative_for_compact_temples
+
+source:
+  manufacturer: Varta Microbattery GmbH
+  part_number: CoinPower CP1254 A4 (12 mm diameter x 5.4 mm height)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.varta-ag.com/en/company/brands/varta-microbattery
+      description: "Varta Microbattery product line (CoinPower series)"
+  chemistry: lithium-ion (Li-ion)
+  form_factor: cylindrical button cell
+  protected: typically UNPROTECTED (the protection circuit is external; Varta sells both protected and unprotected variants)
+
+mechanical:
+  dimensions_mm: { diameter: 12.0, height: 5.4 }
+  weight_g: approximately 2.5
+  volume_cm3: 0.611
+  energy_density_wh_per_kg: approximately 95 (65 mAh x 3.7 V / 2.5 g = 0.24 Wh / 0.0025 kg = ~96 Wh/kg)
+  energy_density_wh_per_l: approximately 395
+  source_for_mechanical: Varta CoinPower datasheet summary
+
+electrical:
+  nominal_voltage_v: 3.7
+  charge_voltage_max_v: 4.2
+  discharge_cutoff_v: 3.0
+  capacity_mah: approximately 65 (varies per variant; A4 is a specific capacity bin)
+  energy_wh: approximately 0.24
+  standard_charge_current_ma: 32 (0.5C)
+  max_charge_current_ma: 65 (1C)
+  max_continuous_discharge_ma: 65 to 130 (1C to 2C; Varta has higher-rate variants)
+  source_for_electrical: Varta datasheet summary
+
+environmental:
+  charge_temperature_c: { min: 0, max: 45 }
+  discharge_temperature_c: { min: -20, max: 60 }
+  source_for_environmental: Varta datasheet
+
+cycle_life:
+  cycles_to_80_percent_capacity: approximately 500 (typical Varta CoinPower class)
+
+connectors:
+  standard: solder tabs (typical for CoinPower; cell is surface-mount or wave-soldered)
+  source_for_connector: typical for this class
+
+purchase:
+  distributor: Varta direct (NDA); DigiKey; Mouser
+  unit_price_usd: approximately 2 to 5 (single-piece retail)
+  moq: 100+ for Varta direct; 1+ for distributor stock
+  lead_time: stock (distributor); 8-12 weeks (Varta direct)
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact CP1254 A4 capacity bin is one of several; verify with Varta when ordering"
+    - "Recommended protection circuit is external; verify if a protected variant exists"
+
+geometry_relevance:
+  temple_fit: "12 mm diameter x 5.4 mm height. 5.4 mm is at the upper end of the 4-6 mm temple target. The 12 mm diameter fits comfortably in a temple cross-section."
+  two_battery_config: "Two CP1254 A4 cells in parallel = 130 mAh / 0.48 Wh. Insufficient for the V853 system."
+
+constraints:
+  status: TOO_SMALL — 130 mAh is insufficient for the V853 system. Varta CoinPower is the right form factor class but capacity must be increased. Consider a larger Varta part (CP1654 or higher capacity variant) if Varta is the preferred vendor.

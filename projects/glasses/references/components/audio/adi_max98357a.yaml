@@ -1,0 +1,53 @@
+schema_version: 1
+component:
+  id: adi_max98357a
+  category: class_d_audio_amplifier_i2s
+  units: mm
+  role: secondary_amplifier_candidate
+
+source:
+  manufacturer: Analog Devices (formerly Maxim Integrated)
+  part_number: MAX98357A
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.analog.com/en/products/max98357a.html
+      description: "MAX98357A product page and datasheet"
+
+mechanical:
+  package: 16-pin TQFN-EP
+  dimensions_mm: { width: 3.0, height: 3.0, depth: 0.75 }
+  source_for_mechanical: ADI datasheet
+
+electrical:
+  interface: I2S (standard 3-wire)
+  supply_voltage_v: { min: 2.5, typ: 3.6, max: 5.5 }
+  output_power_w: 3.2 (typ into 8 ohm at 10% THD+N)
+  efficiency_percent: 92 (typical class-D)
+  filterless: yes
+  load_impedance_ohm: 4 to 8
+  source_for_electrical: ADI datasheet
+
+acoustic:
+  thd_plus_n_percent: less than 0.05 (typ, 1 kHz, 1 W into 8 ohm)
+  source_for_acoustic: ADI datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: ADI datasheet
+
+purchase:
+  distributor: ADI direct; Mouser; DigiKey; SparkFun; Adafruit
+  unit_price_usd: 1.65 to 1.85 (1k qty); ~10 to 15 on Adafruit/SparkFun breakout
+  moq: 1
+  lead_time: stock
+  availability: in production
+  source_for_purchase: Mouser, DigiKey, Adafruit
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary_plus_breakout_board_evidence
+  gaps:
+    - "Larger than MAX98390 (3 x 3 mm vs 1.33 x 1.33 mm)"
+
+constraints:
+  status: SERIOUS_SECONDARY — well-known, well-supported, on breakout boards for prototyping. Larger than MAX98390.

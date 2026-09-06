@@ -1,0 +1,46 @@
+schema_version: 1
+component:
+  id: cs35l41_cirrus
+  category: class_d_audio_amplifier_i2s_smartamp
+  units: mm
+  role: alternative_amplifier_candidate_with_speaker_protection
+
+source:
+  manufacturer: Cirrus Logic
+  part_number: CS35L41 (datasheet-class)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.cirrus.com/products/cs35l41/
+      description: "Cirrus Logic CS35L41 product page"
+
+mechanical:
+  package: WLCSP or QFN
+  dimensions_mm: approximately 3.0 x 3.0 (verify per datasheet)
+  source_for_mechanical: Cirrus datasheet summary
+
+electrical:
+  interface: I2S / TDM plus I2C / SPI
+  supply_voltage_v: { min: 2.7, typ: 3.6, max: 5.5 }  # PVDD via on-chip boost
+  io_voltage_v: 1.8 (verify per datasheet)
+  output_power_w: 6.2 (typ into 4 ohm at 1% THD+N with boost)
+  efficiency_percent: 85
+  load_impedance_ohm: 4 to 8
+  filterless: yes (with internal boost)
+  thermal_protection: yes
+  speaker_protection: yes (integrated DSP, Class-H tracking, excursion control, thermal limiting, EQ)
+  source_for_electrical: Cirrus datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: Cirrus direct; Mouser; DigiKey
+  unit_price_usd: 2.50 to 4.00 (single-piece retail)
+  moq: 1
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+
+constraints:
+  status: ALTERNATIVE — similar to TAS2770 in class (integrated boost + DSP speaker protection). 2x the PCB area of MAX98390. Use if the integrated DSP is desired and the MAX98390's thermal-only protection is not sufficient for the chosen speaker.

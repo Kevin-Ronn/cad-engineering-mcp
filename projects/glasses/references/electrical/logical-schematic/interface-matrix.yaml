@@ -1,0 +1,91 @@
+schema_version: 1
+interface_matrix:
+  id: v853_smart_glasses_interface_matrix
+  date: 2026-09-05
+  status: READ-ONLY logical schematic-capture preparation. No physical BGA ball numbers are invented.
+
+  note: "Cross-reference: which V853 peripheral block is used for which glasses function. The matrix is a single-page summary of the full logical-schematic. Every entry has a source-reference to a per-signal table or a per-block validation document."
+
+  v853_peripheral_to_glasses_function_mapping:
+
+    - { v853_peripheral: "MIPI CSI0 (1x 4-lane / 2x 2-lane mode; per datasheet section 1.3.6.4)", glasses_function: "2x camera MIPI CSI-2 inputs (Camera 1 + Camera 2 on virtual-channel sub-channels)", pins_used: 12, source: "v853-glasses-pin-assignment.yaml + dual-csi-validation.yaml", status: "PROVISIONAL (data/clock lane ball UNKNOWN)" }
+
+    - { v853_peripheral: "MIPI DSI0 (4-lane; per datasheet section 1.3.5.1)", glasses_function: "1x monocular micro-OLED 640x400 display output", pins_used: 11 (10 DSI + 1 TE), source: "v853-glasses-pin-assignment.yaml + display-electrical-validation.yaml", status: "PROVISIONAL (data/clock lane ball UNKNOWN)" }
+
+    - { v853_peripheral: "SMHC0 (eMMC; per 100ASK public dts uses sdc2 PC0..PC11)", glasses_function: "eMMC 5.1 storage (8 GB or 32 GB)", pins_used: 13, source: "sdio-emmc-coexistence.yaml", status: "PROVISIONAL (SMHC choice and ball UNKNOWN; 100ASK uses SMHC2 for eMMC; the glasses' design uses SMHC0 per the v853-glasses-pin-assignment.yaml)" }
+
+    - { v853_peripheral: "SMHC1 (SDIO Wi-Fi; per 100ASK uses sdc1 PG0..PG5)", glasses_function: "AW-CM276SM Wi-Fi/BT module SDIO interface", pins_used: 9 (6 SDIO + 3 control GPIO), source: "wifi-bt-interface-validation.yaml", status: "PROVISIONAL (GPIO bank power domain 3.3 V for the AW-CM276SM)" }
+
+    - { v853_peripheral: "TWI4 (I2C; per 100ASK uses PI1/PI2)", glasses_function: "Shared 7-device I2C bus (AXP2101, MAX17048, TMP117-L, TMP117-R, VEML7700, BQ25185, BMI270)", pins_used: 2, source: "i2c-audit.yaml", status: "VERIFIED (all addresses unique per i2c-audit.yaml)" }
+
+    - { v853_peripheral: "TWI0 (I2C; per 100ASK kernel dts uses PE16/PE17; per U-Boot dts uses PA0/PA1)", glasses_function: "Reserved for debug / second I2C bus if needed", pins_used: 0 (not used in the glasses' design), source: "i2c-audit.yaml", status: "VERIFIED (not used)" }
+
+    - { v853_peripheral: "TWI1 (I2C; per 100ASK uses PA14/PA15)", glasses_function: "Reserved", pins_used: 0, source: "i2c-audit.yaml", status: "VERIFIED (not used)" }
+
+    - { v853_peripheral: "TWI2 (I2C; per 100ASK uses PH5/PH6 or PE20/PE21)", glasses_function: "Reserved", pins_used: 0, source: "i2c-audit.yaml", status: "VERIFIED (not used)" }
+
+    - { v853_peripheral: "TWI3 (I2C; per 100ASK uses PI3/PI4 or PA10/PA11)", glasses_function: "Reserved", pins_used: 0, source: "i2c-audit.yaml", status: "VERIFIED (not used)" }
+
+    - { v853_peripheral: "UART2 (4-wire; per 100ASK uses PE10/PE11/PE12/PE13)", glasses_function: "Bluetooth HCI (4-wire: TX, RX, RTS, CTS)", pins_used: 7 (4 UART + 3 control GPIO), source: "100ASK public dts", status: "PROVISIONAL (GPIO ball UNKNOWN)" }
+
+    - { v853_peripheral: "UART0 (per 100ASK uses PH9/PH10)", glasses_function: "Reserved (could be used for debug console if UART2 is not used for Bluetooth)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (not used; UART2 is the primary Bluetooth HCI)" }
+
+    - { v853_peripheral: "UART1 (per 100ASK uses PG6/PG7)", glasses_function: "Reserved (debug console candidate)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (not used)" }
+
+    - { v853_peripheral: "UART3 (per 100ASK uses PH0/PH1)", glasses_function: "NOT USED (pin conflict with DMIC and I2S0 on PH0-PH1)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "I2S0 (daudio0; per 100ASK uses PH0/PH1/PH2/PH3/PH4)", glasses_function: "Left speaker MAX98390 (I2S BCLK + LRCK + DOUT)", pins_used: 3, source: "i2s-audio-validation.yaml", status: "PROVISIONAL (pin set conflicts with DMIC; alternative pin set per SoC pinctrl dtsi needed)" }
+
+    - { v853_peripheral: "I2S1 (daudio1; per 100ASK uses PE7/PE8/PE9/PE10/PE11)", glasses_function: "Right speaker MAX98390 (I2S BCLK + LRCK + DOUT)", pins_used: 3, source: "i2s-audio-validation.yaml", status: "PROVISIONAL (verify MAX98390 IO voltage)" }
+
+    - { v853_peripheral: "DMIC (per 100ASK uses PH0/PH1/PH2/PH3/PH4)", glasses_function: "ST MP23DB01HP MEMS microphone (PDM clock + data)", pins_used: 2, source: "dmic-validation.yaml", status: "PROVISIONAL (pin set conflicts with I2S0; alternative pin set per SoC pinctrl dtsi needed)" }
+
+    - { v853_peripheral: "On-die audio codec", glasses_function: "NOT USED (bypassed; the external I2S-based MAX98390 amplifiers are used)", pins_used: 0, source: "i2s-audio-validation.yaml", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "USB0 (USB 2.0 DRD)", glasses_function: "USB-C receptacle (5 V charging + USB 2.0 data + debug)", pins_used: 6 (DP, DN, ID, VBUS_DET, plus ESD), source: "usb-electrical-validation.yaml", status: "PROVISIONAL (USB PHY ball UNKNOWN; USB-PD not used; 5 V only)" }
+
+    - { v853_peripheral: "GMAC0 (RGMII Ethernet; per 100ASK uses PE0..PE15)", glasses_function: "NOT USED (glasses do not need Ethernet; disabled in the device tree)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "SPI0 (per 100ASK uses PC0..PC5)", glasses_function: "NOT USED (glasses do not need SPI NOR flash; eMMC is the boot device; disabled in the device tree)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "SPI1 (per 100ASK uses PH5..PH9)", glasses_function: "NOT USED (glasses use DSI, not SPI DBI)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "SPIF0 (per 100ASK uses PF20..PF31)", glasses_function: "NOT USED (same as SPI0)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "RGB LCD (RGB18 / RGB24; per 100ASK uses PD0..PD27)", glasses_function: "NOT USED (glasses use MIPI DSI, not RGB)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "GPADC (general purpose ADC; per 100ASK uses 5-key keypad)", glasses_function: "NOT USED (the user button is GPIO-based; the TMP117 covers temperature)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "Wiegand", glasses_function: "NOT USED (Wiegand is for RFID readers)", pins_used: 0, source: "100ASK public dts", status: "VERIFIED (disabled)" }
+
+    - { v853_peripheral: "PWM (12 channels; per 100ASK uses PWM4 PH11, PWM8 PH8, PWM9 PD22)", glasses_function: "PWM4 (PH11) for IR LED brightness; PWM9 (PD22) for optional display backlight; PWM8 (PH8) reserved", pins_used: 2, source: "100ASK public dts", status: "PROVISIONAL (PWM ball UNKNOWN)" }
+
+    - { v853_peripheral: "GPIO (8 banks; ~128 GPIO total)", glasses_function: "Approximately 20 GPIOs: IMU_INT1/INT2, ALS_INT, TMP117_ALERT x2, MAX17048_ALERT, BQ25185_INT, AXP2101_IRQ, IMX708 reset/standby x2, display TE/reset/backlight-enable, IR_LED_EN, USER_BUTTON, STATUS_LED, HAPTIC_EN, USB_VBUS_DET, boot mode pins, RESET", pins_used: approximately 20, source: "v853-public-pin-function-audit.md + i2c-audit.yaml", status: "PROVISIONAL (specific GPIO ball UNKNOWN for most)" }
+
+  peripheral_to_pmic_mapping:
+    note: "The AXP2101 PMIC provides all the V853 rails plus the peripheral rails. The AXP2101 NVRAM configuration is firmware-programmable; the exact rail-to-SoC-rail assignment is PROVISIONAL until the AXP2101 NVRAM is finalized in production-line programming."
+    mapping:
+      - { axp2101_rail: "DCDC1 (0.9 V default; 1.5-3.4 V range)", assigned_to: "V853 VDD-SYS (0.9 V)", source: "100ASK public dts + v853-power-sequencing.yaml" }
+      - { axp2101_rail: "DCDC2 (0.5-1.54 V range; default 1.2 V)", assigned_to: "V853 VCC-DRAM + DDR3L (1.35 V; RECONFIGURED from default 1.2 V)", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "DCDC3 (0.5-3.4 V range)", assigned_to: "V853 VDD-IO_1V8 (1.8 V) + camera + display + IMU + sensors (1.8 V bank); or VDD-SYS (0.9 V) if DCDC1 is used for DRAM; the exact split is firmware-programmable", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "DCDC4 (0.5-1.84 V range)", assigned_to: "V853 VDDQ-DDR3L (1.35 V); or camera DVDD (1.2 V)", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "DCDC5 (1.4-3.7 V range)", assigned_to: "V853 VCC-IO_1V8 (1.8 V); or Wi-Fi/BT 3.3 V; or AVDD 1.8 V", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "RTC-LDO (1.8 V fixed, always-on)", assigned_to: "V853 VCC-RTC + AXP2101 internal control", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "ALDO1 (0.5-3.5 V range)", assigned_to: "MIC_AVDD (1.8 V) OR camera IOVDD (1.8 V); or VCC-IO_1V8 (1.8 V)", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "ALDO2 (0.5-3.5 V)", assigned_to: "Camera 1 IOVDD (1.8 V) + Camera 2 IOVDD (1.8 V) + VCC-IO_1V8 (1.8 V)", source: "100ASK public dts" }
+      - { axp2101_rail: "ALDO3 (0.5-3.5 V)", assigned_to: "VCC18-MDSI (display PHY rail 1.8 V) OR VCC-IO_1V8 (1.8 V)", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "ALDO4 (0.5-3.5 V)", assigned_to: "VCC18-MCSI (camera PHY rail 1.8 V) OR VCC-IO_1V8 (1.8 V)", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "BLDO1 (0.5-3.5 V; boot-on)", assigned_to: "Wi-Fi/BT 3.3 V OR VSYS direct; or 3.3 V always-on rail", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "BLDO2 (0.5-3.5 V)", assigned_to: "Camera 1 AVDD (2.8 V) + Camera 2 AVDD (2.8 V); or USB VBUS 3.3 V", source: "100ASK public dts (sensor0_avdd_vol=2800000)" }
+      - { axp2101_rail: "DLDO1 (0.5-3.5 V; boot-on)", assigned_to: "VCC-IO 3.3 V (USB + some GPIO); or 1.8 V", source: "v853-power-sequencing.yaml" }
+      - { axp2101_rail: "DLDO2 (0.5-1.4 V range)", assigned_to: "Camera 1 DVDD (1.2 V) + Camera 2 DVDD (1.2 V); or AXP2101 RTC-LDO backup", source: "100ASK public dts (sensor0_dvdd_vol=1200000)" }
+      - { axp2101_rail: "CPUSLDO (0.5-1.4 V)", assigned_to: "reserved (the V853's CPU voltage is DCDC1, not CPUSLDO)", source: "v853-power-sequencing.yaml" }
+
+  summary:
+    total_v853_peripherals_in_use: 14
+    total_v853_peripherals_NOT_in_use: 11
+    total_v853_pins_used: approximately 90 (estimated; the exact count depends on the final GPIO assignments)
+    all_7_i2c_addresses_unique: true (per i2c-audit.yaml)
+    all_external_components_1V8_or_3V3_compatible: true (per the reference libraries)
+    pcb_schematic_capture_ready_at_peripheral_level: TRUE
+    pcb_layout_ready: FALSE (requires the V853/V853S_PINOUT.sls)

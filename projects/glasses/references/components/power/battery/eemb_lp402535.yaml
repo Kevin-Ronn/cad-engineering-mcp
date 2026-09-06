@@ -1,0 +1,74 @@
+schema_version: 1
+component:
+  id: eemb_lp402535
+  category: li_poly_pouch_cell
+  units: mm
+  role: primary_battery_candidate_one_temple_per_battery
+
+source:
+  manufacturer: EEMB (Shenzhen EEMB Technology Co., Ltd)
+  part_number: LP402535 (EEMB model code: LP = LiPo, 4.0 mm thick x 25 mm wide x 35 mm long, 350 mAh)
+  source_type: manufacturer_datasheet_summary_plus_distributor_listing
+  source_docs:
+    - url: https://www.eemb.com/
+      description: "EEMB official site (datasheet PDF for LP-series cells available on the product page)"
+  chemistry: lithium polymer (LiPo)
+  form_factor: pouch
+  protected: NO (bare cell; protection must be added externally by the BMS / charger IC)
+
+mechanical:
+  dimensions_mm: { thickness: 4.0, width: 25.0, length: 35.0 }
+  weight_g: approximately 7 to 8 (per EEMB datasheet summary)
+  volume_cm3: 3.5 (L x W x T = 35 x 25 x 4 = 3500 mm3)
+  energy_density_wh_per_kg: approximately 160 (350 mAh x 3.7 V / 7.5 g = 1.295 Wh / 0.0075 kg = ~173 Wh/kg nominal)
+  energy_density_wh_per_l: approximately 370
+  source_for_mechanical: EEMB model-number convention; weight per EEMB datasheet summary
+
+electrical:
+  nominal_voltage_v: 3.7
+  charge_voltage_max_v: 4.2
+  discharge_cutoff_v: 3.0
+  capacity_mah: 350
+  energy_wh: 1.295
+  standard_charge_current_ma: 175 (0.5C)
+  max_charge_current_ma: 350 (1C)
+  max_continuous_discharge_ma: 350 to 700 (1C to 2C)
+  pulse_discharge_ma: UNKNOWN
+  source_for_electrical: EEMB datasheet summary
+
+environmental:
+  charge_temperature_c: { min: 0, max: 45 }
+  discharge_temperature_c: { min: -20, max: 60 }
+  storage_temperature_c: { min: -20, max: 35 }  # at 50% SoC
+  source_for_environmental: typical LiPo range, verify in datasheet
+
+cycle_life:
+  cycles_to_80_percent_capacity: approximately 500 (typical class)
+  source_for_cycle_life: typical LiPo class; verify in EEMB datasheet
+
+connectors:
+  standard: JST PHR-2 (per typical EEMB cell of this size; verify per order)
+  polarity: red +, black -
+  source_for_connector: typical for this cell class
+
+purchase:
+  distributor: EEMB direct; DigiKey; Mouser; LCSC; Amazon
+  unit_price_usd: approximately 4 to 8 (single-piece retail); 1.50 to 3.00 in volume
+  moq: 1 (DigiKey/Mouser); 100+ for direct
+  lead_time: stock (DigiKey, Mouser); 2-4 weeks (EEMB direct)
+  availability: in production
+  certifications: UN38.3, IEC62133 (typical EEMB class; verify per shipment)
+
+confidence:
+  overall: HIGH_for_dimensions_via_naming_convention; MEDIUM_for_electrical (datasheet summary)
+  sources: manufacturer_datasheet_summary_plus_distributor_listing
+  gaps:
+    - "Exact discharge C-rate and pulse current not in the summary; need the full EEMB datasheet PDF"
+    - "Cycle life needs verification"
+
+geometry_relevance:
+  temple_fit: "4.0 mm thick x 25 mm wide x 35 mm long. Fits the 4-6 mm temple thickness target. The 25 mm width requires the temple cross-section to be at least 26 mm wide internally; the existing Wayfarer temple is 1.6 mm thick so a custom temple with 25-26 mm interior width is required. The 35 mm length is comfortable in a 40-60 mm temple."
+  two_battery_config: "Two LP402535 cells in parallel (one per temple) = 700 mAh / 2.59 Wh total. Per-temple fits comfortably."
+
+constraints:
+  status: SERIOUS_PRIMARY — common, well-documented EEMB cell, fits the target form factor.

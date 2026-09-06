@@ -1,0 +1,70 @@
+schema_version: 1
+display_electrical_validation:
+  id: v853_dsi_to_640x400_display_validation
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, section 1.3.5 (Video Output), 7.2 (MIPI DSI), and the display reference library
+
+  conclusion:
+    dsi_directly_drives_display: "YES, for a MIPI DSI input 0.23 640x400 micro-OLED"
+    bridge_required: "Only if the chosen display engine has a non-DSI input (RGB / LVDS / sub-LVDS). See projects/glasses/references/components/display/display_bridge_evaluation.yaml."
+    confidence: HIGH_for_dsi_path; UNKNOWN_for_specific_panel_driver_firmware
+
+  dsi_capability:
+    source: V853 datasheet section 1.3.5.1
+    configurations:
+      lanes: "4-lane (the only mode supported; 1-lane / 2-lane modes are not supported on V853)"
+      protocol: "MIPI DSI V1.02, D-PHY V1.2"
+      per_lane_data_rate: "up to 1.0 Gbps/lane"
+      max_resolution: "1920 x 1200 @ 60 fps (per datasheet)"
+      supports_normal_mode: true
+      supports_burst_mode: true
+    power_domain: "VCC18-MDSI (1.8 V) for the DSI PHY"
+
+  640x400_target:
+    active_pixels: 640
+    active_lines: 400
+    blanking_overhead: "approximately 10% (typical for DSI panels; exact value depends on the chosen panel)"
+    pixel_clock_estimate_mhz: "640 * 400 * 60 fps * 1.10 blanking = 16.9 MHz (at 60 fps)"
+    required_lane_rate_mbps: "16.9 MHz * 24 bpp = 405 Mbps aggregate / 4 lanes = 101 Mbps per lane"
+    per_lane_data_rate_required: 101 Mbps
+    v853_per_lane_data_rate_max: 1000 Mbps
+    headroom: "approximately 10x; the 640x400 panel is trivially supported by the V853 DSI"
+    note: "The 640x400 target is much lower than the 1920x1200 V853 maximum. The DSI bandwidth is not the bottleneck."
+
+  pixel_formats_supported:
+    per_datasheet: "RGB-888, RGB-666, RGB-565 (per DSI V1.02 spec); the chosen panel must match"
+    confidence: MEDIUM (the V853 DSI controller supports the standard DSI pixel formats; the chosen panel must be verified to match one of these)
+
+  clock_requirements:
+    dsi_byte_clock: "the V853 DSI controller generates the byte clock; no external clock is needed for the DSI data lanes"
+    dsi_pixel_clock: "derived from the lane rate; the V853's DSI PLL configures this from the panel's timing requirements"
+    panel_xtal: "the display engine may require an external reference clock; verify per the chosen panel's datasheet"
+
+  initialization:
+    dcs_commands: "MIPI DCS (Display Command Set) commands are sent over the DSI data lane 0 (in command mode) or via I2C/SPI (in video mode). The chosen panel's datasheet specifies the required DCS commands and the init sequence."
+    panel_reset_sequence: "RESET high -> wait 10 ms -> RESET low -> wait 10 ms -> send DCS init commands -> display on"
+    dsi_controller_init: "the V853's DSI controller is initialized by the Linux kernel / Tina SDK at boot, with the panel's timing parameters from the device tree (panel-timing node)"
+    custom_panel_driver_required: "YES. A custom Linux DRM/KMS panel driver is required for the chosen 0.23 640x400 micro-OLED. The panel driver exposes the panel's timing, DCS commands, and backlight (if any) to the kernel. The driver is a small (~200-500 line) C file that registers a drm_panel and provides enable/disable callbacks. Without this driver, the kernel cannot enumerate the display. The driver must be written (or adapted from an existing driver for a similar panel)."
+
+  linux_drm_kms_support:
+    v853_dsi_driver: "sun6i-mipi-dsi (in mainline Linux drivers/gpu/drm/sun4i/sun6i_mipi_dsi.c). Supports 4-lane DSI. Device-tree binding: sun6i-mipi-dsi."
+    panel_driver: "the chosen 0.23 640x400 micro-OLED panel needs a custom drm_panel driver. The structure is in include/drm/drm_panel.h."
+    confidence: HIGH for the SoC DSI driver; UNKNOWN for the panel driver (must be written for the specific panel)
+
+  bridge_alternative:
+    see: "projects/glasses/references/components/display/display_bridge_evaluation.yaml"
+    when_needed: "if the chosen display engine has a non-DSI input (RGB, LVDS, or sub-LVDS)"
+    recommended_bridge: "Lontium LT8912B (RGB / LVDS to MIPI DSI, QFN-64, 7 x 7 mm)"
+
+  risk:
+    - "Panel driver must be written. The reference ProjectYosemite does NOT have a panel driver for a 0.23 640x400 micro-OLED; the glasses must develop one."
+    - "Pixel format compatibility must be verified per the chosen panel. RGB-888 is the standard; some 0.23 panels are RGB-565 or RGB-666."
+    - "The display engine (Lumus / DigiLens) does NOT publicly document the electrical interface (RGB vs DSI vs LVDS). The NDA acquisition is the path to verify."
+
+  recommendation:
+    path: "V853 DSI 4-lane -> directly to the display engine's DSI input. No bridge needed in the typical case."
+    required_actions_before_pcb:
+      - "Acquire the chosen display engine's electrical interface specification (NDA)"
+      - "Write or adapt a drm_panel driver for the chosen 0.23 640x400 micro-OLED"
+      - "Verify the panel's pixel format (RGB-888 / 666 / 565) and timing"
+      - "If RGB / LVDS / sub-LVDS input, add a Lontium LT8912B bridge (no DSI)"

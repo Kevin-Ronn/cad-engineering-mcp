@@ -1,0 +1,58 @@
+schema_version: 1
+component:
+  id: rpi_camera_module_3_imx708_noir
+  category: mipi_csi2_camera_module
+  units: mm
+  role: primary_camera_candidate_ir_capable
+
+source:
+  manufacturer: Raspberry Pi Ltd (camera module); Sony Semiconductor (sensor)
+  part_number: Raspberry Pi Camera Module 3 NoIR (without IR-cut filter)
+  sensor: Sony IMX708
+  source_type: manufacturer_official_brief
+  source_docs:
+    - url: https://pip-assets.raspberrypi.com/categories/786-raspberry-pi-camera-module-3/documents/RP-008151-DS-1-camera-module-3-product-brief.pdf
+      description: "Official Raspberry Pi Camera Module 3 product brief, June 2024"
+    - url: https://www.raspberrypi.com/products/camera-module-3-noir/
+      description: "Raspberry Pi product page (NoIR variant)"
+
+mechanical:
+  pcb_dimensions_mm: { width: 25.0, height: 24.0 }
+  total_height_mm: 11.5
+  ribbon_cable: { type: FFC/FPC, pin_count: 15, pitch_mm: 1.0, length_mm: 200 }
+  source_for_mechanical: same brief as standard variant
+
+optical:
+  sensor: Sony IMX708
+  resolution_megapixels: 11.9
+  pixel_size_um: 1.4
+  output_format: RAW10
+  hdr_mode: yes, up to 3 MP
+  shutter_type: rolling
+  focus_type: phase detection autofocus
+  ir_cut_filter: NOT_PRESENT (NoIR variant — passes ~650 nm to ~1000 nm light; needed for 940 nm IR illumination)
+  field_of_view: same as standard variant (66 H / 41 V / 102 D deg)
+  source_for_optical: official product brief
+
+electrical:
+  interface: MIPI CSI-2 (2-lane)
+  control: I2C (Fast-mode and Fast-mode Plus)
+  source_for_electrical: official product brief
+
+environmental:
+  operating_temperature_c: { min: 0, max: 50 }
+  source_for_environmental: official product brief
+
+purchase:
+  unit_price_usd: approximately 25
+  availability: in production until at least January 2030
+  distributor: Raspberry Pi authorised resellers
+
+confidence:
+  overall: HIGH
+  gaps:
+    - "Power consumption not in brief"
+  note: "Identical mechanical envelope to the standard variant. The only difference is the missing IR-cut filter. For the glasses, the NoIR variant is REQUIRED for the distributed near-IR LED use case (the IR-cut filter would block the 940 nm illumination the LEDs provide)."
+
+constraints:
+  status: SERIOUS_CANDIDATE — strong choice for the IR-illuminated night-vision / camera-test mode; same mechanical fit constraints as the standard variant

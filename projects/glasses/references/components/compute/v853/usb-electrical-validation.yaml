@@ -1,0 +1,71 @@
+schema_version: 1
+usb_electrical_validation:
+  id: v853_usb2_drd_usb_c_validation
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, section 1.3.8 (USB) and 10.4 (USB2.0 DRD); USB Type-C specification; TI TPD4E05U04 datasheet
+
+  conclusion:
+    v853_usb_2_drd_to_usb_c_sufficient: YES
+    usb_pd_not_required: TRUE
+    confidence: HIGH
+
+  v853_usb_capability:
+    ip_block_count: 1 (USB 2.0 DRD = dual-role device, per datasheet section 1.3.8)
+    protocol: "USB 2.0 with OTG (DRD). The glasses are a device (per the brief: USB-C for charging + data + debug). The SoC can also be a host if needed (e.g. for debug)."
+    speed: "USB 2.0 High-Speed (480 Mbps) and Full-Speed (12 Mbps) and Low-Speed (1.5 Mbps). No SuperSpeed (5 Gbps / 10 Gbps); the V853 does NOT have USB 3.x."
+    voltage_domain: "VCC33_USB (3.3 V analog) + VDD09_USB (0.9 V digital) per datasheet section 2.3.4"
+    otg_id_pin: "the V853 has an OTG ID pin; for the glasses, the SoC is the device, so the ID pin is not used (floating or tied to GND per USB-C spec)"
+
+  usb_c_receptacle:
+    type: "16-pin USB Type-C mid-mount (8.94 x 7.35 x 2.56 mm typical)"
+    pin_count: 16 (USB 2.0 subset: GND x4, VBUS, D+, D-, CC1, CC2, SBU1, SBU2)
+    role: "UFP (Upstream Facing Port) / device; the glasses are a device"
+    cc1_cc2_pull_down: 5.1 kohm to GND (per USB-C spec for a UFP requesting 5 V default)
+    vbus_max: 5 V (the BQ25185 handles 5 V input; no USB-PD required)
+
+  usb_pd_requirement:
+    status: NOT_REQUIRED
+    reason: "5 V default VBUS (from a USB-A or USB-C charger) is sufficient for the glasses. The BQ25185 charger IC accepts up to 5.5 V input. The SoC runs from a 3.7 V Li-ion battery via the AXP2101; no higher voltage is needed for the SoC or peripherals. USB-PD is only needed if a higher voltage is required (e.g. 9 V or 12 V or 20 V); the glasses do not need this."
+    if_pd_required_later: "add an Infineon CYPD3170 or Lontium LT8711 USB-PD controller. The CYPD3170 is a small QFN; the Lontium LT8711 is also small. Both have mainline Linux drivers."
+
+  esd_placement:
+    ic: "TI TPD4E05U04 (4-channel WCSP, 16 kV ESD per IEC 61000-4-2)"
+    placement: "within 5 mm of the USB-C receptacle; on the USB D+ / D- / CC1 / CC2 lines"
+    capacitance: 0.5 pF typical (suitable for USB 2.0 High-Speed 480 Mbps)
+    leakage: 10 nA typical
+    note: "the TPD4E05U04 covers CC1, CC2, D+, D- on one part. VBUS is protected by the BQ25185's internal OVP."
+
+  vbus_sense:
+    purpose: "the SoC needs to know when USB is plugged in (for charging / data path management)"
+    signal: "USB_VBUS_DET (a GPIO input to the V853 with interrupt capability, connected to VBUS via a resistor divider)"
+    voltage_divider: "VBUS is 5 V; the V853's GPIO is 1.8 V or 3.3 V; use a 100 kohm + 33 kohm divider to bring 5 V down to ~1.24 V (within the V853's GPIO range)"
+    note: "the BQ25185 also has a CHRG_OK or PG (power good) output that the SoC can use to detect VBUS presence. The VBUS_DET GPIO is a redundant safety check."
+
+  usb_data_and_charging_simultaneously:
+    status: YES
+    reason: "USB 2.0 data and USB-C VBUS charging are independent. The BQ25185 manages the charging path (with power-path management); the SoC's USB 2.0 DRD IP handles the data path. The two paths share the USB-C receptacle (the D+/D- lines are used for both) but the data and charging are logically separate."
+    caveat: "the data path is only active when the USB-C plug is in the data position (USB-A or USB-C data cable). When the plug is in a charging-only position (no data lines), only the VBUS is active. This is the standard USB-C behavior."
+
+  id_drd_requirements:
+    otg_id_pin: "the V853 has an OTG ID pin. For the glasses (device role), the ID pin is not used. The ID pin can be left floating or tied to GND."
+    drd_role_selection: "the V853's USB 2.0 DRD IP can be configured as device or host via the role-setting register. For the glasses, the role is always device (no USB-PD / no USB-C power-role swap)."
+
+  power_supply_for_d_plus_d_minus:
+    pull_up_on_d_plus: "the V853's USB 2.0 DRD IP has an internal 1.5 kohm pull-up on D+ (for full-speed device) or on D- (for low-speed device). No external pull-up is needed for the glasses' device role."
+    vbus_5v_to_3v3v_rail: "the BQ25185's VSYS rail (3.7 V typical, 3.0-4.2 V range) is the SoC's battery input. The SoC's VCC-IO is 3.3 V; the VCC33_USB is also 3.3 V. The D+/D- lines are 3.3 V logic, which is within the USB 2.0 spec."
+
+  pcb_routing:
+    trace_impedance: "USB 2.0 differential impedance is 90 ohms (per USB 2.0 spec)"
+    trace_length_match: "D+ and D- must be length-matched within 150 mil (per USB 2.0 spec)"
+    esd_placement: "TPD4E05U04 within 5 mm of the USB-C receptacle"
+    common_mode_choke: "optional; recommended for EMI suppression. Murata DLW21SN or similar. 0603 or 0805 size."
+
+  linux_driver:
+    v853_usb_driver: "mainline Linux; sunxi-musb (drivers/usb/musb/sunxi.c). Supports device, host, and OTG modes."
+    usb_c_role_switch: "if USB-PD is added later, the TCPCI driver (drivers/usb/typec/tcpm/) handles the role swap. Not needed for the glasses' 5 V design."
+    confidence: HIGH
+
+  risk:
+    - "the V853 does NOT have USB 3.x. USB 2.0 is the maximum. If higher bandwidth is needed (e.g. for fast debug log transfer), the SoC's SDIO or eMMC is the alternative."
+    - "the OTG ID pin handling must be configured for device role. Verify the device tree."
+    - "the USB-C receptacle must be the mid-mount type with sufficient PCB support. A mechanical design item."

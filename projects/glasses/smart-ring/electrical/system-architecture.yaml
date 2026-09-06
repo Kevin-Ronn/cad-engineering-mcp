@@ -1,0 +1,109 @@
+schema_version: 1
+ring_system_architecture:
+  id: smart_ring_system_architecture
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "The ring is a controller-only companion to the V853 smart glasses. Heavy AI runs on the phone. The ring's primary role is discreet input (touch + IMU + haptic) and short-range BLE communication with the glasses. PPG is V2."
+
+  architecture_overview:
+    product: "V1 ring (controller; no PPG); V2 ring (controller + health)"
+    inspiration: "Even R1 industrial design + interaction philosophy (NOT a clone)"
+    input: "Capacitive touch (Azoteq IQS127D) + 6-axis IMU (BMI270) for gesture recognition"
+    output: "8 mm LRA (Precision Microdrives 308-101) + LED for visual feedback"
+    sensing: "BMI270 (gesture) + TMP117 (temperature) + (V2: MAX86140 PPG)"
+    compute: "Nordic nRF54L15 (Cortex-M33F; BLE 5.4; 256 KB RAM; 1 MB flash)"
+    power: "BQ25185 charger + MAX17048 fuel gauge + 40-50 mAh curved LiPo + DRV2605L haptic driver + 3.3 V LDO"
+    connectivity: "BLE 5.4 to glasses (low-latency) + BLE 5.4 to phone (long-range)"
+    antenna: "Johanson 2450AT18B100 chip antenna on the inner band"
+    charging: "Magnetic pogo (V1; simpler; 95% efficiency; sweat-resistant)"
+
+  functional_block_diagram:
+    description: "All blocks on the V1 ring's tiny rigid PCB. The touch IC and IMU are interrupt-driven for low power. The fuel gauge and temperature sensor are polled at 1 Hz. The BLE radio wakes on touch or IMU interrupt or 100 ms periodic event."
+
+    blocks:
+      - { name: "Touch IC (IQS127D)", interface: "I2C + INT GPIO to nRF54L15", role: "5-7 electrode capacitive touch crown; tap / double-tap / long-press / swipe gestures", current_active_uA: 40, current_sleep_uA: 0.5 }
+      - { name: "IMU (BMI270)", interface: "I2C + INT1 + INT2 to nRF54L15", role: "6-axis IMU; gesture recognition (tilt, rotate, motion); 50 Hz ODR with FIFO; INT1 wakes the nRF54L15 on motion", current_active_uA: 685, current_sleep_uA: 3 }
+      - { name: "Temperature (TMP117)", interface: "I2C to nRF54L15", role: "Finger temperature; 1 Hz conversion", current_active_uA: 3.5, current_sleep_uA: 0.15 }
+      - { name: "Fuel gauge (MAX17048)", interface: "I2C to nRF54L15 (shared bus)", role: "Battery state of charge; ALERT on low battery", current_active_uA: 50, current_sleep_uA: 0.5 }
+      - { name: "Charger (MCP73831, V1 pogo)", interface: "Standalone (no I2C)", role: "Magnetic pogo charging at 5 V; 500 mA charge current; built-in power-path management (system can run from the 5 V pogo input while charging)", notes: "The V1 uses magnetic pogo (not the BQ25185; the BQ25185 is reserved for the glasses' temple)" }
+      - { name: "Haptic driver (DRV2605L)", interface: "I2C to nRF54L15", role: "8 mm LRA driver; auto-resonance tracking; I2C-controlled waveforms", current_active_uA: 500 (peak during pulse), current_sleep_uA: 1 }
+      - { name: "Antenna (Johanson 2450AT18B100)", interface: "50 ohm differential to nRF54L15's RF port", role: "2.4 GHz BLE antenna; on the inner band; 5 mm keepout" }
+      - { name: "nRF54L15", interface: "central SoC", role: "Main MCU; BLE 5.4; Cortex-M33F; portable sensor manager; BLE pipeline; gesture detection; haptic control; OTA; power management" }
+      - { name: "Battery (curved LiPo)", interface: "Direct connection to charger + fuel gauge + system rail", role: "40-50 mAh; 3.85 V nominal; 0.15-0.19 Wh; 3-5 days of runtime" }
+
+  power_rail_topology:
+    description: "Single-cell LiPo battery, pogo charging, single LDO, all sensors share the same 1.8 V rail."
+
+    rails:
+      - { name: "VBAT", voltage_v_range: [3.0, 4.2], source: "Curved LiPo (40-50 mAh)", consumers: ["MCP73831 charger (charging path)", "3.3 V LDO (system rail)", "DRV2605L haptic driver (PVDD)"] }
+      - { name: "VSYS", voltage_v_range: [3.0, 4.2], source: "MCP73831 power-path output (or battery direct when not charging)", consumers: ["3.3 V LDO (system rail)", "DRV2605L PVDD (if needed)"] }
+      - { name: "VCC-3V3 (system rail)", voltage_v: 3.3, source: "3.3 V LDO (TPS7A02-class; 200 mA max)", consumers: ["Johanson 2450AT18B100 chip antenna (via matching network)", "DRV2605L haptic driver (logic supply; the driver can run on 3.3 V)", "STATUS LED (via 1 kohm resistor)"] }
+      - { name: "VCC-1V8 (sensor rail)", voltage_v: 1.8, source: "1.8 V LDO (TPS7A02-class; 100 mA max)", consumers: ["IQS127D touch IC", "BMI270 IMU", "TMP117 temperature sensor", "MAX17048 fuel gauge", "nRF54L15's GPIO domain (the nRF54L15's GPIO can run at 1.8 V or 3.3 V; we choose 1.8 V to match the sensor rail)"] }
+
+  i2c_bus_topology:
+    description: "Single I2C bus on the nRF54L15. All 5 I2C devices (touch IC, IMU, temperature, fuel gauge, haptic driver) share one bus. The bus is 1.8 V; pull-up is 4.7 kohm to 1.8 V."
+
+    devices_on_bus:
+      - { address_7bit: "0x34 or similar (verify per IQS127D datasheet)", device: "IQS127D touch IC" }
+      - { address_7bit: "0x68 (SDO = GND)", device: "BMI270 IMU" }
+      - { address_7bit: "0x48 (A0 = GND)", device: "TMP117 temperature" }
+      - { address_7bit: "0x36", device: "MAX17048 fuel gauge" }
+      - { address_7bit: "0x5A (verify per DRV2605L datasheet)", device: "DRV2605L haptic driver" }
+
+  gpio_allocation:
+    description: "The nRF54L15 has approximately 32 GPIO. The V1 ring uses approximately 8 GPIO for the non-I2C signals. The rest are available for future expansion."
+
+    allocation:
+      - { gpio_function: "Touch IC INT",     direction: "input", pull: "rising edge; nRF54L15 internal pull-up", note: "Wake source; asserts on touch event" }
+      - { gpio_function: "IMU INT1",          direction: "input", pull: "rising edge; nRF54L15 internal pull-up", note: "Wake source; asserts on motion event (BMI270 wakes the nRF54L15 on any motion; the nRF54L15 then reads the FIFO)" }
+      - { gpio_function: "IMU INT2",          direction: "input", pull: "rising edge; nRF54L15 internal pull-up", note: "Data-ready interrupt; can be used for FIFO threshold" }
+      - { gpio_function: "Temperature ALERT", direction: "input", pull: "open-drain; 10 kohm pull-up to 1.8 V", note: "Optional; the V1 polls the TMP117 at 1 Hz, so the ALERT is not strictly needed" }
+      - { gpio_function: "Fuel gauge ALERT",  direction: "input", pull: "open-drain; 10 kohm pull-up to 1.8 V", note: "Asserts on low battery; can wake the nRF54L15" }
+      - { gpio_function: "STATUS LED",        direction: "output", pull: "no", note: "Active-high; drives an LED + 1 kohm resistor to GND" }
+      - { gpio_function: "Haptic driver EN",  direction: "output", pull: "no", note: "Optional; the DRV2605L has an I2C enable; the GPIO is for hardware power-down" }
+      - { gpio_function: "VCC-3V3 LDO EN",   direction: "output", pull: "no", note: "Optional; the LDO can be hardware-enabled by the nRF54L15" }
+
+  ble_architecture:
+    description: "The ring connects to BOTH the glasses and the phone. For low-latency commands, the ring uses a direct BLE connection to the glasses. For application / health data, the ring uses a BLE connection to the phone. The two connections are NOT simultaneous in V1 (BLE 5.x supports multiple connections, but maintaining two simultaneous connections costs power); the ring uses a fast role-switch (within 100 ms) between the two."
+
+    primary: "ring <-> glasses (BLE 5.4; low-latency commands; 7.5 ms connection interval)"
+    secondary: "ring <-> phone (BLE 5.4; long-range data; 30-100 ms connection interval)"
+    simultaneous: false
+    role_switch_time_ms: 100
+
+  firmware_state_machine:
+    description: "Low-power state machine with deep sleep as the dominant state. The ring wakes on touch (IQS127D INT), IMU motion (BMI270 INT1), or fuel gauge ALERT. The touch + IMU events produce a gesture which is sent to the glasses over BLE. The fuel gauge ALERT triggers a low-battery notification."
+
+    states: [BOOT, PAIRING, CONNECTED, IDLE, GESTURE, HAPTIC, SENSING, SLEEP, CHARGING, OTA]
+
+  component_to_peripheral_mapping:
+    description: "Every component is mapped to its nRF54L15 peripheral."
+
+    nRF54L15: "main SoC"
+    I2C0: "IQS127D (touch) + BMI270 (IMU) + TMP117 (temp) + MAX17048 (fuel gauge) + DRV2605L (haptic)"
+    GPIO: "touch INT, IMU INT1+INT2, temp ALERT, fuel gauge ALERT, status LED, haptic EN, LDO EN"
+    PWM: "none in V1 (haptic is driven by the DRV2605L over I2C)"
+    ADC: "none in V1 (temperature is via the TMP117 I2C sensor; battery voltage is via the MAX17048 I2C fuel gauge)"
+    RTC: "used for the periodic 1 Hz wakeup (temperature + fuel gauge poll) and the 100 ms periodic event for role-switch"
+    RADIO: "BLE 5.4 to glasses (primary) and phone (secondary); role-switched"
+    CRYPTO: "ARM TrustZone-M for secure boot; AES-128 / SHA-256 for OTA image verification"
+    SAADC: "not used in V1 (the temperature is via I2C; the battery voltage is via the fuel gauge I2C)"
+    NFCT: "not used in V1 (pogo charging; not NFC)"
+    USB: "not used in V1 (pogo charging; no USB)"
+
+  known_uncertainties:
+    - { item: "IQS127D I2C address", status: "verify per Azoteq datasheet" }
+    - { item: "DRV2605L I2C address", status: "verify per TI datasheet" }
+    - { item: "nRF54L15 WLCSP-2.5x2.5 mm package", status: "verify exact dimensions and pinout per the Nordic product specification v1.0" }
+    - { item: "Curved LiPo cell shape", status: "specification to be determined with the cell manufacturer (EEMB-class) based on the V1 inner ring radius" }
+    - { item: "Antenna keepout (5 mm) interaction with the battery, haptic, and charger placement", status: "to be verified in the mechanical crown layout" }
+
+  references:
+    - { ref: "components/*.yaml", url: "https://github.com/stawiski/open-ring", note: "All component selections are documented in the components/ subdirectory." }
+    - { ref: "research/reference-comparison.md", url: "https://github.com/weierruisi/Intring", note: "Reference comparison." }
+    - { ref: "research/license-audit.md", url: "https://github.com/w1ne/smart-ring-digital-twin", note: "License audit." }
+    - { ref: "electrical/ble-interface.yaml", url: "internal", note: "Detailed BLE GATT spec." }
+    - { ref: "electrical/sensor-interface.yaml", url: "internal", note: "Detailed sensor I2C / GPIO / power tree." }
+    - { ref: "electrical/power-tree.yaml", url: "internal", note: "Detailed power tree." }
+    - { ref: "electrical/power-budget.yaml", url: "internal", note: "Detailed power budget." }

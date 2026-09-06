@@ -1,0 +1,47 @@
+schema_version: 1
+component:
+  id: onsemi_lc709203f
+  category: single_cell_fuel_gauge_hda_model
+  units: mm
+  role: alternative_fuel_gauge_candidate_low_quiescent
+
+source:
+  manufacturer: ON Semiconductor (now onsemi)
+  part_number: LC709203F
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.onsemi.com/products/timing-interconnect-and-sensing/onsemi-fuel-gauge
+      description: "LC709203F product page and datasheet"
+
+mechanical:
+  package: WLCSP-8
+  dimensions_mm: approximately 1.34 x 1.68 (verify per datasheet)
+  source_for_mechanical: onsemi datasheet
+
+electrical:
+  interface: I2C
+  supply_voltage_v: { min: 2.0, typ: 3.7, max: 4.5 }
+  quiescent_current_ua: very low (HDA model; per onsemi)
+  sense_resistor: NOT REQUIRED
+  accuracy_percent: 2 (typical for HDA model)
+  source_for_electrical: onsemi datasheet
+
+environmental:
+  operating_temperature_c: { min: -20, max: 70 }
+  source_for_environmental: onsemi datasheet
+
+purchase:
+  distributor: onsemi; Mouser; DigiKey
+  unit_price_usd: approximately 1.00 to 2.00 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Linux driver support is less universal than MAX17048 / BQ27426"
+
+constraints:
+  status: ALTERNATIVE — small, low-quiescent, OK for wearable. Use if Linux driver support is available for the chosen SoC.

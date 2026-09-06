@@ -1,0 +1,49 @@
+schema_version: 1
+display_bridge_evaluation:
+  id: v853_to_display_bridge_evaluation
+  date: 2026-09-05
+  source: cross-referenced against the V853 datasheet and the display reference library
+
+  v853_mipi_dsi_capability:
+    per_datasheet: "V853 supports 4-lane MIPI DSI up to 1920 x 1200 @ 60 fps (datasheet section 1.3.5.1)"
+    protocol: MIPI DSI V1.02, D-PHY V1.2
+    per_lane_data_rate: up to 1.0 Gbps/lane
+    conclusion: "V853 DSI is the natural output for any 0.23 640x400 micro-OLED with a MIPI DSI input."
+
+  display_engine_input_requirements:
+    - engine_class: 0.23 640x400 micro-OLED (e.g. Sony ECX336-class)
+      typical_input: MIPI DSI (some variants), sub-LVDS (some variants)
+      bridge_required: "NO if MIPI DSI input; YES if sub-LVDS input (no widely-available commercial bridge IC for sub-LVDS to DSI)"
+    - engine_class: 0.39 1280x720 micro-OLED (e.g. Sony ECX343-class)
+      typical_input: MIPI DSI, sub-LVDS
+      bridge_required: same as above
+    - engine_class: LCoS optical engine (e.g. Lumus DK-50 / Maximus class)
+      typical_input: RGB or LVDS (varies per engine)
+      bridge_required: YES — RGB / LVDS to MIPI DSI bridge
+    - engine_class: Waveguide-only module (e.g. Holoeye, Goertek, generic)
+      typical_input: depends on the integrated optical engine
+      bridge_required: depends on the engine
+
+  recommended_display_interface_architecture:
+    - scenario: "0.23 640x400 micro-OLED with MIPI DSI input (most common for Sony ECX336-class)"
+      path: "V853 MIPI DSI 4-lane -> micro-OLED DSI input -> optical engine"
+      bridge: NONE
+      result: "Direct DSI connection. The glasses PCB routes 4 DSI lanes (plus clock, plus TE/reset/backlight-enable GPIO) from the V853 to the FPC connector for the display engine."
+
+    - scenario: "0.23 640x400 micro-OLED with sub-LVDS input (some Sony variants)"
+      path: "V853 MIPI DSI 4-lane -> sub-LVDS-to-DSI bridge IC -> micro-OLED sub-LVDS input -> optical engine"
+      bridge: "NO WIDELY-AVAILABLE COMMERCIAL IC. This is a custom design project (FPGA or ASIC). Use the MIPI DSI variant instead."
+      result: "BLOCKED. Do not select a sub-LVDS display engine without a bridge IC plan."
+
+    - scenario: "LCoS engine with RGB / LVDS input"
+      path: "V853 MIPI DSI 4-lane -> RGB/LVDS-to-DSI bridge IC (e.g. Lontium LT8912B) -> LCoS engine"
+      bridge: Lontium LT8912B (RGB / LVDS to MIPI DSI), QFN-64
+      result: "Bridge IC needed. 7 x 7 mm QFN-64 on the compute-PCB."
+
+  conclusion:
+    primary_recommendation: "Select a display engine that accepts MIPI DSI input. The V853 DSI is the natural output, no bridge IC is needed, and the PCB routing is straightforward (4 DSI lanes + clock + GPIO)."
+    fallback_bridge: "If a non-DSI display engine is required, the Lontium LT8912B (RGB / LVDS to MIPI DSI) is the candidate. 7 x 7 mm QFN-64. Verify the exact Lontium part number (LT8912B vs LT8912 vs LT8911) per the engine's input requirements."
+    rejected_bridge: "The Toshiba TC358870 (HDMI to MIPI DSI) is not useful for the glasses because the V853 does not have HDMI output. Only useful if an external HDMI source is added, which is not in scope."
+    unknowns:
+      - "Exact DSI input requirement of the Lumus DK-50 / Maximus optical engine (not in public data; requires NDA)"
+      - "Whether the chosen 0.23 640x400 micro-OLED is DSI or sub-LVDS (engineer decision when the actual panel is selected)"

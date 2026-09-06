@@ -1,0 +1,51 @@
+schema_version: 1
+component:
+  id: veml7700
+  category: ambient_light_sensor_i2c
+  units: mm
+  role: primary_ambient_light_sensor
+
+source:
+  manufacturer: Vishay Semiconductors
+  part_number: VEML7700
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.vishay.com/en/product/84663/
+      description: "Vishay VEML7700 product page"
+
+mechanical:
+  package: 4-pin OPLGA (leadless)
+  dimensions_mm: { length: 3.0, width: 2.0, height: 0.5 }
+  source_for_mechanical: Vishay datasheet
+
+electrical:
+  supply_voltage_v: { min: 2.5, typ: 3.3, max: 3.6 }
+  interface: I2C (0x10 address)
+  current_active_uA: 450 (typical)
+  current_shutdown_uA: 0.5
+  resolution_lux: 0.003
+  dynamic_range_lux: 0 to 120000
+  output: 16-bit digital
+  source_for_electrical: Vishay datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: Vishay datasheet
+
+purchase:
+  distributor: Mouser; DigiKey; LCSC
+  unit_price_usd: 1.5 to 3 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "No specific Linux driver; VEML7700 is supported via the in-tree IIO driver (veml7700)"
+
+constraints:
+  status: SERIOUS_PRIMARY — small, low power, 16-bit, well-documented, well-supported in Linux.
+  glasses_use_case: "Display brightness auto-adjustment. The sensor is mounted behind a small light pipe in the glasses frame to sample ambient light. 120000 lux dynamic range covers direct sunlight to dark indoor."
+  linux_support: "Mainline Linux IIO driver (veml7700); device-tree binding exists."

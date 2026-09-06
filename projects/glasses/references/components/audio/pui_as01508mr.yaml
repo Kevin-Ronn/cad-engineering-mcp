@@ -1,0 +1,49 @@
+schema_version: 1
+component:
+  id: pui_audio_as01508mr
+  category: micro_speaker_dynamic
+  units: mm
+  role: secondary_speaker_candidate
+
+source:
+  manufacturer: PUI Audio (a division of DB Unlimited)
+  part_number: AS01508MR-2-R
+  source_type: distributor_listing
+  source_docs:
+    - url: https://www.puiaudio.com/
+      description: "PUI Audio official site"
+
+mechanical:
+  dimensions_mm: { length: 15.0, width: 11.0, height: 3.0 }  # typical PUI AS01-series 8 ohm form factor
+  weight_g: approximately 0.6
+  port_orientation: top
+  acoustic_type: sealed
+  source_for_mechanical: PUI Audio datasheet summary
+
+electrical:
+  impedance_ohm: 8
+  rated_power_w: 0.5 to 0.7
+  maximum_power_w: 0.8
+  sensitivity_db_spl_per_w_1m: 86 to 90 (typical class; verify per datasheet)
+  frequency_response_hz: 300 to 10000 (typical class)
+  source_for_electrical: PUI Audio datasheet
+
+environmental:
+  operating_temperature_c: { min: -20, max: 60 }
+
+purchase:
+  distributor: PUI Audio direct; Mouser; DigiKey
+  unit_price_usd: 1.5 to 3 (single-piece); 0.8 to 1.5 in volume
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: distributor_listing
+  gaps:
+    - "Exact sensitivity SPL not in the summary"
+    - "Frequency response and resonance not in the summary"
+
+constraints:
+  status: SERIOUS — same form factor as the Soberton SP-1509L1. Use as a third-source fallback.

@@ -1,0 +1,48 @@
+schema_version: 1
+component:
+  id: usb_c_16pin_midmount
+  category: usb_type_c_receptacle_5v_charging
+  units: mm
+  role: primary_usb_c_connector_candidate
+
+source:
+  manufacturer: various (Mouser catalog lists GCT, Molex, Hirose, JAE, JST, Amphenol ICC, Würth, CUI; the part numbers vary)
+  part_number: representative example: GCT USB4105-GF-A or Molex 216990-0001
+  source_type: distributor_catalog
+  source_docs:
+    - url: https://www.mouser.com/c/connectors/usb-connectors/usb-type-c-connectors/
+      description: "Mouser USB Type-C connector catalog"
+
+mechanical:
+  connector_type: USB Type-C receptacle
+  pin_count: 16 (USB 2.0 subset: GND, VBUS, D+, D-, CC1, CC2, SBU1, SBU2, plus shield)
+  mount_style: mid-mount (most common on a thin PCB) or top-mount
+  dimensions_mm: approximately 8.94 x 7.35 x 2.56 (typical 16-pin mid-mount)
+  source_for_mechanical: typical USB Type-C 16-pin mid-mount; verify per part
+
+electrical:
+  voltage_rating_v: 5 (VBUS, charging)
+  current_rating_a: 3 (USB-C standard @ 5 V; 1.5 A or 3 A depending on Rp pull-up)
+  cc_resistors: 5.1 kohm to GND on CC1 and CC2 (for a UFP / device role requesting 5 V default)
+  esd_protection: required (USB-C connector pins are exposed; TVS array on CC, D+, D-)
+  usb_pd: not required for the glasses (5 V is sufficient)
+  data: USB 2.0 (D+, D-) only; no USB 3.0 super-speed pairs
+  source_for_electrical: USB Type-C specification
+
+environmental:
+  operating_temperature_c: { min: -30, max: 85 }  # typical
+  source_for_environmental: typical USB-C connector
+
+purchase:
+  distributor: Mouser; DigiKey; LCSC
+  unit_price_usd: approximately 0.50 to 1.50 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH_for_form_factor; HIGH_for_5V_charging_via_CC_pulldown
+
+constraints:
+  status: SERIOUS_PRIMARY — USB-C 16-pin mid-mount is the standard 5 V charging connector for small wearables. No USB-PD is needed for 5 V charging.
+  notes: "If USB-PD becomes a requirement (e.g. for > 5 V input), a USB-PD controller IC like Infineon CYPD3170 or similar would be added. For the 5 V path, no USB-PD controller is needed."

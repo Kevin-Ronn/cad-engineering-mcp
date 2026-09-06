@@ -1,0 +1,56 @@
+schema_version: 1
+component:
+  id: bosch_bmi270
+  category: 6_axis_imu_accel_gyro
+  units: mm
+  role: primary_imu_candidate
+
+source:
+  manufacturer: Bosch Sensortec
+  part_number: BMI270
+  source_type: manufacturer_datasheet_summary_plus_distributor_listing
+  source_docs:
+    - url: https://www.bosch-sensortec.com/products/smart-sensors/bmi270/
+      description: "Bosch BMI270 product page"
+    - url: https://www.lcsc.com/product-detail/C411871.html
+      description: "LCSC listing ($1.91)"
+
+mechanical:
+  package: 14-pin LGA
+  dimensions_mm: { length: 2.5, width: 3.0, height: 0.8 }
+  source_for_mechanical: Bosch datasheet
+
+electrical:
+  supply_voltage_v: { min: 1.71, typ: 1.8, max: 3.6 }
+  interfaces: [I2C, SPI up to 10 MHz]
+  accelerometer_ranges_g: [2, 4, 8, 16]
+  gyroscope_ranges_dps: [125, 250, 500, 1000, 2000]
+  odr_max_hz: 6400 (gyro); 1600 (accel)
+  current_active_uA: 685 (accel + gyro, typical)
+  current_sleep_uA: 3 (deep suspend)
+  fifo_bytes: 1024
+  interrupts: 2 (INT1, INT2)
+  source_for_electrical: Bosch datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: Bosch datasheet
+
+purchase:
+  distributor: Bosch direct; Mouser; DigiKey; LCSC
+  unit_price_usd: 1.91 to 3.00 (single-piece retail); 1.20 in volume
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary_plus_distributor_listing
+  gaps:
+    - "Detailed register map not in the summary"
+    - "Specific Linux driver status: Bosch BMI160 driver in mainline Linux; BMI270 is supported via the same driver family; verify on the target kernel"
+
+constraints:
+  status: SERIOUS_PRIMARY — 2.5 x 3.0 mm LGA, 0.8 mm thin, mature vendor, well-known, used in Meta Ray-Ban / Snap Spectacles / many smartwatches.
+  linux_support: "Mainline Linux IIO driver (bmi160 / bmi270); device-tree binding exists."
+  glasses_use_case: "Head motion tracking (display stabilization, gesture sensing), step counting (optional), activity classification. Bosch provides built-in gesture and activity recognition firmware that runs on-chip (no host CPU load)."

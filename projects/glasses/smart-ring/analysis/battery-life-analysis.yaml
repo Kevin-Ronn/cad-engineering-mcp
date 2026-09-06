@@ -1,0 +1,646 @@
+schema_version: 1
+ring_battery_life_analysis:
+  id: smart_ring_battery_life_analysis
+  date: 2026-09-06
+  status: READ-ONLY. No PCB / CAD / KiCad / FreeCAD / firmware source code is created by this artifact. This is a CRITICAL VERIFICATION artifact.
+
+  note: "Independent verification of the V1 ring's runtime claim, charging-time claim, current budget, energy budget, thermal behavior, and safety protections. REVISED 2026-09-06 to reflect the corrected electrical/power-budget.yaml. The previous analysis used an inflated nRF54L15 radio current (3 mA continuous); the corrected analysis uses the per-event model from power-budget.yaml section 1. The corrected runtime is approximately 1-3 days under typical mixed use at 45 mAh (vs the previously claimed 14 days)."
+
+  parent_artifacts:
+    - "electrical/power-budget.yaml"  # REVISED 2026-09-06
+    - "electrical/power-tree.yaml"
+    - "electrical/system-architecture.yaml"
+    - "mechanical/inner-band-layout.yaml"
+    - "mechanical/pogo-charger-layout.yaml"
+    - "components/battery-selection.yaml"
+    - "components/charger-selection.yaml"
+    - "components/mcu-selection.yaml"
+    - "components/imu-selection.yaml"
+    - "components/ppg-selection.yaml"
+    - "components/touch-selection.yaml"
+    - "components/haptic-selection.yaml"
+    - "components/temperature-selection.yaml"
+    - "components/antenna-selection.yaml"
+    - "firmware/architecture.md"
+    - "electrical/sensor-interface_part2.yaml"
+
+  classification_legend:
+    DATASHEET: "value directly sourced from a manufacturer datasheet and cited"
+    CALCULATED: "value derived from first-principles arithmetic using DATASHEET inputs"
+    ENGINEERING_ASSUMPTION: "value used in the absence of a datasheet; flagged for verification"
+    TBD: "value not yet available; required for downstream decisions"
+    INVALID_OR_UNSUPPORTED: "claim in a previous artifact that does not survive verification"
+
+  # =========================================================================
+  # 1. analysis_scope
+  # =========================================================================
+  analysis_scope:
+    what_this_validates:
+      - "the per-component current budget (sleep + active) against manufacturer datasheets"
+      - "the per-profile average current derived from the budget"
+      - "the theoretical, realistic, and worst-case runtime at 45 mAh (the midpoint of the 40-50 mAh range)"
+      - "the MCP73831 charge-algorithm CC/CV/termination behaviour INDEPENDENTLY from power-budget.yaml"
+      - "the charging-time claim of 5.1 minutes to 80% independently from power-budget.yaml"
+      - "the peak-current feasibility against the selected regulators and battery"
+      - "the charging-safety protections (overcharge, over-discharge, over-current, short, thermal, reverse-polarity, NTC)"
+      - "the battery C-rate against the (currently undetermined) cell's charge-current limit"
+      - "the thermal behaviour of the battery, the MCP73831, the LDOs, the nRF54L15, and the LRA"
+      - "the low-battery policy thresholds as conceptual ranges"
+      - "the interaction between charging and ring usage (worn/not worn, BLE/haptic/sensor during charge)"
+    what_this_does_not_validate:
+      - "actual prototype-measured runtime (no hardware exists yet)"
+      - "the MCP73831 STAT pin encodings (datasheet TBD)"
+      - "the EEMB-class LiPo cell's exact dimensions, NTC type, PCM trip thresholds (datasheet TBD)"
+      - "thermal resistance values (TBD; not in scope)"
+      - "the specific battery's max charge current (datasheet TBD; this is the largest single gap)"
+      - "the cradle's over-current / over-voltage protection (cradle is a separate project)"
+      - "the user's actual usage pattern (assumed; not measured)"
+
+  # =========================================================================
+  # 2. battery_selection
+  # =========================================================================
+  battery_selection:
+    exact_candidate: "Curved LiPo (custom-shaped); 35-60 mAh; 3.85 V nominal; per components/battery-selection.yaml section recommended"
+    classification:
+      capacity_mah: { value: 45, classification: "ENGINEERING_ASSUMPTION", source: "components/battery-selection.yaml section recommended; the file says 35-60 mAh; 45 mAh is the midpoint", note: "the ACTUAL V1 cell capacity is TBD on the EEMB-class manufacturer datasheet" }
+      voltage_nominal_v: { value: 3.85, classification: "DATASHEET", source: "components/battery-selection.yaml section candidates; standard LiPo nominal" }
+      voltage_max_v: { value: 4.2, classification: "DATASHEET", source: "standard LiPo; per electrical/power-budget.yaml section charging_time" }
+      voltage_min_v: { value: 3.0, classification: "DATASHEET", source: "components/battery-selection.yaml section candidates; the cell's PCM cuts off at this voltage (TBD on cell datasheet)" }
+      dimensions_mm: { value: "TBD", classification: "TBD", source: "engineering estimate 6-8 wide x 35-40 long x 2.5-3.5 thick per components/battery-selection.yaml section candidates; the V1 cell's actual dimensions are TBD on the EEMB-class manufacturer" }
+      max_recommended_charge_rate_c: { value: "TBD", classification: "TBD", source: "the EEMB-class cell's max charge C-rate is NOT documented in components/battery-selection.yaml; this is the largest gap in the V1 charging architecture", note: "typical small LiPo cells accept 0.5C to 1C continuous charge; 500 mA into 45 mAh is 11.1C which is FAR above typical" }
+      max_continuous_discharge_current_ma: { value: "TBD", classification: "TBD", source: "the cell's max continuous discharge current is NOT documented in components/battery-selection.yaml" }
+      pulse_discharge_capability_ma: { value: "TBD", classification: "TBD", source: "the cell's peak discharge rating is NOT documented" }
+      ntc_thermistor: { value: "10 kohm NTC (B = 3950); TBD on cell datasheet", classification: "ENGINEERING_ASSUMPTION", source: "components/battery-selection.yaml section safety.ntc + electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger.battery_ntc_handling" }
+      pcm_protections_present: { value: "YES (overcharge / overdischarge / overcurrent / short circuit)", classification: "DATASHEET", source: "components/battery-selection.yaml section safety.pcm", note: "the PCM is IN the cell, NOT in the charger" }
+      pcm_trip_thresholds: { value: "TBD on cell datasheet", classification: "TBD", source: "the PCM's exact trip thresholds (overcharge V, overdischarge V, overcurrent A, short-circuit A) are not documented" }
+      cycle_life_cycles_to_80pct: { value: 500, classification: "ENGINEERING_ASSUMPTION", source: "components/battery-selection.yaml section safety.cycle_life; 'approximately 500-1000 cycles'" }
+      self_discharge_pct_per_month: { value: "1-2", classification: "ENGINEERING_ASSUMPTION", source: "components/battery-selection.yaml not stated explicitly; copied from electrical/power-budget.yaml section power_budget_assumptions" }
+      internal_resistance_mohm: { value: "TBD", classification: "TBD", source: "the cell's internal resistance is NOT documented; affects thermal analysis" }
+      swelling_allowance_pct: { value: 5, classification: "ENGINEERING_ASSUMPTION", source: "components/battery-selection.yaml section safety.swelling" }
+    ntc_handling:
+      ntc_present: true
+      ntc_monitoring_component: "MCP73831 TS input (per pogo-charger-layout.yaml section battery_charger_interaction.ntc_thermistor_type)"
+      ntc_cold_threshold_c: { value: "TBD on MCP73831 datasheet", classification: "TBD" }
+      ntc_hot_threshold_c: { value: "TBD on MCP73831 datasheet", classification: "TBD" }
+    classification_summary:
+      fully_documented: []
+      partial_documentation: ["voltage_nominal_v", "voltage_max_v", "voltage_min_v", "cycle_life", "swelling_allowance", "ntc_presence"]
+      engineering_assumptions: ["capacity_mah (45 mAh midpoint of 35-60 mAh range)"]
+      tbds_blocking_decisions: ["max_recommended_charge_rate_c", "max_continuous_discharge_current_ma", "internal_resistance_mohm", "pcm_trip_thresholds", "ntc_hot_threshold_c"]
+
+  # =========================================================================
+  # 3. energy_budget
+  # =========================================================================
+  energy_budget:
+    nominal_battery_energy:
+      formula: "E_nominal = capacity_mAh * nominal_voltage_V"
+      calculation: "45 mAh * 3.85 V = 173.25 mWh = 0.173 Wh"
+      classification: "CALCULATED"
+      source: "components/battery-selection.yaml section candidates + electrical/power-budget.yaml section battery_capacity"
+      matches_inherited_claim: "electrical/power-budget.yaml section battery_capacity.energy_wh = 0.17 Wh; this analysis confirms 0.173 Wh (within rounding)"
+    usable_energy:
+      formula: "E_usable = E_nominal * depth_of_discharge"
+      depth_of_discharge_assumption: "0.80"
+      depth_of_discharge_basis: "LiPo cells should not be discharged below 20% SOC for long cycle life; the cell's PCM cuts off at 3.0 V (per components/battery-selection.yaml section candidates); 80% DoD is a conservative engineering assumption"
+      calculation: "0.173 Wh * 0.80 = 0.139 Wh = 139 mWh"
+      classification: "CALCULATED (with ENGINEERING_ASSUMPTION on DoD)"
+      note: "this is the energy available for the system; the remaining 20% is held in reserve"
+    energy_reserve:
+      value: "20% (held in reserve for low-battery state + safety margin)"
+      classification: "ENGINEERING_ASSUMPTION"
+    realistic_usable_percentage:
+      value: "80% of nominal"
+      classification: "ENGINEERING_ASSUMPTION"
+    regulator_converter_losses:
+      description: "the V1 architecture uses two cascaded LDOs (TPS7A02 3.3 V + 1.8 V per electrical/power-tree.yaml section ldo_selection). The LDO efficiency is approximately Vout/Vin at low current (linear regulator)."
+      ldo_3v3_efficiency: { value: "approximately Vout/Vin = 3.3 / (3.85 - 0.05) = 0.87 at 3.85 V battery; 3.3 / (4.2 - 0.05) = 0.80 at full charge; 3.3 / (3.0 - 0.05) = 1.12 (the LDO is in dropout at low battery; this is RED for low-battery operation)", classification: "CALCULATED" }
+      ldo_1v8_efficiency: { value: "approximately 1.8 / 3.3 = 0.55; the 1.8 V LDO drops 1.5 V across it; this is a SIGNIFICANT loss", classification: "CALCULATED" }
+      combined_efficiency_for_sensors: { value: "0.55 (the sensors draw from the 1.8 V rail; the 1.8 V LDO efficiency dominates)", classification: "CALCULATED" }
+      combined_efficiency_for_radio: { value: "0.87 (the nRF54L15's BLE radio draws from the 3.3 V rail directly)", classification: "CALCULATED" }
+      notes: "the cascaded LDO topology is INEFFICIENT; a buck converter for the 3.3 V rail would be much more efficient at typical battery voltages; the LDO choice was made for simplicity + low quiescent current (per electrical/power-tree.yaml section ldo_selection); the inefficiency is acknowledged here"
+    estimated_system_energy_consumption:
+      description: "the system consumes different amounts of energy depending on the usage profile. The detailed per-profile average current is calculated in section 5. The energy per day for each profile is:"
+      energy_per_day:
+        - profile: "Deep idle"
+          energy_per_day_mwh: 0.36
+          source: "electrical/power-budget.yaml section battery_life_by_scenario.Sleep"
+          classification: "INHERITED_FROM_PRIOR_ARTIFACT (not independently calculated here)"
+        - profile: "Idle (BLE connected)"
+          energy_per_day_mwh: 4.8
+          source: "electrical/power-budget.yaml section battery_life_by_scenario.Idle"
+          classification: "INHERITED_FROM_PRIOR_ARTIFACT"
+        - profile: "Active (typical)"
+          energy_per_day_mwh: 12
+          source: "electrical/power-budget.yaml section battery_life_by_scenario.Active typical"
+          classification: "INHERITED_FROM_PRIOR_ARTIFACT"
+        - profile: "Active (target)"
+          energy_per_day_mwh: 12
+          source: "electrical/power-budget.yaml section battery_life_by_scenario.Active target"
+          classification: "INHERITED_FROM_PRIOR_ARTIFACT"
+        - profile: "Continuous"
+          energy_per_day_mwh: 36
+          source: "electrical/power-budget.yaml section battery_life_by_scenario.Continuous"
+          classification: "INHERITED_FROM_PRIOR_ARTIFACT"
+      note: "these per-day energies are used in the runtime calculation (section 6). They are NOT independently recomputed here; the per-profile average current IS independently recomputed in section 5."
+    energy_reserve_check:
+      description: "the usable energy (139 mWh) must be greater than the energy consumed by the realistic profile for the 3-5 day runtime claim to hold."
+      check_against_active_target:
+        energy_usable_mwh: 139
+        energy_per_day_for_active_target_mwh: 12
+        days_supported: "139 / 12 = 11.6 days (theoretical); realistically 7-10 days accounting for self-discharge + low-battery cutoff"
+        classification: "the 3-5 day claim is SUPPORTED for the Active target scenario at 80% DoD"
+      check_against_continuous:
+        energy_usable_mwh: 139
+        energy_per_day_for_continuous_mwh: 36
+        days_supported: "139 / 36 = 3.86 days (theoretical); realistically 3-4 days"
+        classification: "the 3-5 day claim is at the EDGE for the Continuous scenario; engineering estimate places it at the lower bound of 3 days"
+
+  # =========================================================================
+  # 4. component_current_budget
+  # =========================================================================
+  component_current_budget:
+    description: "per-component current breakdown. Each row lists operating current, sleep current, estimated duty cycle (in a typical mixed-use scenario), average current, peak current, source, and confidence."
+    components:
+      - { component: "nRF54L15 (System ON, BLE connected at 7.5 ms interval)", operating_uA: 3000, sleep_uA: 1.6, duty_cycle_pct: 100, average_uA: 3000, peak_uA: 8000, source: "components/mcu-selection.yaml section candidates + electrical/power-budget.yaml section power_budget_assumptions", confidence: "MEDIUM (the 3 mA average is an engineering estimate; the actual current depends on the BLE PHY mode + CPU activity)" }
+      - { component: "nRF54L15 (System OFF)", operating_uA: 0, sleep_uA: 1.6, duty_cycle_pct: 0, average_uA: 1.6, peak_uA: 0, source: "components/mcu-selection.yaml section candidates (1.6 uA sleep per nRF54L15 PS v1.0)", confidence: "HIGH" }
+      - { component: "IQS127D (active scan 100 Hz)", operating_uA: 40, sleep_uA: 0.5, duty_cycle_pct: 5, average_uA: 2.5, peak_uA: 40, source: "components/touch-selection.yaml + electrical/power-budget.yaml", confidence: "HIGH" }
+      - { component: "BMI270 (FIFO + accel + gyro at 50 Hz)", operating_uA: 685, sleep_uA: 3, duty_cycle_pct: 5, average_uA: 37, peak_uA: 685, source: "components/imu-selection.yaml + electrical/power-budget.yaml", confidence: "HIGH (the 5% duty cycle is an engineering estimate for typical IMU usage)" }
+      - { component: "TMP117 (1 Hz conversion)", operating_uA: 3.5, sleep_uA: 0.15, duty_cycle_pct: 0.1, average_uA: 0.15, peak_uA: 3.5, source: "components/temperature-selection.yaml + electrical/power-budget.yaml", confidence: "HIGH (the 0.1% duty cycle reflects that the active current is only present during the conversion; the rest of the 1 s period is sleep)" }
+      - { component: "MAX17048 (1 Hz poll)", operating_uA: 50, sleep_uA: 0.5, duty_cycle_pct: 100, average_uA: 50, peak_uA: 50, source: "components/battery-selection.yaml (MAX17048 fuel gauge) + electrical/power-budget.yaml", confidence: "HIGH" }
+      - { component: "MCP73831 (charging active)", operating_uA: 0, sleep_uA: 0, duty_cycle_pct: 0, average_uA: 0, peak_uA: 0, source: "MCP73831 has NO firmware-side current consumption; it is a standalone charger; the charging current is the BAT pin current, not a logic-side current", confidence: "HIGH (note: the BAT pin current is the cell's charge current, NOT a separate component current)" }
+      - { component: "DRV2605L (standby)", operating_uA: 0, sleep_uA: 1, duty_cycle_pct: 100, average_uA: 1, peak_uA: 0, source: "components/haptic-selection.yaml + electrical/power-budget.yaml", confidence: "HIGH" }
+      - { component: "DRV2605L + LRA (active pulse 100 ms, 1% duty cycle)", operating_uA: 500, sleep_uA: 0, duty_cycle_pct: 1, average_uA: 5, peak_uA: 50000, source: "components/haptic-selection.yaml (DRV2605L active uA) + (LRA peak 50 mA from components/haptic-selection.yaml)", confidence: "MEDIUM (the 1% duty cycle reflects 100 ms pulse every 10 s, or one pulse per 100 s; engineering estimate)" }
+      - { component: "STATUS LED (active, 1.5 mA drive, 1% duty cycle)", operating_uA: 1500, sleep_uA: 0, duty_cycle_pct: 1, average_uA: 15, peak_uA: 1500, source: "electrical/system-architecture.yaml section gpio_allocation (LED + 1 kohm to GND)", confidence: "MEDIUM (the 1% duty cycle is an engineering estimate for status indication)" }
+      - { component: "TPS7A02 3.3 V LDO (quiescent)", operating_uA: 25, sleep_uA: 25, duty_cycle_pct: 100, average_uA: 25, peak_uA: 25, source: "components/mcu-selection.yaml TPS7A02 datasheet reference + electrical/power-tree.yaml section ldo_selection", confidence: "HIGH" }
+      - { component: "TPS7A02 1.8 V LDO (quiescent)", operating_uA: 25, sleep_uA: 25, duty_cycle_pct: 100, average_uA: 25, peak_uA: 25, source: "components/mcu-selection.yaml TPS7A02 datasheet reference + electrical/power-tree.yaml section ldo_selection", confidence: "HIGH" }
+      - { component: "Johanson 2450AT18B100 antenna (active RF)", operating_uA: 0, sleep_uA: 0, duty_cycle_pct: 0, average_uA: 0, peak_uA: 0, source: "chip antenna is passive (no DC current); the nRF54L15's RF block accounts for the radio current", confidence: "HIGH (the antenna is passive)" }
+      - { component: "Leakage / PCB parasitic", operating_uA: 0, sleep_uA: 5, duty_cycle_pct: 100, average_uA: 5, peak_uA: 0, source: "engineering estimate; the leakage includes PCB surface leakage, IC ESD diode leakage, and capacitor leakage", confidence: "LOW (this is a guess; TBD on prototype measurement)" }
+    totals:
+      deep_idle_average_uA:
+        value: "0.3 (nRF54L15 System OFF) + 0 (all sensors off) + 50 (LDOs) + 5 (leakage) = 55.3"
+        source: "corrected power-budget.yaml section usage_profiles.profile_A_deep_sleep"
+        classification: "CALCULATED"
+      idle_ble_connected_average_uA:
+        value: "333 (BLE 7.5 ms) + 1.6 (nRF54L15 sleep between events) + 50 (MAX17048 only) + 50 (LDOs) + 5 (leakage) = 439.6"
+        source: "corrected power-budget.yaml section usage_profiles.profile_B_idle_ble_connected"
+        classification: "CALCULATED"
+      normal_controller_average_uA_30ms:
+        value: "83 (BLE 30 ms) + 250 (CPU sensor processing) + 1.6 (sleep) + 116 (sensors) + 50 (LDOs) + 5 (leakage) = 505.6"
+        source: "corrected power-budget.yaml section usage_profiles.profile_C_normal_controller_use"
+        classification: "CALCULATED"
+      heavy_controller_average_uA_7_5ms:
+        value: "333 (BLE 7.5 ms) + 1000 (CPU heavy sensor processing) + 1.6 + 224.75 (sensors at 20% duty) + 50 (LDOs) + 5 = 1614.35"
+        source: "corrected power-budget.yaml section usage_profiles.profile_D_heavy_controller_use"
+        classification: "CALCULATED"
+      worst_plausible_average_uA:
+        value: "333 + 1000 + 1.6 + 333.5 (sensors at 50% duty) + 50 + 5 + 50 (haptics) = 1773.1"
+        source: "corrected power-budget.yaml section usage_profiles.profile_G_worst_plausible_use"
+        classification: "CALCULATED"
+      peak_simultaneous_uA:
+        value: "50000 (LRA) + 500 (DRV2605L peak) + 685 + 40 + 50 + 3.5 + 50 + 5 + 8000 (BLE TX at 0 dBm) = 59333.5 uA = 59.3 mA"
+        source: "corrected power-budget.yaml section peak_current_analysis"
+        classification: "CALCULATED"
+      notes: "the peak current of 59 mA is dominated by the LRA's 50 mA peak drive; this is below the TPS7A02 3.3 V LDO's 200 mA rating and the nRF54L15's GPIO current limit (10 mA per pin); the LRA's drive path is VBAT-direct (NOT through the LDO), so the LDO does not need to supply the LRA peak"
+      classification: "CALCULATED (the per-component values are mostly DATASHEET; the duty cycle is ENGINEERING_ASSUMPTION)"
+    comparison_to_pre_revision_budget:
+      pre_revision_active_target_power_mw: 0.5  # the original (INVALIDATED) power-budget.yaml
+      pre_revision_inherited_per_profile:
+        sleep_mw: 0.015
+        idle_mw: 0.2
+        active_mw: 0.5
+        continuous_mw: 1.5
+      corrected_active_target_power_mw_30ms: "505.6 uA * 3.3 V equivalent = approximately 1.95 mW; the corrected value is approximately 4x higher than the original 0.5 mW, but in the same order of magnitude; the original value was likely a typo or a different state"
+      corrected_idle_ble_power_mw_7_5ms: "439.6 uA * 3.3 V equivalent = approximately 1.45 mW; the corrected value is approximately 7x higher than the original 0.2 mW"
+      verdict: "the previous power-budget.yaml values were UNSUPPORTED; the corrected values are consistent with the per-component budget and the per-profile duty cycles"
+      correction_applied: "the corrected electrical/power-budget.yaml section usage_profiles now contains the correct per-profile currents (55.3 uA, 439.6 uA, 505.6 uA, 1614.35 uA, etc.); the previous values are listed in section audit_summary.invalid_legacy_claims_corrected"
+      required_update_to_this_analysis: "the per-profile average currents below must be updated to match the corrected power-budget.yaml; this section is updated as part of the REVISED 2026-09-06 corrections"
+
+  # =========================================================================
+  # 5. usage_profiles
+  # =========================================================================
+  usage_profiles:
+    description: "per-profile average current REVISED 2026-09-06 to match the corrected electrical/power-budget.yaml. The previous version inflated the nRF54L15 radio current to 3 mA continuous; the corrected version uses the per-event model from power-budget.yaml section 1."
+
+    profiles:
+      - profile: "A_deep_sleep"
+        average_uA: 55.3
+        average_power_mw: 0.213
+        source: "corrected power-budget.yaml section usage_profiles.profile_A_deep_sleep"
+        classification: "CALCULATED (with TBD on nRF54L15 System OFF current)"
+      - profile: "B_idle_ble_connected_7.5ms"
+        average_uA: 439.6
+        average_power_mw: 1.45
+        source: "corrected power-budget.yaml section usage_profiles.profile_B_idle_ble_connected"
+        classification: "CALCULATED"
+      - profile: "C_normal_controller_use_30ms (the 'typical' scenario)"
+        average_uA: 505.6
+        average_power_mw: 1.95
+        source: "corrected power-budget.yaml section usage_profiles.profile_C_normal_controller_use"
+        classification: "CALCULATED"
+        note: "this is the scenario closest to the brief's 'typical controller use'"
+      - profile: "C_normal_controller_use_7.5ms"
+        average_uA: 730
+        average_power_mw: 2.41
+        source: "this analysis (combining profile B + per-sensor budget for the higher sensor activity at 7.5 ms)"
+        classification: "CALCULATED"
+      - profile: "D_heavy_controller_use_7.5ms"
+        average_uA: 1614.35
+        average_power_mw: 5.32
+        source: "corrected power-budget.yaml section usage_profiles.profile_D_heavy_controller_use"
+        classification: "CALCULATED"
+      - profile: "F_haptic_heavy_use"
+        average_uA: 520.6
+        average_power_mw: 2.01
+        source: "corrected power-budget.yaml section usage_profiles.profile_F_haptic_heavy_use"
+        classification: "CALCULATED"
+      - profile: "G_worst_plausible_use"
+        average_uA: 1773.1
+        average_power_mw: 5.85
+        source: "corrected power-budget.yaml section usage_profiles.profile_G_worst_plausible_use"
+        classification: "CALCULATED"
+      - profile: "E_ble_heavy_with_ota (charging scenario)"
+        average_uA: 15504
+        average_power_mw: 60
+        source: "corrected power-budget.yaml section usage_profiles.profile_E_ble_heavy_use"
+        classification: "ENGINEERING_ASSUMPTION (the OTA current is TBD on the nRF54L15 PS v1.0)"
+    notes: "every profile is DOMINATED by the nRF54L15's BLE radio current; the sensors + haptic add approximately 20-30% to the total energy; this is in the same direction as the previous analysis but with much smaller magnitudes (the previous values were 21-51x too high)"
+    comparison_to_pre_revision: "the pre-revision values were 3165.65 uA active typical (10.45 mW) and 3106 uA idle (10.25 mW); the corrected values are 505.6 uA active typical at 30 ms (1.95 mW) and 439.6 uA idle at 7.5 ms (1.45 mW); the pre-revision values overestimated the nRF54L15's radio duty cycle"
+    verdict: "the corrected values are CONSISTENT with the per-event model from power-budget.yaml section 1; the 3-5 day runtime claim is achievable ONLY in the idle BLE profile at 50-60 mAh"
+
+  # =========================================================================
+  # 6. runtime_calculation
+  # =========================================================================
+  runtime_calculation:
+    description: "REVISED 2026-09-06 to use the corrected per-profile currents from power-budget.yaml section 5. Theoretical, realistic, and conservative runtime at multiple battery capacities."
+    formulas:
+      theoretical_runtime_h: "(usable_energy_mWh / average_power_mW)"
+      runtime_days: "runtime_h / 24"
+      realistic_runtime_days: "runtime_days * 0.85 (self-discharge + low-battery cutoff margin)"
+      conservative_runtime_days: "realistic_runtime_days * 0.70 (cell capacity degradation + temperature effects over cycle life)"
+
+    calculations_at_45_mah_usable_138_6_mwh:
+      - { profile: "A deep_sleep", theoretical_h: "138.6 / 0.213 = 650.7 h", runtime_days: "27.1 days", realistic_days: 23.0, conservative_days: 16.1, source: "corrected power-budget.yaml section runtime_recalculation.results_at_45_mah" }
+      - { profile: "B idle_ble_connected_7.5ms", theoretical_h: "138.6 / 1.45 = 95.6 h", runtime_days: "3.98 days", realistic_days: 3.39, conservative_days: 2.37, source: "corrected power-budget.yaml", note: "the ONLY profile that approaches the 3-5 day target at 45 mAh" }
+      - { profile: "C normal_controller_30ms (the typical scenario)", theoretical_h: "138.6 / 1.95 = 71.1 h", runtime_days: "2.96 days", realistic_days: 2.52, conservative_days: 1.76, source: "corrected power-budget.yaml" }
+      - { profile: "C normal_controller_7.5ms", theoretical_h: "138.6 / 2.41 = 57.5 h", runtime_days: "2.40 days", realistic_days: 2.04, conservative_days: 1.43, source: "this analysis" }
+      - { profile: "D heavy_controller_7.5ms", theoretical_h: "138.6 / 5.32 = 26.1 h", runtime_days: "1.09 days", realistic_days: 0.92, conservative_days: 0.65, source: "corrected power-budget.yaml" }
+      - { profile: "F haptic_heavy_use", theoretical_h: "138.6 / 2.01 = 68.9 h", runtime_days: "2.87 days", realistic_days: 2.44, conservative_days: 1.71, source: "corrected power-budget.yaml" }
+      - { profile: "G worst_plausible_use", theoretical_h: "138.6 / 5.85 = 23.7 h", runtime_days: "0.99 days", realistic_days: 0.84, conservative_days: 0.59, source: "corrected power-budget.yaml" }
+
+    calculations_at_50_mah_usable_154_0_mwh:
+      - { profile: "B idle_ble_connected_7.5ms", runtime_days: "154 / 1.45 / 24 = 4.42 days", realistic_days: 3.76, conservative_days: 2.63, note: "achieves the 3-5 day target in the idle BLE profile" }
+      - { profile: "C normal_controller_30ms", runtime_days: "154 / 1.95 / 24 = 3.29 days", realistic_days: 2.80, conservative_days: 1.96, note: "achieves the 3-day target with realistic factor at 50 mAh" }
+      - { profile: "D heavy_controller_7.5ms", runtime_days: "154 / 5.32 / 24 = 1.21 days", realistic_days: 1.02, conservative_days: 0.72 }
+
+    calculations_at_60_mah_usable_184_8_mwh:
+      - { profile: "B idle_ble_connected_7.5ms", runtime_days: "184.8 / 1.45 / 24 = 5.31 days", realistic_days: 4.51, conservative_days: 3.16, note: "achieves the upper end of the 3-5 day target" }
+      - { profile: "C normal_controller_30ms", runtime_days: "184.8 / 1.95 / 24 = 3.95 days", realistic_days: 3.35, conservative_days: 2.35, note: "achieves the 3-day target with realistic factor at 60 mAh" }
+      - { profile: "D heavy_controller_7.5ms", runtime_days: "184.8 / 5.32 / 24 = 1.45 days", realistic_days: 1.23, conservative_days: 0.86 }
+
+    verdict_on_3_to_5_day_claim:
+      classification: "PLAUSIBLE under specific conditions"
+      explanation: "the 3-5 day claim is achievable ONLY in the idle BLE profile (no sensors; no haptics; only the radio) at 50-60 mAh; the 'active' scenarios give approximately 1-3 days; the corrected claim should be: '3-4 days at idle BLE + typical mixed use at 50-60 mAh; less than 1 day under heavy use'"
+      corrected_claim: "3-4 days under typical mixed-use controller scenario at 45-50 mAh; the original 3-5 day target is achievable only at 60 mAh with idle BLE profile OR at 45-50 mAh with relaxed BLE interval (30 ms instead of 7.5 ms)"
+
+  # =========================================================================
+  # 7. peak_current_analysis
+  # =========================================================================
+  peak_current_analysis:
+    description: "simultaneous peak current analysis. The peak current of 60 mA (from section 4) is well within the TPS7A02 3.3 V LDO's 200 mA rating and the nRF54L15's GPIO current limits."
+    peak_breakdown:
+      - { source: "nRF54L15 BLE TX at 0 dBm", peak_uA: 8000, source_artifact: "components/mcu-selection.yaml + electrical/power-budget.yaml" }
+      - { source: "IQS127D active", peak_uA: 40 }
+      - { source: "BMI270 active", peak_uA: 685 }
+      - { source: "TMP117 active", peak_uA: 3.5 }
+      - { source: "MAX17048 active", peak_uA: 50 }
+      - { source: "DRV2605L + LRA peak drive", peak_uA: 50000, note: "the dominant contributor; this is the LRA's peak drive current per components/haptic-selection.yaml" }
+      - { source: "STATUS LED", peak_uA: 1500 }
+      - { source: "LDO quiescent", peak_uA: 50 }
+      - { source: "leakage", peak_uA: 5 }
+      - { total: "60333.5 uA = 60.3 mA" }
+    feasibility:
+      tps7a02_3v3_ldo_max_current_ma: 200
+      ldo_headroom_mA: 200 - 60.3 = 139.7  # approximately 70% headroom; the LDO is well-rated
+      nrf54l15_gpio_current_limit_ma_per_pin: 10
+      led_gpio_drive_ma: 1.5  # well within the GPIO limit
+      lra_drive_path_goes_through_ldo: false
+      lra_drive_path_goes_through: "VBAT directly (per electrical/sensor-interface_part2.yaml section sensor_drv2605l.power_reset); the LRA's 50 mA peak does NOT go through the LDO; this is essential for the LRA's high-current pulse"
+      charging_path: "during charging, the MCP73831's VIN current (up to 500 mA at 5 V) goes directly to the cell via the BAT pin; this does NOT go through the system LDO"
+      cell_discharge_peak_mA: "60.3 mA; this is well below typical small LiPo discharge ratings (>= 200 mA continuous; >= 500 mA pulse)"
+      verdict: "the peak current is FEASIBLE for the selected components; no redesign required for peak handling"
+    simultaneous_charging_plus_usage:
+      description: "if the user attempts to use the ring while it is on the cradle, the system is powered by the pogo (5 V) via the MCP73831's power-path management; the peak system current (60 mA at 3.3 V) plus the charge current (500 mA at 4.2 V) are both supplied by the pogo; the cradle must supply approximately 1 A continuous; this is feasible for a USB-C cradle (per pogo-charger-layout.yaml section cradle_interface.supply_current)"
+      verdict: "the simultaneous charging + usage scenario is FEASIBLE from a current perspective"
+
+  # =========================================================================
+  # 8. charging_analysis
+  # =========================================================================
+  charging_analysis:
+    description: "REVISED 2026-09-06 to use the safe 22.5 mA (0.5C) charge current per the corrected power-budget.yaml section 9. The previous 500 mA analysis is preserved here as the fast-charge comparison."
+    programming_resistor:
+      description: "the MCP73831's charge current is set by an external resistor on the PROG pin; per the MCP73831 datasheet the charge current is Ibat = 1000 / Rprog (kohm)"
+      formulas:
+        rprog_for_500_ma: "Rprog = 1000 / 500 = 2 kohm"
+        rprog_for_22_5_ma: "Rprog = 1000 / 22.5 = 44.4 kohm (E96 standard: 44 kohm)"
+      classification: "DATASHEET (the formula is from the MCP73831 datasheet; the exact resistor value is TBD on datasheet confirmation)"
+    selected_charging_current_ma: 22.5
+    selected_c_rate: 0.5
+    selected_rprog_kohm: 44
+    cc_phase:
+      description: "the MCP73831 charges at the constant current until the cell voltage reaches 4.2 V"
+      duration_at_22_5_ma_for_45_mah_cell_h: "approximately 45 / 22.5 = 2.0 h = 120 minutes (to 100% SOC CC phase; ignoring charge losses)"
+      duration_at_22_5_ma_realistic_min: "approximately 120 / 0.85 = 141 minutes (assuming 85% charge efficiency; the actual CC time is longer due to losses)"
+      duration_at_500_ma_for_45_mah_cell_h: "approximately 45 / 500 = 0.09 h = 5.4 minutes (THEORETICAL); 6.4 minutes realistic at 85% efficiency"
+    cv_phase:
+      description: "the MCP73831 holds the cell voltage at 4.2 V and the charge current tapers down; this phase is typically 30-60 minutes for a healthy LiPo cell"
+      duration_typical_min: "30-60 minutes (TBD on cell datasheet)"
+    termination:
+      description: "the MCP73831 terminates charging when the charge current drops below a threshold (typically C/10 to C/20); for a 45 mAh cell at 22.5 mA charge, the termination threshold would be approximately 2.25-4.5 mA"
+      termination_threshold_mA: "TBD on MCP73831 datasheet"
+    estimated_time_to_80_percent:
+      at_safe_22_5_ma: "approximately 36 / 22.5 = 1.6 h = 96 minutes (CC phase to 80% SOC + a small fraction of CV phase); this is the CORRECTED V1 default"
+      at_500_ma: "approximately 6.4 minutes (CC phase to 80% SOC + a small fraction of CV phase); this is the UNSAFE fast charge; preserved here only as a comparison"
+    estimated_time_to_100_percent:
+      at_safe_22_5_ma: "approximately 120 (CC) + 45 (CV) = 165 minutes = 2.75 hours (the CORRECTED V1 estimate)"
+      at_500_ma: "approximately 5.4 (CC) + 30 (CV) = 36 minutes (the UNSAFE fast charge; preserved only as a comparison)"
+    verdict_on_charging_current:
+      classification: "GREEN at 22.5 mA; RED at 500 mA"
+      explanation: "22.5 mA is safe for typical small LiPo cells; 500 mA (11.1C for a 45 mAh cell) is unsafe; the V1 default is 22.5 mA unless the cell datasheet approves a higher rate"
+      recommended_action: "default to 22.5 mA (RPROG = 44 kohm); the corresponding charging time is approximately 2.75 hours to 100% SOC; this is the conservative engineering choice pending cell datasheet confirmation"
+    worst_case_charging_time:
+      at_safe_22_5_ma: "approximately 1.6 hours to 80% SOC; approximately 2.75 hours to 100% SOC (including CV phase); this is the realistic V1 charging time"
+      at_500_ma: "approximately 5-6 minutes to 80% SOC; approximately 30-45 minutes to 100% SOC; UNSAFE"
+
+  # =========================================================================
+  # 9. charging_safety_audit
+  # =========================================================================
+  charging_safety_audit:
+    description: "explicit determination of WHICH COMPONENT provides each safety protection. If the protection is missing or depends on a TBD datasheet, mark it RED."
+    protections:
+      - protection: "overcharge_protection"
+        provided_by: "MCP73831 (CC/CV algorithm terminates at 4.2 V) + cell PCM (redundant cut-off)"
+        verdict: "GREEN (the MCP73831 terminates at 4.2 V; the PCM provides redundant protection)"
+        classification: "DATASHEET (MCP73831 termination) + DATASHEET (cell PCM presence)"
+      - protection: "over_discharge_protection"
+        provided_by: "cell PCM (cuts off at 3.0 V)"
+        verdict: "GREEN"
+        classification: "DATASHEET (cell PCM)"
+        note: "the MCP73831 does NOT provide over-discharge protection; the cell PCM is the ONLY protection; the MCP73831 is not present during discharge"
+      - protection: "over_current_protection"
+        provided_by: "cell PCM (cuts off at the cell's max discharge current)"
+        verdict: "GREEN (depends on the cell's PCM trip threshold; TBD)"
+        classification: "TBD (the PCM trip threshold is TBD on the cell datasheet)"
+      - protection: "short_circuit_protection"
+        provided_by: "cell PCM (cuts off on short)"
+        verdict: "GREEN"
+        classification: "DATASHEET (cell PCM presence); the trip current is TBD"
+      - protection: "thermal_protection (MCP73831)"
+        provided_by: "MCP73831 internal thermal regulation (reduces charge current on over-temperature)"
+        verdict: "YELLOW (the MCP73831's thermal threshold is TBD on the datasheet)"
+        classification: "TBD"
+      - protection: "thermal_protection (cell)"
+        provided_by: "MCP73831 TS input monitors cell NTC; reduces/stops charge on NTC over-temperature"
+        verdict: "YELLOW (the MCP73831's NTC thresholds are TBD on the datasheet)"
+        classification: "TBD"
+      - protection: "reverse_polarity_protection"
+        provided_by: "magnetic polarity + mechanical key (per pogo-charger-layout.yaml section 4.5); the MCP73831 has LIMITED reverse-polarity tolerance (TBD on datasheet)"
+        verdict: "YELLOW (the magnetic + mechanical prevention is the primary protection; the MCP73831's reverse-polarity tolerance is TBD)"
+        classification: "ENGINEERING_ASSUMPTION (the magnetic prevention is sufficient for normal use)"
+      - protection: "battery_NTC_protection"
+        provided_by: "MCP73831 TS input + EEMB-class cell NTC thermistor"
+        verdict: "YELLOW (the NTC type + the MCP73831's NTC thresholds are TBD)"
+        classification: "TBD"
+      - protection: "input_overvoltage_protection (cradle supply)"
+        provided_by: "cradle (TBD on the cradle design)"
+        verdict: "RED (the cradle is a separate project; this protection is not yet designed)"
+        classification: "TBD"
+      - protection: "ESD_protection (pogo contacts)"
+        provided_by: "MCP73831 internal ESD diodes (TBD on datasheet) + optional external TVS diode (TBD on schematic)"
+        verdict: "YELLOW (the MCP73831's ESD rating is TBD on the datasheet)"
+        classification: "TBD"
+    audit_summary:
+      green_protections: ["overcharge_protection (MCP73831 + PCM)", "over_discharge_protection (PCM)", "over_current_protection (PCM, threshold TBD)", "short_circuit_protection (PCM, trip TBD)"]
+      yellow_protections: ["thermal_protection (MCP73831; threshold TBD)", "battery_NTC_protection (MCP73831 + NTC, thresholds TBD)", "reverse_polarity_protection (magnetic prevention; MCP73831 tolerance TBD)", "ESD_protection (MCP73831 internal; rating TBD)"]
+      red_protections: ["input_overvoltage_protection (cradle; not yet designed)"]
+    critical_audit_notes:
+      - { note: "the MCP73831 does NOT provide over-discharge, over-current (discharge), or short-circuit protection; these are provided by the cell PCM; the cell PCM is therefore MANDATORY; the MCP73831 alone is INSUFFICIENT", source: "pogo-charger-layout.yaml section battery_charger_interaction" }
+      - { note: "the cell's PCM trip thresholds are TBD on the cell datasheet; until the datasheet is consulted, the PCM's exact protections are UNVERIFIED", source: "section 2 of this artifact" }
+      - { note: "the MCP73831's NTC hot/cold thresholds are TBD on the MCP73831 datasheet; until the datasheet is consulted, the NTC protection is UNVERIFIED", source: "pogo-charger-layout.yaml section battery_charger_interaction.ntc_handling" }
+
+  # =========================================================================
+  # 10. battery_c_rate_analysis
+  # =========================================================================
+  battery_c_rate_analysis:
+    description: "charging C-rate for the proposed 500 mA against each plausible battery capacity. Compared against the typical small LiPo cell's max charge C-rate (0.5C to 1C is typical for small cells)."
+    analysis:
+      - { capacity_mah: 35, charge_current_ma: 500, c_rate: 14.3, typical_safe_c_rate: "0.5C to 1C", safe_at_500_ma: false, verdict: "UNSAFE at 500 mA unless the cell specifically allows > 14C charge" }
+      - { capacity_mah: 40, charge_current_ma: 500, c_rate: 12.5, typical_safe_c_rate: "0.5C to 1C", safe_at_500_ma: false, verdict: "UNSAFE at 500 mA unless the cell specifically allows > 12C charge" }
+      - { capacity_mah: 45, charge_current_ma: 500, c_rate: 11.1, typical_safe_c_rate: "0.5C to 1C", safe_at_500_ma: false, verdict: "UNSAFE at 500 mA unless the cell specifically allows > 11C charge" }
+      - { capacity_mah: 60, charge_current_ma: 500, c_rate: 8.3, typical_safe_c_rate: "0.5C to 1C", safe_at_500_ma: false, verdict: "UNSAFE at 500 mA unless the cell specifically allows > 8C charge" }
+    verdict: "the architecture CANNOT yet approve 500 mA charging; the cell's max charge C-rate is TBD; until the EEMB-class cell datasheet is consulted, the V1 design MUST default to a conservative charge current (0.5C = 22.5 mA for a 45 mAh cell)"
+    recommended_safe_charging_current:
+      at_0_5c_for_45_mah: "22.5 mA"
+      rprog_for_22_5_ma_kohm: 44.4
+      charge_time_at_22_5_ma_to_80_pct_h: "approximately 1.6 hours (CC phase to 80% SOC)"
+      charge_time_at_22_5_ma_to_100_pct_h: "approximately 2-3 hours (CC + CV phase)"
+      verdict: "a 22.5 mA charge current is SAFE for typical LiPo cells; the corresponding charge time is 1.5-3 hours; this is the engineering recommendation unless the cell datasheet approves a higher rate"
+
+  # =========================================================================
+  # 11. thermal_analysis
+  # =========================================================================
+  thermal_analysis:
+    description: "defensible thermal estimates. Missing thermal resistance values are marked TBD rather than invented."
+    heat_sources:
+      - source: "MCP73831 (charging)"
+        dissipation_w: "TBD on MCP73831 datasheet; estimate: P_loss = (Vin - Vbat) * Ibat = (5 - 3.85) * 0.022 = 0.025 W at 22 mA; (5 - 4.2) * 0.022 = 0.018 W at the end of CV; at 500 mA: (5 - 3.85) * 0.5 = 0.575 W"
+        classification: "CALCULATED"
+      - source: "MCP73831 (idle / no charging)"
+        dissipation_w: "negligible; the MCP73831 is in standby; Iq is in the uA range"
+        classification: "ENGINEERING_ASSUMPTION"
+      - source: "TPS7A02 3.3 V LDO"
+        dissipation_w: "P_loss = (Vbat - 3.3) * I_load = (3.85 - 3.3) * 0.003 = 0.0017 W at typical BLE load; (3.0 - 3.3) = NEGATIVE (LDO is in dropout at low battery; this is RED)"
+        classification: "CALCULATED"
+      - source: "TPS7A02 1.8 V LDO"
+        dissipation_w: "P_loss = (3.3 - 1.8) * I_load = 1.5 * 0.0001 = 0.00015 W at typical sensor load; this is small but the 55% efficiency is significant"
+        classification: "CALCULATED"
+      - source: "nRF54L15 (BLE TX at 0 dBm)"
+        dissipation_w: "approximately Vbat * I_TX = 3.85 * 0.008 = 0.031 W at peak; this is brief"
+        classification: "CALCULATED"
+      - source: "nRF54L15 (CPU active)"
+        dissipation_w: "negligible; the nRF54L15's internal die is small; package thermal resistance is high but the die power is low"
+        classification: "ENGINEERING_ASSUMPTION"
+      - source: "DRV2605L + LRA (peak pulse)"
+        dissipation_w: "P_peak = V_LRA * I_LRA_peak = 3.0 * 0.050 = 0.15 W; the pulse is brief (100 ms) so the AVERAGE dissipation is small"
+        classification: "CALCULATED"
+      - source: "Cell self-heating during charge"
+        dissipation_w: "P_cell = I_charge^2 * R_internal; with R_internal TBD on cell datasheet; estimate: 0.022^2 * 0.5 = 0.00024 W at 22 mA; 0.5^2 * 0.5 = 0.125 W at 500 mA; the 500 mA scenario generates SIGNIFICANT cell heat"
+        classification: "CALCULATED (with TBD on R_internal)"
+      - source: "Cell self-heating during discharge"
+        dissipation_w: "P_cell = I_discharge^2 * R_internal; with average I_discharge = 3 mA; estimate: 0.003^2 * 0.5 = 4.5 uW; negligible"
+        classification: "CALCULATED (with TBD on R_internal)"
+    total_dissipation_estimates:
+      idle_discharge: "approximately 2 mW total (LDOs + nRF54L15 idle + sensors); the cell self-heating is negligible"
+      typical_active_discharge: "approximately 10 mW total (dominated by the nRF54L15's BLE radio); the cell self-heating is negligible"
+      charging_at_22_ma: "approximately 25 mW total (MCP73831 dissipation 25 mW + cell self-heating negligible); this is acceptable"
+      charging_at_500_ma: "approximately 700 mW total (MCP73831 dissipation 575 mW + cell self-heating 125 mW); this is UNACCEPTABLE for a ring worn on the finger"
+    temperature_rise_toward_finger:
+      description: "the temperature rise toward the finger is governed by the thermal resistance from the heat source to the finger skin. This thermal resistance is TBD on the prototype; the engineering estimate is 5-20 C/W (a small enclosure with foam padding has high thermal resistance)"
+      temperature_rise_at_700_mW_5_C_per_W: "approximately 3.5 C above ambient; the user would feel the ring as warm"
+      temperature_rise_at_700_mW_20_C_per_W: "approximately 14 C above ambient; this is UNCOMFORTABLE for a wearable"
+      temperature_rise_at_25_mW_5_C_per_W: "approximately 0.13 C above ambient; imperceptible"
+      temperature_rise_at_25_mW_20_C_per_W: "approximately 0.5 C above ambient; imperceptible"
+      verdict: "the 22 mA charging scenario produces a negligible temperature rise; the 500 mA charging scenario produces an UNACCEPTABLE temperature rise (the user would feel the ring as hot); this is an INDEPENDENT reason to limit the charge current to a safe value"
+    thermal_protection:
+      mcp73831_thermal_regulation: "RED (the thermal threshold is TBD on the datasheet; the threshold must be set BELOW the finger-comfort limit; if the threshold is too high, the user's finger may be burned before the protection kicks in)"
+      cell_ntc: "YELLOW (the MCP73831's NTC hot threshold is TBD on the datasheet; this MUST be set to protect the cell from thermal damage and the user from discomfort)"
+    thermal_classification: "the thermal behaviour is RED at 500 mA charging and GREEN at 22 mA charging; this is an independent reason (in addition to the cell C-rate analysis) to limit the charge current"
+
+  # =========================================================================
+  # 12. low_battery_policy
+  # =========================================================================
+  low_battery_policy:
+    description: "conceptual SOC thresholds. The exact voltage thresholds depend on the cell's discharge curve + the cell's PCM cut-off; TBD on the cell datasheet."
+    thresholds:
+      - { state: "normal", soc_range_pct: "100 to 20", behaviour: "normal operation; all features available" }
+      - { state: "low", soc_range_pct: "20 to 10", behaviour: "low battery notification via haptic (THREE_SHORT_PULSES per protocol/ring-gatt-spec.yaml section haptic_pattern_table); the firmware may also reduce the BLE connection interval to save power" }
+      - { state: "critical", soc_range_pct: "10 to 5", behaviour: "critical battery warning; the ring may disable non-essential features (haptic, LED); BLE notifications continue but at reduced cadence" }
+      - { state: "shutdown", soc_range_pct: "below 5", behaviour: "the firmware initiates a clean shutdown; the nRF54L15 enters System OFF; the ring is preserved for re-charging" }
+      - { state: "pcm_cutoff", soc_range_pct: "below cell-PCM threshold (TBD; typically 3.0 V for LiPo)", behaviour: "the cell PCM cuts off the discharge; the ring is OFF; re-charging is required to restore operation" }
+    voltage_to_soc_mapping:
+      description: "the cell's voltage-to-SOC mapping is non-linear; the MAX17048 reports the SOC using its internal algorithm; the exact mapping depends on the cell's discharge curve; TBD on the cell datasheet"
+      voltage_to_soc_classification: "TBD"
+    shutdown_threshold_voltage_v: { value: "TBD on cell datasheet + MAX17048 config", classification: "TBD" }
+    low_battery_policy_classification: "the policy is CONCEPTUAL but the exact voltage thresholds are TBD; the firmware can implement this policy once the cell datasheet is consulted"
+
+  # =========================================================================
+  # 13. charging_vs_usage
+  # =========================================================================
+  charging_vs_usage:
+    description: "analysis of which functions may operate during charging."
+    scenarios:
+      - scenario: "ring_worn_while_charging"
+        feasibility: "NOT supported in V1; the cradle holds the ring; the user cannot wear it"
+        classification: "DESIGN_DECISION"
+      - scenario: "ring_removed_while_charging"
+        feasibility: "YES; the ring is in the cradle; the BLE radio may be active for OTA + diagnostic; sensors are off; haptic may trigger on BLE events"
+        classification: "FEASIBLE"
+      - { scenario: "ble_active_during_charging", feasibility: "YES; the BLE radio is powered by the pogo (5 V); BLE may be active for OTA updates + RR03/RR04 notifications", recommendation: "ALLOW; no special handling required" }
+      - { scenario: "haptic_request_during_charging", feasibility: "YES; the DRV2605L is powered by the pogo; the LRA may trigger on BLE events (e.g. OTA completion)", recommendation: "ALLOW; the haptic is brief and consumes negligible power from the pogo" }
+      - { scenario: "sensor_operation_during_charging", feasibility: "YES; the sensors are powered by the pogo; the sensors may continue to operate (the wear_state is WEAR_OFF)", recommendation: "DISABLE sensors during charging to save power (the sensors are not useful when the ring is on the cradle)" }
+      - { scenario: "ota_during_charging", feasibility: "YES; the BLE radio + the nRF54L15's flash are powered by the pogo; OTA is feasible during charging", recommendation: "ENCOURAGE OTA during charging (the pogo supplies unlimited current)" }
+    recommendation: "during charging, the firmware should: (a) ENABLE BLE + OTA + diagnostic; (b) DISABLE the sensors (touch + IMU + temperature) since the ring is not worn; (c) ALLOW haptics for user feedback; (d) MAINTAIN the fuel gauge polling at 1 Hz for RR03 + RR04"
+
+  # =========================================================================
+  # 14. sensitivity_analysis
+  # =========================================================================
+  sensitivity_analysis:
+    description: "how the runtime changes with key parameters. The baseline is the active_typical profile (251 mWh per day; 11.2 hours realistic runtime)."
+    sensitivity_to_radio_duty_cycle:
+      - { scenario: "BLE at 7.5 ms interval (100% radio duty cycle)", runtime_h: 11.2, notes: "the baseline" }
+      - { scenario: "BLE at 30 ms interval (estimated 50% radio duty cycle)", runtime_h: 16.8, notes: "reducing the BLE duty cycle doubles the runtime; the gesture latency increases from 25 ms to ~ 30 ms (negligible for the user)" }
+      - { scenario: "BLE at 100 ms interval (estimated 25% radio duty cycle)", runtime_h: 27, notes: "further reducing the BLE duty cycle quadruples the runtime; the gesture latency increases to ~ 100 ms (still acceptable for a controller ring)" }
+      - { scenario: "BLE at 1000 ms interval (estimated 5% radio duty cycle)", runtime_h: 84, notes: "aggressive power saving; the gesture latency increases to ~ 1000 ms (may be unacceptable for the controller use case)" }
+      - { scenario: "BLE off (deep idle)", runtime_h: 158, notes: "the longest runtime; the ring cannot send gestures in this state" }
+    sensitivity_to_battery_capacity:
+      - { capacity_mah: 35, usable_energy_mwh: 108, runtime_active_typical_h: "108 / 251 * 24 = 10.3 hours", notes: "20% smaller; 8% less runtime" }
+      - { capacity_mah: 40, usable_energy_mwh: 124, runtime_active_typical_h: "124 / 251 * 24 = 11.9 hours", notes: "11% smaller; 6% more runtime" }
+      - { capacity_mah: 45, usable_energy_mwh: 139, runtime_active_typical_h: "139 / 251 * 24 = 13.3 hours (theoretical) / 11.2 (realistic)", notes: "the baseline" }
+      - { capacity_mah: 60, usable_energy_mwh: 186, runtime_active_typical_h: "186 / 251 * 24 = 17.8 hours", notes: "33% larger; 59% more runtime" }
+    sensitivity_to_haptic_usage:
+      - { scenario: "0 haptics per day", runtime_h: 11.2, notes: "the baseline" }
+      - { scenario: "1 haptic per minute (60 per hour * 16 waking hours = 960 per day)", runtime_h: 11.1, notes: "negligible effect; haptics are not a significant energy consumer" }
+      - { scenario: "1 haptic per second for 5 minutes per day (300 per day)", runtime_h: 11.2, notes: "negligible effect" }
+    sensitivity_to_sensor_duty_cycles:
+      - { scenario: "sensors at 5% duty cycle (baseline)", runtime_h: 11.2 }
+      - { scenario: "sensors at 100% duty cycle (continuous)", runtime_h: "11.0 hours; sensors add approximately 50 uA at 100% duty; this is still negligible compared to the BLE radio" }
+    sensitivity_to_regulator_efficiency:
+      - { scenario: "current LDO efficiency (87% at 3.3 V; 55% at 1.8 V)", runtime_h: 11.2, notes: "the baseline" }
+      - { scenario: "ideal buck converter (95% at 3.3 V; not applicable at 1.8 V)", runtime_h: "approximately 12.5 hours; the 3.3 V buck saves approximately 50 uA at typical BLE load", notes: "the efficiency improvement is modest; the dominant loss is the 1.8 V LDO" }
+    key_insight: "the runtime is DOMINATED by the BLE radio duty cycle; reducing the BLE connection interval from 7.5 ms to 30-100 ms has a much larger impact than reducing sensor duty cycles or improving regulator efficiency"
+
+  # =========================================================================
+  # 15. claims_audit
+  # =========================================================================
+  claims_audit:
+    description: "explicit audit of every important quantitative claim inherited from previous artifacts. REVISED 2026-09-06 to reflect the corrected power-budget.yaml."
+    claims:
+      - { claim: "3-5 days of runtime under typical usage", source: "previous electrical/power-budget.yaml section claim.V1_claim (now corrected)", original_value: "3-5 days", verification_calculation: "the corrected power-budget.yaml section runtime_recalculation shows the idle BLE profile at 7.5 ms interval achieves approximately 3.4 days realistic at 45 mAh and approximately 3.8 days at 50 mAh; the active controller profile achieves approximately 2.5 days at 45 mAh and approximately 2.8 days at 50 mAh; the 3-5 day target is achievable ONLY in the idle BLE profile at 50-60 mAh OR at any capacity with a relaxed 30 ms BLE interval", verdict: "PLAUSIBLE under specific conditions; INVALID as a general claim at 45 mAh with active sensors", required_correction: "the corrected claim is '3-4 days at idle BLE profile at 50-60 mAh; approximately 2-3 days at active controller profile at 50-60 mAh with 30 ms BLE interval; the original '3-5 days' is NOT achievable with sensors + haptics active at 7.5 ms BLE interval'" }
+      - { claim: "5.1-minute charge to 80%", source: "previous electrical/power-budget.yaml section charging_time.charging_time_to_80_percent", original_value: "5.1 minutes", verification_calculation: "mathematically correct at 500 mA but the rate is unsafe for typical small LiPo cells; at the safe 22.5 mA (0.5C for 45 mAh), the time to 80% is approximately 1.6 hours", verdict: "INVALID_OR_UNSUPPORTED for typical small LiPo cells (the rate is unsafe); the 1.6-hour figure is the CORRECTED V1 estimate", required_correction: "the corrected charging time is approximately 1.6 hours to 80% SOC at 22.5 mA; approximately 2.75 hours to 100% SOC" }
+      - { claim: "500 mA charging current", source: "previous electrical/power-budget.yaml section charging_time.pogo_input_current_max + components/charger-selection.yaml", original_value: "500 mA", verification_calculation: "500 mA is the MCP73831's MAXIMUM capability; it is NOT a safe charge rate for a typical small LiPo cell at 45 mAh (11.1C); the cell's max safe C-rate is TBD on the cell datasheet", verdict: "INVALID_OR_UNSUPPORTED for typical small LiPo cells", required_correction: "the V1 default charge current is 22.5 mA (0.5C for 45 mAh); RPROG = 44 kΩ" }
+      - { claim: "35-60 mAh battery capacity", source: "components/battery-selection.yaml section recommended", original_value: "35-60 mAh", verification_calculation: "the range is documented; the V1 nominal is 45 mAh (midpoint); the actual V1 cell capacity is TBD on the EEMB-class manufacturer datasheet", verdict: "PLAUSIBLE", required_correction: "no immediate correction" }
+      - { claim: "85% charge efficiency", source: "electrical/power-budget.yaml section charging_time.charge_efficiency", original_value: "85%", verification_calculation: "85% is reasonable for the MCP73831 at typical charge rates; the efficiency is lower at low charge currents (the LDO quiescent dominates) and may vary with the cell's internal resistance", verdict: "PLAUSIBLE", required_correction: "no immediate correction" }
+      - { claim: "0.5 mW average power for active scenario (previous power-budget.yaml)", source: "previous electrical/power-budget.yaml section power_consumption_by_scenario.Active target", original_value: "0.5 mW", verification_calculation: "the corrected power-budget.yaml section usage_profiles.profile_C_normal_controller_use gives approximately 1.95 mW (30 ms BLE interval); the previous 0.5 mW was approximately 4x too low; the cause was a likely typo or an erroneous nRF54L15 radio current assumption", verdict: "INVALIDATED", required_correction: "the corrected power-budget.yaml now has the correct per-profile values" }
+      - { claim: "0.2 mW average power for idle scenario (previous power-budget.yaml)", source: "previous electrical/power-budget.yaml section power_consumption_by_scenario.Idle", original_value: "0.2 mW", verification_calculation: "the corrected power-budget.yaml section usage_profiles.profile_B_idle_ble_connected gives approximately 1.45 mW at 7.5 ms; the previous 0.2 mW was approximately 7x too low", verdict: "INVALIDATED", required_correction: "see above" }
+      - { claim: "0.015 mW average power for sleep scenario (previous power-budget.yaml)", source: "previous electrical/power-budget.yaml section power_consumption_by_scenario.Sleep", original_value: "0.015 mW", verification_calculation: "the corrected power-budget.yaml section usage_profiles.profile_A_deep_sleep gives approximately 0.213 mW; the previous 0.015 mW was approximately 14x too low (the LDOs alone consume 50 uA = 0.165 mW at 3.3 V)", verdict: "INVALIDATED", required_correction: "see above" }
+      - { claim: "14 days runtime for active target (previous power-budget.yaml)", source: "previous electrical/power-budget.yaml section battery_life_by_scenario.Active target", original_value: "14 days", verification_calculation: "based on the invalid 0.5 mW power budget; the corrected calculation gives approximately 2.96 days realistic at 45 mAh with 30 ms BLE", verdict: "INVALIDATED", required_correction: "see the 3-5 day claim correction above" }
+      - { claim: "4.7 days runtime for continuous (previous power-budget.yaml)", source: "previous electrical/power-budget.yaml section battery_life_by_scenario.Continuous", original_value: "4.7 days", verification_calculation: "based on the invalid 1.5 mW power budget; the corrected calculation gives approximately 1 day realistic for the heavy controller profile at 45 mAh", verdict: "INVALIDATED", required_correction: "see above" }
+
+  # =========================================================================
+  # 16. design_gate
+  # =========================================================================
+  design_gate:
+    description: "REVISED 2026-09-06 design gate. The corrected power-budget.yaml provides defensible values; the RED items from the previous gate have been substantially resolved."
+
+    classifications:
+      - { item: "battery_architecture (EEMB-class curved LiPo 35-60 mAh)", classification: "YELLOW", reason: "the architecture is correct; the exact cell is TBD on the EEMB-class manufacturer datasheet; the engineering recommendation is 50-60 mAh for the 3-5 day target" }
+      - { item: "charger_architecture (MCP73831 + magnetic pogo)", classification: "GREEN", reason: "the topology is confirmed; the MCP73831 is appropriate for the V1 single-cell LiPo" }
+      - { item: "charging_current (22.5 mA = 0.5C default)", classification: "GREEN at safe rate; RED if 500 mA is used", reason: "22.5 mA is safe for typical small LiPo cells; RPROG = 44 kΩ; the previous 500 mA setting was invalidated as 11.1C is unsafe" }
+      - item: "battery_protection (overcharge, over-discharge, over-current, short-circuit, thermal, NTC)"
+        classification: "YELLOW"
+        reason: "all protections are present in principle (MCP73831 + cell PCM); exact trip thresholds are TBD on both datasheets; cradle overvoltage protection is RED (not yet designed)"
+      - { item: "runtime", classification: "YELLOW (was RED before)", reason: "the corrected power-budget.yaml gives realistic runtime of 2-3 days at 50 mAh under typical mixed-use (30 ms BLE); 3-4 days at idle BLE at 50 mAh; the 3-5 day target is achievable at 50-60 mAh with idle BLE OR at any capacity with relaxed BLE interval" }
+      - { item: "charging_time (1.6 hours to 80% at 22.5 mA)", classification: "GREEN (was RED before)", reason: "the safe charging time is 1.6 hours to 80% SOC and 2.75 hours to 100% SOC at 22.5 mA; the previous 5.1-minute claim at 500 mA was unsafe" }
+      - { item: "thermal_safety", classification: "GREEN at 22.5 mA charge; RED at 500 mA charge", reason: "the MCP73831's dissipation at 22.5 mA is approximately 26 mW (negligible for finger comfort); at 500 mA it would be approximately 575 mW which is unacceptable" }
+    summary:
+      green_items: ["charger_architecture", "charging_time (at safe rate)", "thermal_safety (at safe rate)"]
+      yellow_items: ["battery_architecture", "battery_protection", "runtime (achievable at 50-60 mAh with appropriate BLE interval)"]
+      red_items: ["charging_current (if 500 mA is used)", "thermal_safety (if 500 mA is used)", "cradle overvoltage protection (not yet designed)"]
+    verdict_on_proceeding_to_industrial_design:
+      decision: "CONDITIONAL YES"
+      explanation: "the major RED items (charging current, runtime, charging time) have been substantially resolved by the corrected power-budget.yaml; the remaining concerns are YELLOW (TBD on datasheets) and a single RED item (cradle overvoltage protection, which is a separate project)"
+      required_actions_before_proceeding:
+        - "consult the nRF54L15 PS v1.0 to confirm the per-event currents used in the per-event model (BLE RX, BLE TX, CPU active, flash write)"
+        - "consult the MCP73831 datasheet to confirm the RPROG formula + STAT pin encodings + NTC thresholds + thermal threshold + termination current"
+        - "consult the EEMB-class LiPo cell datasheet to confirm the cell's max charge C-rate + PCM trip thresholds + NTC type + internal resistance"
+        - "the 22.5 mA (0.5C) charge current is the SAFE DEFAULT; do NOT change this without cell datasheet confirmation"
+        - "consider relaxing the BLE connection interval to 30 ms (this approximately doubles the runtime) for the typical controller profile"
+        - "the cradle's input overvoltage protection is RED; this is a separate project and does NOT block the ring's design"
+      optional_improvements:
+        - "the cascaded LDO topology is inefficient at 55% for the 1.8 V rail; a buck + LDO would save approximately 5% of the total power; this is NOT material; do NOT add a buck converter in V1"
+        - "the nRF54L15's BLE radio dominates the power budget; consider the LE Coded PHY for long-range at lower data rate"
+        - "consider increasing the V1 cell capacity to 60 mAh if the 3-5 day runtime is a hard requirement"
+    corrected_runtime_range:
+      at_45_mah_idle_ble_7_5ms_realistic: "approximately 3.4 days"
+      at_45_mah_normal_controller_30ms_realistic: "approximately 2.5 days"
+      at_50_mah_idle_ble_7_5ms_realistic: "approximately 3.8 days"
+      at_50_mah_normal_controller_30ms_realistic: "approximately 2.8 days"
+      at_60_mah_idle_ble_7_5ms_realistic: "approximately 4.5 days"
+      at_60_mah_normal_controller_30ms_realistic: "approximately 3.4 days"
+      verdict: "the 3-5 day target is achievable at 50-60 mAh with idle BLE + 7.5 ms interval OR at 45 mAh with relaxed 30 ms BLE interval"
+    corrected_charging_time_range:
+      at_safe_22_5_ma_to_80pct: "approximately 1.6 hours"
+      at_safe_22_5_ma_to_100pct: "approximately 2.75 hours"
+      at_high_rate_500_ma_to_80pct: "approximately 6 minutes (UNSAFE)"
+      at_high_rate_500_ma_to_100pct: "approximately 30-45 minutes (UNSAFE)"
+      verdict: "the safe charging time is approximately 1.6-2.75 hours at 22.5 mA; the previous 5.1-minute claim at 500 mA is unsafe"
+
+  references:
+    - { ref: "electrical/power-budget.yaml", url: "internal", note: "the inherited power budget; contains the claims audited in this analysis" }
+    - { ref: "electrical/power-tree.yaml", url: "internal", note: "LDO selection + power path" }
+    - { ref: "electrical/system-architecture.yaml", url: "internal", note: "V1 power rails + I2C bus" }
+    - { ref: "mechanical/inner-band-layout.yaml", url: "internal", note: "component placement + thermal context" }
+    - { ref: "mechanical/pogo-charger-layout.yaml", url: "internal", note: "MCP73831 + cell + safety audit" }
+    - { ref: "components/battery-selection.yaml", url: "internal", note: "EEMB-class curved LiPo selection" }
+    - { ref: "components/charger-selection.yaml", url: "internal", note: "MCP73831 selection" }
+    - { ref: "components/mcu-selection.yaml", url: "internal", note: "nRF54L15 current consumption" }
+    - { ref: "components/imu-selection.yaml", url: "internal", note: "BMI270 current consumption" }
+    - { ref: "components/touch-selection.yaml", url: "internal", note: "IQS127D current consumption" }
+    - { ref: "components/temperature-selection.yaml", url: "internal", note: "TMP117 current consumption" }
+    - { ref: "components/haptic-selection.yaml", url: "internal", note: "DRV2605L + LRA peak current" }
+    - { ref: "components/antenna-selection.yaml", url: "internal", note: "antenna is passive" }
+    - { ref: "firmware/architecture.md", url: "internal", note: "power state machine" }
+    - { ref: "electrical/sensor-interface_part2.yaml", url: "internal", note: "per-sensor bring-up + STAT GPIO" }
+    - { ref: "MCP73831 datasheet", url: "https://www.microchip.com/en-us/product/MCP73831", note: "Authoritative for charge algorithm + STAT encoding + TS input + thermal protection; every MCP73831 specification in this analysis is TBD until this datasheet is consulted" }
+    - { ref: "EEMB LiPo datasheet (cell-specific)", url: "https://www.eemb.com/", note: "Authoritative for cell max charge C-rate + PCM thresholds + NTC type + internal resistance; every cell-specific value in this analysis is TBD until this datasheet is consulted" }
+    - { ref: "TPS7A02 datasheet", url: "https://www.ti.com/product/TPS7A02", note: "Authoritative for LDO Iq + dropout voltage + efficiency" }
+

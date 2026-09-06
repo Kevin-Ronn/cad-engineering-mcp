@@ -1,0 +1,49 @@
+schema_version: 1
+charger_selection:
+  id: smart_ring_charger_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "Compare inductive/NFC wireless charging vs magnetic pogo charging. Use Open Ring (induction, separate charger module) and NERVA_Ring (magnetic; reference-only) as engineering references. Also investigate the Even R1 approach (undocumented; assume wireless per the discreet / waterproof design). For V1, select whichever provides the best combination of simplicity, reliability, efficiency, waterproofing, and manufacturability."
+
+  options:
+
+    - option_A:
+      name: "Inductive / NFC wireless charging"
+      ic_candidates:
+        - { part: "TI BQ25125 (used in Open Ring)", package: "WCSP-1.5x1.5 mm", interface: "I2C", supply: "1.8-3.6 V (VIN); 3.3-5.5 V (VBUS for wireless input)", notes: "Open Ring uses this; small; integrated power path; the BQ25125 supports inductive charging with a separate transmitter coil" }
+        - { part: "TI BQ51025 (companion transmitter)", notes: "Transmitter IC for the V1 base station; charges the ring's BQ25125 receiver" }
+      example: "Open Ring uses inductive charging with a separate charger module (the charger module has its own STM32G030F6 MCU for charger control and status LED). The V1 design can use the same architecture: the ring has the BQ25125 receiver, and the base station has the BQ51025 transmitter + a microcontroller for user feedback (LED). The magnetic coupling is used for alignment, but the actual charging is inductive."
+      pros: ["waterproof (no exposed pogo pins)", "Even R1 likely uses this (discreet design, no exposed connectors)", "Open Ring's proven architecture", "alignment via magnetic coupling"]
+      cons: ["less efficient than pogo (typically 70-80% vs 95%)", "more expensive (coil + BQ51025 transmitter + base station MCU)", "more complex (requires a base station)"]
+      v1_acceptable: "yes (the V1 base station is a separate mechanical / industrial-design project)"
+
+    - option_B:
+      name: "Magnetic pogo charging (e.g. NERVA-style)"
+      ic_candidates:
+        - { part: "MCP73831 (single-cell LiPo charger, simple)", package: "SOT-23-5 (1.6x1.6 mm)", interface: "none (standalone)", supply: "3.7-6.5 V (VIN)", notes: "Simple single-cell LiPo charger; can be paired with a magnetic pogo connector" }
+        - { part: "MCP73871 (with power-path management)", package: "MSOP-8 / DFN-10", notes: "Power-path management (can run the system while charging)" }
+      example: "NERVA uses magnetic pogo charging. The ring has 2-3 small pogo pins on the inside of the band, and the base station has a magnetic docking cradle with matching pogo pins. The pogo pins carry the 5 V charging voltage and the ground. The ring's MCP73831 charges the cell from the 5 V pogo input."
+      pros: ["simpler (no wireless protocol; no transmitter)", "more efficient (95% vs 70-80%)", "cheaper (no coil; no transmitter IC)", "faster charging (the MCP73831 supports up to 500 mA charge current)"]
+      cons: ["less waterproof (the pogo pins must be sealed; typically a silicone gasket is required)", "less discreet (the pogo pins are visible on the inside of the band)", "requires precise mechanical alignment"]
+      v1_acceptable: "yes (the V1's waterproofing target is 'sweat-resistant', not full IP68; pogo with a silicone gasket is sufficient)"
+
+  recommended_for_V1: "option_B (magnetic pogo)"
+  reason: "Simpler, more efficient, cheaper, faster charging. The V1's waterproofing target is 'sweat-resistant', not full IP68. Pogo with a silicone gasket is sufficient. The Even R1's waterproof design is more rigorous, but our V1 is a controller-focused ring, not a fully-waterproof jewelry-class ring."
+
+  trade_offs:
+    simplicity: "option_B (pogo) is simpler than option_A (induction)"
+    reliability: "option_B (pogo) is more reliable (no wireless protocol; no transmitter to fail; the pogo pins are standard hardware)"
+    efficiency: "option_B (pogo) is more efficient (95% vs 70-80%); less heat dissipated in the ring"
+    waterproofing: "option_A (induction) is more waterproof (no exposed pogo pins); option_B (pogo) requires a silicone gasket"
+    manufacturability: "option_B (pogo) is easier to manufacture (no coil winding; no wireless certification); option_A (induction) requires the charger module to be certified (FCC, CE, etc.)"
+
+  decision:
+    V1: "magnetic pogo charging (option_B). Simpler, more efficient, cheaper, faster charging. The V1's waterproofing target is sweat-resistant, not full IP68."
+    V2: "magnetic pogo charging OR inductive (depends on the V2's waterproofing target)."
+
+  sources:
+    - { ref: "Open Ring (induction reference)", url: "https://github.com/stawiski/open-ring", note: "Open Ring uses inductive charging with a separate charger module." }
+    - { ref: "NERVA_Ring (magnetic pogo reference; license unknown)", url: "https://github.com/NRG24/NERVA_Ring", note: "NERVA uses magnetic pogo charging." }
+    - { ref: "BQ25125 datasheet", url: "https://www.ti.com/product/BQ25125", note: "Verify exact package and pinout before committing." }
+    - { ref: "MCP73831 datasheet", url: "https://www.microchip.com/en-us/product/MCP73831", note: "Verify exact package and pinout before committing." }

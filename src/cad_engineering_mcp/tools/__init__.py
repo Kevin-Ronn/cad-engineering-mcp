@@ -23,6 +23,11 @@ from .provenance_tools import (
     list_authoritative_overrides,
     resolution_plan,
 )
+from .placement_execution_tools import (
+    apply_placement_resolution,
+    placement_resolution_plan,
+    verify_structural_objectives,
+)
 from .mesh_interference import mesh_interference
 from .optical_window_tools import validate_optical_window_system
 from .propose_pose import propose_pose
@@ -73,4 +78,8 @@ __all__ = [
     "authoritative_value_override",
     "list_authoritative_overrides",
     "resolution_plan",
+    # Phase 7
+    "apply_placement_resolution",
+    "placement_resolution_plan",
+    "verify_structural_objectives",
 ]

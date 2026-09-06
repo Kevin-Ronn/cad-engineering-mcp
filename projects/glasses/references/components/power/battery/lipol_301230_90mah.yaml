@@ -1,0 +1,64 @@
+schema_version: 1
+component:
+  id: lipol_301230_90mah
+  category: li_poly_pouch_cell
+  units: mm
+  role: tiny_battery_candidate_for_reference
+
+source:
+  manufacturer: LiPol Battery Co., Ltd (and other Chinese vendors; this is a generic model code)
+  part_number: 301230 (3.0 mm thick x 12 mm wide x 30 mm long, ~90 mAh)
+  source_type: market_survey
+  source_docs:
+    - url: https://www.lipolbattery.com/
+      description: "LiPol Battery Co."
+  chemistry: lithium polymer (LiPo)
+  form_factor: pouch
+  protected: NO (bare cell)
+
+mechanical:
+  dimensions_mm: { thickness: 3.0, width: 12.0, length: 30.0 }
+  weight_g: approximately 2.5
+  volume_cm3: 1.08
+  energy_density_wh_per_kg: approximately 133
+  energy_density_wh_per_l: approximately 308
+  source_for_mechanical: model-number convention
+
+electrical:
+  nominal_voltage_v: 3.7
+  charge_voltage_max_v: 4.2
+  discharge_cutoff_v: 3.0
+  capacity_mah: 90
+  energy_wh: 0.333
+  standard_charge_current_ma: 45 (0.5C)
+  max_charge_current_ma: 90 (1C)
+  max_continuous_discharge_ma: 180 (2C)
+  source_for_electrical: market survey / typical class
+
+environmental:
+  charge_temperature_c: { min: 0, max: 45 }
+  discharge_temperature_c: { min: -20, max: 60 }
+  source_for_environmental: typical LiPo
+
+cycle_life:
+  cycles_to_80_percent_capacity: approximately 500
+
+connectors:
+  standard: JST PHR-2 (verify per order)
+
+purchase:
+  distributor: LiPol direct; LCSC; Amazon; AliExpress
+  unit_price_usd: approximately 1.5 to 3 (single-piece); 0.8 to 1.5 in volume
+  moq: 1 to 10
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+
+geometry_relevance:
+  temple_fit: "3.0 x 12 x 30 mm. Smallest in this set. 12 mm width is the narrowest."
+  two_battery_config: "Two cells in parallel = 180 mAh / 0.67 Wh. Insufficient for the V853 system."
+
+constraints:
+  status: NOT_RECOMMENDED — too small for the V853 system power budget. Listed for reference only.

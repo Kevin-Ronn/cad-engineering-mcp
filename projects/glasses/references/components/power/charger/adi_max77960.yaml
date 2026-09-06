@@ -1,0 +1,51 @@
+schema_version: 1
+component:
+  id: adi_max77960
+  category: single_cell_li_ion_charger_i2c_powerpath_usbc
+  units: mm
+  role: alternative_charger_candidate_with_usbc_pd
+
+source:
+  manufacturer: Analog Devices (formerly Maxim Integrated)
+  part_number: MAX77960
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.analog.com/en/products/max77960.html
+      description: "MAX77960 product page and datasheet"
+
+mechanical:
+  package: WLP or small QFN
+  dimensions_mm: UNKNOWN (verify per datasheet; expected sub-3 mm class)
+  source_for_mechanical: ADI datasheet summary
+
+electrical:
+  input_voltage_v: { min: 2.7, typ: 5.0, max: 5.5 }  # plus optional USB-C PD up to 15 V
+  charge_current_ma: up to approximately 1500 (verify per datasheet)
+  charge_voltage_v: 4.2 (Li-ion) / 4.35 (Li-poly) selectable
+  interface: I2C
+  power_path_management: yes
+  usb_pd: yes (USB-C PD negotiation up to 15 V; can also use a basic 5 V USB-C input)
+  thermal_regulation: yes
+  safety_timers: yes
+  battery_protection_features: overcharge, overdischarge, overcurrent, thermal
+  source_for_electrical: ADI datasheet summary
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: ADI datasheet summary
+
+purchase:
+  distributor: ADI direct; Mouser; DigiKey
+  unit_price_usd: approximately 2.50 to 4.00 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact WCSP/QFN dimensions not in the summary"
+
+constraints:
+  status: ALTERNATIVE — supports USB-PD if the glasses need > 5 V charging input. The brief allows 5 V only, so USB-PD is optional.

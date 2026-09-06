@@ -1,0 +1,93 @@
+schema_version: 1
+v853_power_sequencing:
+  id: v853_glasses_power_sequencing_with_axp2101
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, section 2.3.5 (power-on sequence) and 2.3.4 (recommended operating conditions); AXP2101 datasheet (AXP2101_Datasheet_V1_en.pdf, mirrored in projects/glasses/references/components/compute/v853/)
+
+  conclusion:
+    axp2101_meets_sequencing_requirements: YES
+    confidence: HIGH (the AXP2101 is the Allwinner-ecosystem PMIC designed to power the V853 with the exact sequencing shown in the V853 datasheet Figure 2-2)
+
+  power_on_sequence:
+    source: V853 datasheet Figure 2-2
+    order:
+      - { step: 1, rail: "VCC-RTC", voltage_v: 1.8, source: "AXP2101 DCDC-RTC (always-on; the only rail that is on when the system is 'off'; powered by the Li-ion cell directly through the AXP2101's BAT input)", delay_from_previous_ms: 0, note: "first rail" }
+      - { step: 2, rail: "VCC-DRAM", voltage_v: 1.5 (DDR3) or 1.35 (DDR3L), source: "AXP2101 DCDC2 (or DCDC4; verify per glasses-specific config)", delay_from_previous_ms: 8, note: "T1 >= 8 ms after VCC-RTC stable" }
+      - { step: 3, rail: "VDD-SYS", voltage_v: 0.9, source: "AXP2101 DCDC1", delay_from_previous_ms: 0, note: "within 0 ms of VCC-DRAM" }
+      - { step: 3, rail: "VDD18-DRAM", voltage_v: 1.8, source: "AXP2101 LDO (dedicated DRAM 1.8 V)", delay_from_previous_ms: 4, note: "T2 between 0 and 4 ms after VDD-SYS" }
+      - { step: 4, rail: "VCC-PLL", voltage_v: 1.8, source: "AXP2101 LDO", delay_from_previous_ms: 8, note: "T3 >= 8 ms after VCC-DRAM stable" }
+      - { step: 4, rail: "VCC18-DSI", voltage_v: 1.8, source: "AXP2101 LDO (shared with VCC18-PF)", delay_from_previous_ms: 8, note: "T3 >= 8 ms after VCC-DRAM" }
+      - { step: 4, rail: "VCC-EFUSE", voltage_v: 1.8, source: "AXP2101 LDO (combined with VCC18-PF)", delay_from_previous_ms: 8 }
+      - { step: 4, rail: "VCC18-PF", voltage_v: 1.8, source: "AXP2101 LDO", delay_from_previous_ms: 8, note: "GPIO Port F 1.8 V power" }
+      - { step: 4, rail: "VCC-PA&MCSI", voltage_v: 1.8, source: "AXP2101 LDO (shared with VCC-PA)", delay_from_previous_ms: 8, note: "GPIO Port A 1.8 V + MIPI CSI 1.8 V" }
+      - { step: 4, rail: "VCC-IO", voltage_v: 3.3, source: "AXP2101 LDO", delay_from_previous_ms: 8, note: "USB 2.0 DRD 3.3 V analog + GPIO 3.3 V" }
+      - { step: 4, rail: "VCC-PC", voltage_v: 3.3 (or 1.8 V mode), source: "AXP2101 LDO", delay_from_previous_ms: 8, note: "GPIO Port C 3.3 V (or 1.8 V mode); the glasses design uses 1.8 V" }
+      - { step: 4, rail: "VCC-PD", voltage_v: 3.3 (or 1.8 V mode), source: "AXP2101 LDO", delay_from_previous_ms: 8, note: "GPIO Port D 3.3 V (or 1.8 V mode); the glasses design uses 1.8 V" }
+      - { step: 4, rail: "VCC-PG", voltage_v: 1.8, source: "AXP2101 LDO", delay_from_previous_ms: 8, note: "GPIO Port G 1.8 V" }
+      - { step: 4, rail: "VCC33-USB", voltage_v: 3.3, source: "AXP2101 LDO (combined with VCC-IO 3.3 V; or a separate rail)", delay_from_previous_ms: 8, note: "USB 2.0 DRD 3.3 V analog" }
+      - { step: 4, rail: "VCC33-PF", voltage_v: 3.3, source: "AXP2101 LDO (combined with VCC-IO 3.3 V; or a separate rail)", delay_from_previous_ms: 8, note: "GPIO Port F 3.3 V (or 1.8 V mode); not used in the glasses design" }
+      - { step: 4, rail: "AVCC", voltage_v: 1.8, source: "AXP2101 LDO", delay_from_previous_ms: 8, note: "V853 analog supply" }
+      - { step: 5, rail: "RESET (SoC)", source: "AXP2101 RESET output pin", delay_from_previous_ms: 8, note: "RESET is released after all rails are stable" }
+      - { step: 6, rail: "24 MHz crystal", source: "external crystal + V853 internal oscillator", delay_from_previous_ms: 4, note: "4 ms after RESET is released" }
+
+  rails_grouping:
+    vcc_rtc_alone:
+      rail: VCC-RTC
+      source: "AXP2101 always-on rail (the only rail on when the system is 'off')"
+      note: "This rail powers the V853's RTC + the AXP2101's internal control logic. It is powered by the Li-ion cell directly through the AXP2101's BAT input. The AXP2101 has a separate power path for this rail so that it is always on."
+    vddsys_with_dcdc1:
+      rail: VDD-SYS (0.9 V)
+      source: "AXP2101 DCDC1"
+      note: "V853 application core + GPU + ISP. The AXP2101's DCDC1 is the primary SoC core supply."
+    dram_voltage_separate:
+      rail: VCC-DRAM (1.5 V DDR3 or 1.35 V DDR3L)
+      source: "AXP2101 DCDC2 (or DCDC4; glasses-specific config)"
+      note: "Separate from VDD-SYS because the DRAM voltage is different. The AXP2101's DCDC2 is rated for the DRAM current (up to 1 A for the glasses' small DRAM)."
+    io_voltage_separate:
+      rail: VCC-IO (3.3 V) AND VCC18-MCSI (1.8 V) AND VCC18-MDSI (1.8 V)
+      source: "AXP2101 LDO1 (3.3 V) + LDO3 (1.8 V camera) + LDO4 (1.8 V display)"
+      note: "The 3.3 V and 1.8 V rails are separate LDOs because the V853's I/O and MIPI PHY have different voltage requirements. The 1.8 V MIPI LDOs are critical for the camera and display."
+    rtc_and_backup:
+      rail: "VCC-RTC (1.8 V) + VDD18-DRAM (1.8 V) + VCC-PLL (1.8 V) + VCC-EFUSE (1.8 V) + VCC18-PF (1.8 V)"
+      source: "AXP2101 dedicated LDOs"
+      note: "These rails can be combined or kept separate per the AXP2101's pinout. The AXP2101 has 5 LDOs (LDO1..LDO5); 4 of them can be 1.8 V."
+
+  rails_that_can_be_combined:
+    vcc_3v3_combined:
+      rails: ["VCC-IO (3.3 V)", "VCC33-USB (3.3 V)", "VCC33-PF (3.3 V)"]
+      shared_source: "AXP2101 LDO1 (3.3 V, 300 mA)"
+      feasibility: "The VCC-IO and VCC33-USB are always the same 3.3 V. The VCC33-PF is for the GPIO Port F 3.3 V mode (not used in the glasses). The total 3.3 V load is < 300 mA; one AXP2101 LDO is sufficient."
+    vcc_1v8_mipi_combined:
+      rails: ["VCC18-MCSI (1.8 V)", "VCC18-MDSI (1.8 V)", "VCC-PA (1.8 V)"]
+      shared_source: "AXP2101 LDO3 (1.8 V, 200 mA)"
+      feasibility: "The VCC18-MCSI and VCC18-MDSI are the camera and display analog rails. The VCC-PA is the GPIO Port A 1.8 V. The total 1.8 V load for these is < 200 mA; one AXP2101 LDO is sufficient if the GPIO Port A pin count is reasonable."
+
+  rails_that_must_be_separate:
+    vcc_rtc: "must be the first rail and must remain on; cannot be combined with any other rail"
+    vdd_sys: "must be a separate DCDC with the right voltage (0.9 V) and current (up to 1.5 A); cannot be combined with any other rail"
+    vcc_dram: "must be a separate DCDC at 1.5 V or 1.35 V; cannot be combined with the 0.9 V SoC core"
+    vcc_3v3: "the 3.3 V is a different voltage from the 1.8 V and 0.9 V; cannot be combined"
+
+  power_good_and_reset:
+    pg_output: "the AXP2101 has a PWRON / PGOOD output that indicates all rails are up. The SoC's RESET ball is held by the AXP2101's RESET output. The AXP2101's reset delay is configurable (typically 100-300 ms); the V853 requires T1 >= 8 ms + the time to ramp VDD-SYS + 4 ms crystal start = approximately 20-30 ms minimum."
+    reset_release: "after all rails are up and the reset delay has elapsed, the AXP2101 deasserts the SoC's RESET line. The SoC starts booting."
+
+  peripheral_power_states:
+    always_on:
+      rails: ["VCC-RTC"]
+      consumers: ["V853 RTC + AXP2101 internal control"]
+      controlled_by: "AXP2101 always-on; cannot be turned off"
+    normal_run:
+      rails: ["VDD-SYS", "VCC-DRAM", "VCC-IO", "VCC18-MCSI", "VCC18-MDSI", "VCC-PI", "VCC-PA", "VCC-PC", "VCC-PD", "VCC-PE", "VCC-PG", "VCC-PLL", "AVCC", "VCC33-USB", "VCC33-PF (if used)"]
+      consumers: ["V853 application core", "DDR3", "all I/O", "camera", "display", "USB"]
+      controlled_by: "AXP2101 firmware; can be put into low-power mode for suspend-to-RAM"
+    suspend:
+      rails: ["VCC-RTC only"]
+      consumers: ["V853 RTC wakeup logic"]
+      controlled_by: "AXP2101 firmware; the SoC's state is saved to DDR3 (self-refresh) and the rails are turned off except VCC-RTC. Wakeup via RTC alarm, GPIO, or USB VBUS detect."
+
+  risk:
+    - "The AXP2101's exact rail-by-rail configuration for the glasses (which DCDC1..5 and which LDO1..4 is which V853 rail) is firmware-configurable. The glasses-specific configuration must be set in the AXP2101's NVRAM or OTP at production-line programming time. Verify the AXP2101's register map."
+    - "The DRAM rail is 1.5 V for DDR3 or 1.35 V for DDR3L. The glasses design must choose one or the other; mixing is not possible. Recommend DDR3L (1.35 V) for lower power."
+    - "The MIPI rails (VCC18-MCSI and VCC18-MDSI) must be on BEFORE the camera and display are initialized. The AXP2101's sequence handles this. If a different PMIC is used, the sequence must be verified."
+    - "The 24 MHz crystal startup time is typically 1-4 ms; the V853's spec is 4 ms maximum. The AXP2101's reset delay must be > 4 ms after all rails are up. This is typically configured at 100-300 ms in the AXP2101 firmware."

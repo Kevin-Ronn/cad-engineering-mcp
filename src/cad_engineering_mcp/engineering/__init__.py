@@ -154,3 +154,16 @@ from .provenance import (
     resolve_with_provenance,
     save_overrides,
 )
+
+from .plExecution import (
+    PLACEMENT_KEY_TO_POSE,
+    PLACEMENT_POLICY_REL,
+    POSE_VALIDATION_REL,
+    PlExecutionError,
+    REQUIRED_OBJECTIVES_LIST,
+    RIB_SYSTEM_REL,
+    STRUCTURAL_POLICY_REL,
+    apply_placement_resolution,
+    build_placement_resolution_plan,
+    verify_structural_objectives,
+)

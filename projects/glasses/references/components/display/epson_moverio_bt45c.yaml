@@ -1,0 +1,81 @@
+schema_version: 1
+component:
+  id: epson_moverio_bt45c_optical_engine
+  category: binocular_ar_optical_engine
+  units: mm
+  role: high_resolution_alternative_reference
+
+source:
+  manufacturer: Seiko Epson Corporation
+  part_number: Moverio BT-45C (the headset); the optical engine inside is a separate Epson part, sold to OEMs as an OEM module by Epson
+  source_type: manufacturer_product_page
+  source_docs:
+    - url: https://www.epson.com/moverio-augmented-reality
+      description: "Epson Moverio product line"
+  notes: "The BT-45C headset is binocular and 0.45 inch (not 0.23 inch), 1920x1080, ~34 deg FOV. The brief targets 0.23 inch 640x400; the BT-45C is included only as a documented reference for what an Epson Si-OLED engine looks like, not as a primary candidate for the 0.23 inch 640x400 brief."
+
+optical:
+  display_technology: Si-OLED (silicon-based OLED, Epson)
+  resolution: 1920 x 1080
+  diagonal_size_inch: 0.45
+  aspect_ratio: 16:9
+  fov_horizontal_deg: approximately 34
+  fov_vertical_deg: approximately 19
+  waveguide_technology: NOT a waveguide; the BT-45C uses a conventional lens-based combiner (semi-reflective prism)
+  waveguide_thickness_mm: N/A
+  waveguide_dimensions_mm: N/A
+  eyebox: NOT_PUBLISHED
+  eye_relief_mm: NOT_PUBLISHED
+  exit_pupil: NOT_PUBLISHED
+  brightness_nits: NOT_PUBLISHED (per Epson 'visible in dim indoor light'; not a sunlight-readable display)
+  contrast: 500000:1 (per Epson)
+  colors: 24-bit color (16.77 million)
+  transparency_transmittance: NOT applicable (the BT-45C uses a tinted combiner, not see-through like a waveguide)
+  refresh_rate_hz: 60
+  distortion: NOT_PUBLISHED
+  focus_distance: focuses at a fixed distance (per Epson, not at infinity)
+  source_for_optical: Epson public materials
+
+mechanical:
+  optical_engine_dimensions_mm: NOT_PUBLIC (the BT-45C is a finished headset; the engine is integrated and not sold separately in documented mm form)
+  optical_engine_weight_g: NOT_PUBLIC
+  waveguide_dimensions_mm: N/A
+  complete_module_dimensions_mm: NOT_PUBLIC
+  source_for_mechanical: NOT_PUBLIC for the engine
+
+electronics:
+  interface: MIPI DSI or USB-C with internal display controller (Epson's headset has an Android controller tethered over USB-C)
+  mipi_dsi_lanes: NOT_PUBLIC
+  controller_driver_ic: Epson proprietary
+  required_supply_voltages: NOT_PUBLIC
+  power_consumption: NOT_PUBLIC
+  connector_type: NOT_PUBLIC
+  fpc_dimensions: NOT_PUBLIC
+  fpc_length_mm: NOT_PUBLIC
+  pin_count: NOT_PUBLIC
+  source_for_electronics: NOT_PUBLIC
+
+purchase:
+  distributor: Epson authorized resellers
+  unit_price_usd: BT-45C headset approximately 1800 to 2500 (finished product, not OEM module)
+  moq: N/A for finished headset
+  lead_time: stock
+  availability: in production
+  source_for_purchase: Epson website and authorized resellers
+
+confidence:
+  overall: HIGH_for_public_specs_LOW_for_glasses_relevance
+  sources: manufacturer_public_announcement
+  gaps:
+    - "Epson does NOT sell a 0.23 inch 640x400 OEM engine that matches the brief; the BT-45C is 0.45 inch 1920x1080 and binocular"
+    - "Epson does sell a 0.45 inch Si-OLED panel, but the brief explicitly targets 0.23 inch 640x400"
+    - "The BT-45C is NOT waveguide-based; it uses a conventional lens-based combiner. It does not satisfy the 'waveguide optical system preferred' requirement"
+
+constraints:
+  status: NOT_RECOMMENDED — does not match the 0.23 inch 640x400 target; not waveguide-based
+  reference_only: "Included as a high-quality documented public spec to anchor the comparison table. The brief's preferred form factor (0.23 inch, 640x400, waveguide) is not what the BT-45C ships."
+
+geometry_relevance:
+  conceptual_fit_against_wayfarer:
+    note: "Epson's BT-45C is a tethered industrial headset, not a glasses-integrated module. Its engine alone is approximately 30 x 20 x 10 mm (estimated; not verified), far too large for a Wayfarer temple. A custom Epson Si-OLED panel + custom optics would be needed to match the brief; this is not a turnkey product."
+    source_for_frame_comparison: projects/glasses/analysis/structure/full-mechanical-inspection.md

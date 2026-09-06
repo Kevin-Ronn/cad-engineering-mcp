@@ -1,0 +1,56 @@
+schema_version: 1
+antenna_selection:
+  id: smart_ring_antenna_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified. Do not finalize the mechanical crown until the antenna strategy is understood.
+
+  note: "The finger / body will strongly affect RF performance. The antenna must be placed on the inner band, NOT on the crown (the crown is too close to the body and the ground plane is limited)."
+
+  options:
+
+    - option_A:
+      name: "PCB trace antenna"
+      pros: ["no component cost; built into the PCB", "thin (no extra height)", "customizable shape"]
+      cons: ["sensitive to body detuning (the finger / wrist / body absorbs the 2.4 GHz signal)", "requires careful PCB layout (the ground plane and the trace geometry must be optimized)", "sensitive to the battery and metal ring proximity"]
+      v1_recommended: "consider as a fallback if chip antenna is too large; the V1's mechanical enclosure is critical"
+
+    - option_B:
+      name: "Chip antenna"
+      examples:
+        - { part: "Johanson Technology 2450AT18B100", package: "SMD-2x1.25x0.85 mm", frequency_ghz: 2.4-2.5, peak_gain_dbi: 1.5, vswr: less than 2.5:1, notes: "VERY small; designed for wearables; good for 2.4 GHz BLE; the ceramic body provides some immunity to body detuning" }
+        - { part: "Murata LFB182G45BG5D920", package: "SMD-1.6x0.8x0.6 mm", frequency_ghz: 2.4-2.5, peak_gain_dbi: 0.5, notes: "EVEN smaller than Johanson; slightly less gain; the smallest available chip antenna" }
+        - { part: "PulseLARSEN (used in Open Ring)", notes: "Open Ring uses a PulseLARSEN chip antenna; specific part not in the README" }
+      recommended: "Johanson Technology 2450AT18B100 (or Murata LFB182G45BG5D920 if extreme size is required)"
+      reason: "Small (2x1.25x0.85 mm); designed for wearables; 2.4 GHz; good VSWR; the ceramic body provides some immunity to body detuning. The V1 antenna keepout is approximately 5 mm in all directions (per the chip antenna's datasheet)."
+
+    - option_C:
+      name: "Flex antenna (FPC-integrated)"
+      pros: ["can be placed on the inner band away from the body", "thin (typical 0.2 mm FPC)", "can be shaped to fit the curved inner band"]
+      cons: ["more expensive (FPC antenna is a custom part)", "more complex (requires FPC design and FFC connector)", "less efficient than chip antenna at 2.4 GHz (typically 1-2 dB less)" ]
+      v1_recommended: "no (the ring is too small for a flex antenna; a chip antenna on the inner band is simpler)"
+
+  placement: "ON THE INNER BAND, NOT on the crown. The crown is too close to the body and the ground plane is limited. The inner band has a more reliable ground plane (the ring's metal enclosure or the PCB's ground pour) and is farther from the body. The antenna should be placed on the inner band near the top of the ring (NOT at the bottom, where the finger is) to maximize the body distance."
+
+  antenna_keepout: "5 mm in all directions from the antenna. The keepout zone must NOT have the battery, the haptic driver, the charger IC, or any other noisy circuit. The keepout zone must be free of the metal ring enclosure (if any)."
+
+  body_detuning_mitigation:
+    - "The antenna is placed on the INNER band (facing the finger), not the OUTER band (facing the air). The body (finger) is in close proximity; the ground plane is small. The body detuning is mitigated by the chip antenna's ceramic body (which has its own ground reference) and by the small size of the ring (the body effect is constant; the antenna's matching network is tuned for the in-body state)."
+    - "The PCB ground pour is continuous under the antenna (per the chip antenna's datasheet recommendation). The ground pour acts as the antenna's ground plane and reduces body detuning."
+    - "The battery is placed AWAY from the antenna (at the OPPOSITE end of the ring). The battery's metal can affect the antenna's impedance; placing it away reduces this effect."
+
+  BLE_link_budget:
+    tx_power_dbm: 0 (nRF54L15 typical; 0 dBm is conservative for wearable battery life)
+    rx_sensitivity_dbm: -95 (nRF54L15 typical; -95 dBm at 1 Mbps)
+    path_loss_dbm: 50-70 (typical for body-worn BLE at 1-2 m; the body absorbs ~30-50% of the signal)
+    link_margin_dB: "approximately 25-45 dB at 1-2 m; this is a comfortable margin for a wearable"
+
+  regulatory:
+    fcc: "The V1 ring with the nRF54L15 + Johanson 2450AT18B100 chip antenna must be FCC-certified. The nRF54L15 has a modular FCC grant (the chip is pre-certified), but the ring's antenna + enclosure combination requires a final FCC test."
+    ce: "Same as FCC; the V1 ring must be CE-certified for the European market."
+    telec: "Same; the V1 ring must be TELEC-certified for the Japanese market."
+
+  sources:
+    - { ref: "Johanson 2450AT18B100", url: "https://www.johansontechnology.com/products/antennas", note: "Verify exact dimensions and VSWR before committing." }
+    - { ref: "Murata LFB182G45BG5D920", url: "https://www.murata.com/products/antennas", note: "Same." }
+    - { ref: "Open Ring (PulseLARSEN chip antenna)", url: "https://github.com/stawiski/open-ring", note: "Open Ring uses a PulseLARSEN chip antenna; specific part not in the README." }
+    - { ref: "RRing (ANT3216 chip antenna)", url: "https://github.com/state-of-the-art/rring", note: "RRing uses ANT3216; reference-only (license unknown)." }

@@ -1,0 +1,98 @@
+schema_version: 1
+boot_architecture:
+  id: v853_glasses_boot_architecture
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, section 2.3.5 (power-on sequence), section 1.3.x (peripherals); Allwinner Tina Linux SDK boot documentation (project tree, not yet retrieved)
+
+  conclusion:
+    primary_boot: eMMC (SMHC0)
+    fallback_boot: SD card on SMHC2 (debug / recovery)
+    fel_recovery: USB (USB0 in FEL mode)
+    confidence: HIGH_for_architecture; MEDIUM_for_specific_boot_pin_straps (need the V853/V853S_PINOUT.sls file or the Allwinner BSP device tree)
+
+  v853_boot_modes:
+    per_allwinner_documentation: "The V853 supports the following boot modes (typical Allwinner V-series):"
+    - "eMMC boot (from SMHC0)"
+    - "SD card boot (from SMHC2)"
+    - "SPI NOR boot (from SPI0)"
+    - "FEL mode (USB recovery; the SoC is held in reset by the USB-C VBUS detect, and the BROM enters FEL mode)"
+    - "NAND boot (from SMHC0 or SPI; not used in the glasses)"
+    boot_selection: "via boot pins (typically 2-3 boot mode pins sampled at reset). The exact boot pin balls are in the V853/V853S_PINOUT.sls file."
+
+  primary_boot_path_eMMC:
+    source: SMHC0
+    device: eMMC 5.1 (8 GB or 32 GB)
+    boot_image: "U-Boot SPL + U-Boot proper + Linux kernel (Image / zImage) + device tree blob (DTB) + rootfs (squashfs / ext4) in the eMMC's BOOT0 / BOOT1 partitions and the user area"
+    boot_speed: "eMMC HS200 / HS400 mode for fast boot"
+    boot_time: "typically 2-5 seconds from SoC reset to Linux userspace (depending on the eMMC speed and the kernel size)"
+    required_pull_ups: "eMMC has internal pull-ups; CMD and D0 have internal pull-ups; the SoC's eMMC boot does not require external pull-ups"
+
+  fallback_boot_path_SD:
+    source: SMHC2
+    device: "microSD card (SDHC / SDXC; 8 GB or larger)"
+    use_case: "production-line recovery; field-firmware-update; development"
+    boot_image: "Same as eMMC; the SD card is the source of the boot images during recovery."
+    required_pull_ups: "SD card has internal pull-ups on CMD and D0; no external pull-ups needed"
+    note: "The glasses design does NOT include an SD card slot (per the brief). The SMHC2 is reserved for the debug / recovery flow only. The SD card is connected via a pogo-pin debug connector on the temple pod, accessible without disassembly."
+
+  fel_recovery_USB:
+    source: USB0
+    method: "The SoC's BROM (Boot ROM) monitors the USB-C VBUS at power-on. If VBUS is detected AND a specific boot pin strap is set to 'FEL mode', the SoC enters FEL mode and waits for a USB host to send boot images. The Allwinner 'sunxi-fel' tool on the host PC controls this."
+    use_case: "blank eMMC recovery; production-line programming; engineering debug"
+    required_strap: "specific boot pin must be set to 'FEL mode' at power-on. The exact strap is in the V853/V853S_PINOUT.sls file."
+    note: "The FEL mode does NOT require a separate UART or JTAG connection; the USB-C is the only required connection."
+
+  boot_pin_strapping:
+    typical_v_series_strapping: "2-3 boot mode pins (often named BOOT_SEL, BOOT_MODE) sampled at the rising edge of RESET. The exact pins and the strapping table are in the V853/V853S_PINOUT.sls file."
+    production_recommendation: "use eMMC boot as the primary; do not strapping for SD boot or SPI NOR boot. The SD fallback is accessed by holding the FEL pin at reset, which is a debug / production-line action."
+    pull_ups: "the strapping pins typically have internal pull-ups or pull-downs; verify per the .sls file"
+
+  reset_and_watchdog:
+    reset_source: "the AXP2101 PMIC generates the SoC's RESET signal after all rails are up. The AXP2101 has a configurable reset delay (typically 100-300 ms) that gives the rails time to stabilize."
+    external_reset: "the SoC's RESET ball is held by the AXP2101; no external reset button is needed (the user button is a GPIO-driven soft-reset via the ASoC / Linux input layer)"
+    watchdog: "the V853 has an internal watchdog timer (WDT). The Linux kernel's softdog or hardwaredog driver is configured to reset the SoC if the user-space hangs."
+
+  power_on_sequence:
+    source: V853 datasheet section 2.3.5 and Figure 2-2
+    sequence:
+      - "1. VCC-RTC ramps first (1.8 V; from the AXP2101's always-on rail)"
+      - "2. VCC-DRAM (1.5 V for DDR3 or 1.35 V for DDR3L) ramps; T1 >= 8 ms after VCC-RTC"
+      - "3. VDD-SYS (0.9 V) ramps; VDD18-DRAM (1.8 V) ramps; T2 between 0 and 4 ms after VDD-SYS"
+      - "4. VCC-PLL, VCC18-DSI, VCC-EFUSE, VCC18-PF, VCC-PA&MCSI, VCC-IO, VCC-PC, VCC-PD, VCC-PG, VCC33-USB, VCC33-PF, AVCC ramp; T3 >= 8 ms after VCC-DRAM"
+      - "5. RESET ramps after VDD-SYS is stable (T1 >= 8 ms); the SoC starts booting"
+      - "6. 24 MHz crystal starts oscillating 4 ms after RESET is released"
+    axp2101_handling: "the AXP2101 PMIC handles this sequencing internally. The glasses PCB does not need a separate sequencer. The AXP2101's DCDC1, DCDC2, DCDC3, DCDC4, DCDC5, and LDO1..LDO4 are enabled in the correct order by the AXP2101's firmware."
+
+  eMMC_boot_requirements:
+    eMMC_partition: "BOOT0 (for SPL) and BOOT1 (for backup); user area for the rootfs and data"
+    boot_image_layout: "typically: MBR or GPT; 1st partition: U-Boot SPL + U-Boot proper; 2nd partition: Linux kernel + DTB; 3rd partition: rootfs (squashfs / ext4)"
+    boot_speed: "eMMC HS200 / HS400 for the fastest boot; the SoC's SMHC0 supports up to HS400 per the V853 datasheet section 4.2"
+    required_image_size: "approximately 16 MB for SPL + U-Boot proper; 8-16 MB for Linux kernel + DTB; 1-4 GB for rootfs. Total: 4-8 GB minimum; 8 GB is the practical minimum."
+    eMMC_grade: "industrial-grade eMMC (eMMC 5.1, A1 or A2 application performance class) is recommended for wearables"
+
+  SD_card_fallback:
+    sd_card_slot: "NOT included in the production design. A pogo-pin debug connector on the temple pod is used to connect an external SD card adapter during recovery."
+    sd_card_image: "the same boot image as the eMMC; the SD card is the source of the boot images during recovery"
+    sd_card_speed: "SDHC / SDXC; SDR50 / SDR104; the SoC's SMHC2 supports up to SDR104"
+
+  FEL_recovery:
+    method: "the SoC's BROM monitors the USB-C VBUS at power-on. If VBUS is detected AND the FEL pin is held (specific boot pin), the SoC enters FEL mode and waits for a USB host."
+    host_tool: "Allwinner 'sunxi-fel' (open-source; available via apt-get install sunxi-tools on Linux; available as 'xfel' on Windows / macOS). The tool writes boot images to the SoC's SRAM and then to the eMMC / SD card."
+    use_case: "blank eMMC recovery; production-line programming; engineering debug"
+    required_strap: "FEL pin (specific boot pin) held at reset; the exact strap is in the V853/V853S_PINOUT.sls file"
+
+  reset_and_watchdog_summary:
+    cold_reset: "AXP2101 -> SoC RESET ball; minimum 8 ms hold after VDD-SYS stable"
+    warm_reset: "Linux kernel reset via the AXP2101's I2C-controlled reset register (writes the reset key, the AXP2101 toggles the SoC's RESET line for 100-300 ms)"
+    watchdog: "V853 internal WDT; Linux softdog or hardwaredog driver; user-space heartbeat"
+
+  boot_image_signing:
+    status: NOT_INCLUDED
+    reason: "The brief does not require secure boot. The V853 has a crypto engine (section 1.3.9) but secure boot is an Allwinner-specific feature that is not commonly used in Linux-based smart glasses."
+    note: "If secure boot is required in the future, the V853's BROM can verify a signed SPL. The signing key is burned into the eFuse. The Allwinner BSP supports this; the glasses firmware must be signed with the corresponding private key."
+
+  risk:
+    - "the exact boot pin straps are in the V853/V853S_PINOUT.sls file. Without the .sls file, the boot pin assignment is UNKNOWN."
+    - "the production-line programming flow must be defined: blank eMMC -> FEL mode -> sunxi-fel -> write boot images -> eMMC boot. This is a manufacturing process item."
+    - "the recovery flow (FEL mode via USB) requires the user to hold the FEL pin at power-on. The user-facing recovery flow should be documented."
+    - "the eMMC's expected lifetime is typically 100k-300k program/erase cycles (for the user area) and 1k-3k for the BOOT partitions. The glasses' firmware update frequency should be << 1000 times in the product's lifetime to stay within the BOOT partition's endurance."

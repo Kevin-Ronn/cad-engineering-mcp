@@ -1,0 +1,60 @@
+schema_version: 1
+mcu_selection:
+  id: smart_ring_mcu_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / STL / FreeCAD files were modified.
+
+  note: "The ring is not an AI computer. The smallest MCU that provides enough capability with excellent BLE and low power is preferred. However, a single modern SoC can replace the Open Ring's separate BLE + touch + charger MCU architecture."
+
+  candidates:
+
+    - { part: "Nordic nRF54L15", package: "WLCSP-2.5x2.5 mm", ram_kb: 256, flash_kb: 1024, gpio: 32, adc: 12-bit, ble: "5.4 (2 Mbps PHY; CSA #2; LE Coded 1 Mbps)", zephyr: "yes (mainstream)", ota: "MCUboot with FOTA over BLE; SMP/MCUboot", security: "ARM TrustZone-M; secure boot; secure key storage", sleep_current_uA: 1.6 (System ON, full RAM retention; per nRF54L15 PS v1.0), notes: "Most modern; lowest power in the nRF54 series; Cortex-M33F; sufficient for the ring's gesture + IMU + BLE pipeline" }
+
+    - { part: "Nordic nRF5340", package: "aQFN-7x7 mm", ram_kb: 512, flash_kb: 256, gpio: 48, adc: "12-bit SAADC", ble: "5.4 (2 Mbps PHY)", zephyr: "yes (mainstream)", ota: "MCUboot with FOTA over BLE; dual-core application + network", security: "ARM TrustZone-M; secure boot; secure key storage", sleep_current_uA: 1.9 (per nRF5340 PS v1.1), notes: "Application + network dual-core; larger than nRF54L15; overkill for the ring's needs" }
+
+    - { part: "Nordic nRF52840", package: "aQFN-7x7 mm", ram_kb: 256, flash_kb: 1024, gpio: 48, adc: "12-bit SAADC", ble: "5.0 (2 Mbps PHY)", zephyr: "yes (mainstream; mature)", ota: "MCUboot with FOTA over BLE", security: "ARM TrustZone-M (nRF52840 only); secure boot; secure key storage", sleep_current_uA: 1.9, notes: "Mature; widely used (Even R1 uses this); larger than nRF54L15; less power-efficient" }
+
+    - { part: "Dialog DA14531 (Renesas SmartBond DA14531)", package: "WLCSP-17 (2.0 x 2.5 x 0.5 mm)", ram_kb: 48, flash_kb: 32, gpio: 12, adc: "10-bit", ble: "5.1 (2 Mbps PHY)", zephyr: "yes (Renesas SmartBond SDK)", ota: "SUOTA", security: "AES-128; secure boot", sleep_current_uA: 0.65, notes: "Smallest, lowest power in the candidate set; used in Open Ring; RAM (48 KB) is tight for the firmware architecture (portable sensor manager + BLE + gesture detection + bootloader + OTA); single-MCU architecture may be tight; consider with external flash (MACRONIX MX25R) like Open Ring does" }
+
+    - { part: "Espressif ESP32-C3", package: "QFN-5x5 mm", ram_kb: 400, flash_kb: 4, gpio: 22, adc: "12-bit SAR", ble: "5.0 (2 Mbps PHY)", zephyr: "yes (ESP-IDF is the primary SDK; Zephyr port is community)", ota: "dual-partition OTA via ESP-IDF", security: "secure boot v2; flash encryption; AES-128/SHA-256", sleep_current_uA: 5, notes: "Single-core RISC-V; cheap; well-known; used in Intring; NOT as low-power as nRF54L15; larger package" }
+
+  comparison_matrix:
+    notes: "Lower is better for all rows except RAM/Flash/GPIO/ADC/BLE-version/Zephyr/OTA/Security (higher is better)."
+
+    - { criterion: "package_size", nRF54L15: "WLCSP-2.5x2.5 mm (BEST)", nRF5340: "aQFN-7x7 mm", nRF52840: "aQFN-7x7 mm", DA14531: "WLCSP-17 (2.0 x 2.5 x 0.5 mm)", ESP32_C3: "QFN-5x5 mm" }
+    - { criterion: "ram_kb", nRF54L15: 256, nRF5340: 512, nRF52840: 256, DA14531: 48, ESP32_C3: 400 }
+    - { criterion: "flash_kb", nRF54L15: 1024, nRF5340: 256, nRF52840: 1024, DA14531: 32, ESP32_C3: 4 }
+    - { criterion: "ble", nRF54L15: "5.4 (LATEST; 2 Mbps PHY)", nRF5340: "5.4", nRF52840: "5.0", DA14531: "5.1", ESP32_C3: "5.0" }
+    - { criterion: "zephyr_support", nRF54L15: "mainstream", nRF5340: "mainstream", nRF52840: "mainstream (mature)", DA14531: "yes (Renesas SmartBond)", ESP32_C3: "yes (community port; primary is ESP-IDF)" }
+    - { criterion: "sleep_current_uA", nRF54L15: 1.6, nRF5340: 1.9, nRF52840: 1.9, DA14531: 0.65, ESP32_C3: 5 }
+    - { criterion: "security", nRF54L15: "TrustZone-M + secure boot + secure key storage (BEST)", nRF5340: "TrustZone-M + secure boot", nRF52840: "TrustZone-M (52840 only)", DA14531: "AES-128 + secure boot", ESP32_C3: "secure boot v2 + flash encryption" }
+    - { criterion: "single_MCU_architecture_feasibility (portable sensor manager + BLE + gesture + OTA)", nRF54L15: "yes (256 KB RAM; 1 MB flash is enough)", nRF5340: "yes (overkill)", nRF52840: "yes (mature)", DA14531: "tight (48 KB RAM is the limit; may need external flash like Open Ring)", ESP32_C3: "yes" }
+    - { criterion: "gesture_sensing_capability (built-in touch or external)", nRF54L15: "no built-in touch; need external (Azoteq IQS127D-class)", nRF5340: "same as nRF54L15", nRF52840: "same", DA14531: "no built-in touch; Open Ring uses external ATSAML10", ESP32_C3: "no built-in touch" }
+
+  recommended_primary:
+    part: "Nordic nRF54L15"
+    package: "WLCSP-2.5x2.5 mm"
+    reason: "The smallest package; the most modern BLE (5.4); the lowest sleep current in the nRF54 series; sufficient RAM (256 KB) and flash (1024 KB) for a single-MCU architecture with a portable sensor manager + BLE pipeline + gesture detection + bootloader + OTA; TrustZone-M for secure OTA. **This replaces the Open Ring's 3-MCU architecture with a single SoC.**"
+    notes: "The nRF54L15 does NOT have built-in capacitive touch; the ring needs a separate touch IC (e.g. Azoteq IQS127D-class). This is acceptable; the touch IC is small (~3x3 mm WLCSP) and low-power."
+    sources:
+      - { ref: "nRF54L15 Product Specification v1.0", url: "https://infocenter.nordicsemi.com/topic/struct_nrf54l15/struct_nrf54l15.html", note: "Datasheet is the source of record; verify exact numbers before committing." }
+      - { ref: "Comparison with DA14531 (Open Ring)", url: "https://github.com/stawiski/open-ring", note: "Open Ring uses DA14531 + ATSAML10 + STM32; the 3-MCU architecture is the design pattern; we replace it with a single SoC + separate touch IC + separate charger IC." }
+
+  recommended_fallback:
+    part: "Nordic nRF52840"
+    reason: "Mature, widely used (Even R1 uses this), sufficient RAM/flash, BLE 5.0; the disadvantage is the larger aQFN-7x7 mm package and the slightly higher sleep current."
+    notes: "Fallback if the nRF54L15 is unavailable or has lead-time issues."
+
+  recommended_DO_NOT_USE:
+    - { part: "ESP32-C3", reason: "Larger package (QFN-5x5); higher sleep current (5 uA vs 1.6 uA); not as low-power; RISC-V core is fine but the Zephyr port is community-only. The Intring project uses this because it's cheap and easy, but for our V1 ring, the nRF54L15 is the better choice." }
+    - { part: "DA14531 + dedicated touch MCU + dedicated charger MCU (3-MCU)", reason: "This is the Open Ring architecture. It works, but it's more complex than a single SoC. The 48 KB RAM of the DA14531 is tight for the portable sensor manager + BLE pipeline + gesture detection. A single nRF54L15 is simpler and has more headroom." }
+    - { part: "nRF5340", reason: "Overkill for the ring's needs. The dual-core architecture is not needed for a ring; the larger aQFN-7x7 mm package is too big." }
+
+  architecture_choice:
+    option_A: "DA14531 + dedicated touch MCU + dedicated charger MCU (3-MCU; Open Ring pattern)"
+    option_B: "nRF52840 + integrated firmware touch solution"
+    option_C: "nRF5340 (dual-core application + network)"
+    option_D: "nRF54L15 (RECOMMENDED; single SoC + separate touch IC + separate charger IC)"
+    option_E: "ESP32-C3 (cheaper but larger and higher-power)"
+    recommended: "D"
+    rationale: "The nRF54L15 is the smallest, lowest-power, most modern single-SoC option. It replaces the 3-MCU architecture with a single SoC. The touch and charger are external ICs (small, low-power, well-documented)."

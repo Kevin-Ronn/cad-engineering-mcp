@@ -1,0 +1,88 @@
+schema_version: 1
+component:
+  id: generic_0p23_640x400_lcos_optical_engine
+  category: oem_optical_engine_no_waveguide
+  units: mm
+  role: low_cost_oem_engine_candidate
+
+source:
+  manufacturer: various Chinese OEM/ODM vendors (Shenzhen Honyee Technology and similar Alibaba-listed suppliers)
+  part_number: "0.23 inch LCoS 640x400 optical engine" (no single standardized part number)
+  source_type: distributor_listing
+  source_docs:
+    - url: https://www.aliexpress.com/
+      description: "Alibaba / AliExpress search results for '0.23 inch LCoS 640x400 optical engine'"
+  notes: "Multiple Alibaba and Taobao listings for 0.23 inch 640x400 LCoS optical engines exist at ~$20-60 per unit. These typically come WITHOUT a waveguide, WITHOUT a driver board, WITHOUT a datasheet, and WITHOUT a warranty. They are NOT branded with a verifiable manufacturer name in most listings. Representative example: 'AR glasses Engine Optical Module 0.23 inch LCD LCoS 640x400 Display HDMI Interface' from Shenzhen Honyee Technology. Treat as the low-cost / unbranded baseline."
+
+optical:
+  display_technology: LCoS (reflective liquid-crystal-on-silicon)
+  resolution: 640 x 400
+  diagonal_size_inch: 0.23
+  aspect_ratio: 8:5
+  fov_horizontal_deg: NOT_PUBLISHED (varies by collimator; typically 20-30 deg for this class)
+  fov_vertical_deg: NOT_PUBLISHED
+  waveguide_technology: NONE included; this is an optical engine only. A separate waveguide (Lumus, Dispelix, WaveOptics, or generic diffractive) must be sourced separately and integrated.
+  waveguide_thickness_mm: N/A
+  waveguide_dimensions_mm: N/A
+  eyebox: NOT_PUBLISHED (typically 8-12 mm for this class)
+  eye_relief_mm: NOT_PUBLISHED (typically 18-25 mm for this class)
+  exit_pupil: NOT_PUBLISHED
+  brightness_nits: NOT_PUBLISHED (LED-backlit LCoS; typically a few hundred to 1500 nits)
+  contrast: NOT_PUBLISHED
+  colors: monochrome or sequential-color (RGB LED time-multiplexed)
+  transparency_transmittance: N/A (no waveguide)
+  refresh_rate_hz: 60 (typical)
+  distortion: NOT_PUBLISHED
+  focus_distance: NOT_PUBLISHED
+  source_for_optical: distributor listing only
+
+mechanical:
+  optical_engine_dimensions_mm: approximately 13 x 10 x 5 (per Alibaba listing text; NOT verified)
+  optical_engine_weight_g: NOT_PUBLISHED
+  waveguide_dimensions_mm: N/A
+  complete_module_dimensions_mm: N/A (no waveguide)
+  source_for_mechanical: distributor listing text
+
+electronics:
+  interface: HDMI input (per Alibaba listing); the V853 does NOT have HDMI output. An HDMI-to-MIPI DSI bridge IC would be required (e.g. Toshiba TC358870, ITE IT6505, or Lontium LT8918). This is a significant design cost and complexity.
+  mipi_dsi_lanes: NOT_APPLICABLE at the engine; an HDMI-to-MIPI bridge would expose 4-lane MIPI DSI to the V853
+  controller_driver_ic: LCoS driver is typically Himax HX7030 or similar; NOT confirmed for any specific Alibaba listing
+  required_supply_voltages: 5 V (typical for LCoS engines with LED backlight)
+  power_consumption: NOT_PUBLISHED (typically 0.5 to 1.5 W including LED backlight)
+  connector_type: HDMI (per listing)
+  fpc_dimensions: N/A (HDMI connector, not FPC)
+  fpc_length_mm: N/A
+  pin_count: N/A
+  source_for_electronics: distributor listing only
+
+purchase:
+  distributor: Alibaba, AliExpress, Taobao (Shenzhen Honyee and similar)
+  unit_price_usd: 20 to 60 per unit (varies by quantity and configuration)
+  moq: 1 to 10
+  lead_time: 3 to 5 weeks
+  availability: in production; multiple suppliers
+  source_for_purchase: Alibaba listings
+
+confidence:
+  overall: LOW
+  sources: distributor_listing_only
+  gaps:
+    - "No manufacturer datasheet with mm-level mechanical dimensions"
+    - "No FOV, eyebox, brightness, or power published"
+    - "No waveguide included; sourcing is separate"
+    - "HDMI-only input does not directly drive from V853 MIPI DSI"
+    - "Mechanical dimensions from the listing are approximate; '~13 x 10 x 5 mm' is a guess from a one-line description, not a measured value"
+    - "No warranty, no integration documentation, no driver support"
+
+constraints:
+  status: REJECTED_FOR_GLASSES
+  rejection_rationale: "Mechanically unverified, electronically incompatible (HDMI vs MIPI DSI), no waveguide included, no documentation, no support. The brief explicitly says: 'If the cheapest candidate is mechanically/electronically unsuitable, explicitly reject it rather than choosing it because of price.' This candidate is the cheapest but fails on documentation, interface, and waveguide-integration requirements."
+
+geometry_relevance:
+  conceptual_fit_against_wayfarer:
+    target: monocular display in front of one eye
+    optical_engine_location: ~13 x 10 x 5 mm; smaller than the Lumus / DigiLens class; potentially fits in the upper-bridge area or in a temple-integrated pod
+    waveguide_location: not included; a separate waveguide must be sourced
+    minimum_temple_requirement: engine ~13 x 10 x 5 mm is on the threshold of fitting in a Wayfarer-style front frame but the dimensions are unverified
+    blocker: no verified mm-level dimensions; HDMI-only input forces a bridge IC; no waveguide; no support
+    source_for_frame_comparison: projects/glasses/analysis/structure/full-mechanical-inspection.md

@@ -1,0 +1,57 @@
+schema_version: 1
+component:
+  id: axp2101
+  category: pmic_for_v853
+  units: mm
+  role: primary_pmic_candidate
+
+source:
+  manufacturer: X-Powers (Allwinner ecosystem)
+  part_number: AXP2101
+  source_type: manufacturer_datasheet_plus_open_source_reference_design
+  source_docs:
+    - url: https://github.com/YuzukiHD/ProjectYosemite/blob/main/Datasheets/AXP2101_Datasheet_V1_en.pdf
+      description: "AXP2101 datasheet mirrored in ProjectYosemite/Datasheets/"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/blob/main/Datasheets/AXP2101%E8%AE%BE%E8%AE%A1%E6%8C%87%E5%8D%97_V1.0_CN.pdf
+      description: "AXP2101 design guide (Chinese)"
+
+mechanical:
+  package: QFN-32 (typical for the AXP2101; verify per datasheet)
+  dimensions_mm: approximately 5.0 x 5.0 (QFN-32 0.5 mm pitch)
+  source_for_mechanical: typical QFN-32
+
+electrical:
+  input_voltage_v: { min: 2.7, typ: 3.7, max: 5.5 }  # single-cell Li-ion + USB
+  outputs:
+    - { rail: DCDC1, voltage_v: 0.7 to 1.4, current_ma: 1500, purpose: "V853 core (VDD_CPU)" }
+    - { rail: DCDC2, voltage_v: 0.7 to 1.4, current_ma: 2000, purpose: "V853 core (VDD_DRAM)" }
+    - { rail: DCDC3, voltage_v: 0.7 to 1.4, current_ma: 1500, purpose: "V853 GPU / ISP" }
+    - { rail: DCDC4, voltage_v: 1.0 to 1.4, current_ma: 1500, purpose: "V853 DDR3L VDDQ" }
+    - { rail: DCDC5, voltage_v: 1.0 to 3.5, current_ma: 1000, purpose: "V853 PLL / analog" }
+    - { rail: LDO1, voltage_v: 0.7 to 3.5, current_ma: 300, purpose: "V853 I/O VDD_IO" }
+    - { rail: LDO2, voltage_v: 0.7 to 3.5, current_ma: 300, purpose: "V853 RTC VDD_RTC" }
+    - { rail: LDO3, voltage_v: 0.7 to 3.5, current_ma: 200, purpose: "Sensor / camera AVDD" }
+    - { rail: LDO4, voltage_v: 0.7 to 3.5, current_ma: 200, purpose: "MIPI / display" }
+  power_path_management: yes (battery + USB, automatic switchover)
+  interface: I2C
+  thermal_regulation: yes
+  battery_protection_features: overcharge, overdischarge, overcurrent, thermal, die-temperature
+  source_for_electrical: AXP2101 datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: AXP2101 datasheet
+
+purchase:
+  distributor: Allwinner ecosystem distributors; LCSC
+  unit_price_usd: approximately 1.50 to 3.00 (single-piece retail)
+  moq: 1 (LCSC)
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_plus_open_source_reference_design
+
+constraints:
+  status: SERIOUS_PRIMARY — AXP2101 is the Allwinner-ecosystem PMIC and is proven with the V853 in the ProjectYosemite reference design. All required V853 rails are present. The package (5 x 5 mm QFN-32) is on the larger side for a glasses compute PCB, but the compute PCB lives in the temple, not in the front frame, so 5 x 5 mm is fine.

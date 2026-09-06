@@ -1,0 +1,42 @@
+schema_version: 1
+sdio_emmc_coexistence:
+  id: v853_emmc_and_sdio_wifi_coexistence
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, section 4.2 (SD/MMC Host Controller), and the Wi-Fi/BT module reference library
+
+  conclusion:
+    emmc_and_sdio_wifi_can_coexist: YES
+    confidence: HIGH
+    reason: "SMHC0 and SMHC1 are independent IP blocks. Each has its own clock, command, and data buses. Each has its own clock generator and pin mux. The two buses can be active simultaneously and at different speeds."
+
+  smhc_block_allocation:
+    smhc0:
+      function: "eMMC 5.1 storage"
+      bus_width: 8-bit
+      voltage: "1.8 V (HS200 / HS400 mode) or 3.3 V (legacy)"
+      source: V853 standard reference design; V853 datasheet section 4.2 supports 8-bit eMMC at 1.8 V
+      data_rate_max: "HS400 = 400 MB/s, HS200 = 200 MB/s (per eMMC 5.1 spec)"
+    smhc1:
+      function: "SDIO Wi-Fi (AW-CM276SM / FN-LINK 6221 / etc.)"
+      bus_width: 4-bit
+      voltage: "1.8 V or 3.3 V (per the Wi-Fi module's spec; the AW-CM276SM is 3.3 V IO; the FN-LINK 6221 is 3.3 V IO)"
+      source: V853 SMHC1 supports SDIO 2.0 / 3.0
+      data_rate_max: "SDIO 3.0 = 104 MB/s; SDIO 2.0 = 25 MB/s. The Wi-Fi module's data rate (typically 65 Mbps for Wi-Fi 4) is well within both."
+
+  coexistence:
+    independent_clocks: "Each SMHC has its own clock generator. eMMC can run at HS400 while SDIO runs at SDR50; no shared clock."
+    independent_buses: "Each SMHC has its own data, command, and clock pins. No shared pins."
+    interrupt_handling: "Each SMHC has its own interrupt line to the SoC. The Linux kernel handles both interrupts independently."
+    no_performance_contention: "eMMC and SDIO do not share a bus; they are independent. The SoC can read from eMMC and write to SDIO simultaneously."
+
+  pin_conflict_check:
+    status: NO_CONFLICT
+    reason: "The eMMC and SDIO pins are on different SMHC blocks, which have different physical pins. The V853's pin mux assigns each SMHC's signals to a different set of balls (the specific balls are in the V853/V853S_PINOUT.sls file)."
+
+  practical_speed:
+    eMMC: "The eMMC 5.1 in HS400 mode provides 400 MB/s read, 200 MB/s write. This is more than enough for the glasses' storage workload (boot, app load, log writes)."
+    SDIO Wi-Fi: "The Wi-Fi 4 (or Wi-Fi 5) module's peak throughput is 65 Mbps (Wi-Fi 4) or 433 Mbps (Wi-Fi 5, 1x1 SISO). The SDIO bus is the bottleneck for Wi-Fi 5 (104 MB/s SDIO 3.0 = ~830 Mbps; OK for Wi-Fi 5 1x1)."
+
+  risk:
+    - "If the Wi-Fi module is upgraded to a 2x2 MIMO variant (e.g. RTL8822BU), the peak throughput is 867 Mbps. The SDIO bus at 104 MB/s is marginal. A USB-based Wi-Fi module (RTL8821CU USB) or a PCIe-based Wi-Fi module (rare) would be needed for full 2x2 throughput. **The glasses use 1x1 SISO; this is not a concern.**"
+    - "SDIO and eMMC bus sharing is NOT a concern because the V853 has 3 SMHC blocks (SMHC0, SMHC1, SMHC2). SMHC2 is reserved for debug / SD card fallback."

@@ -1,0 +1,55 @@
+schema_version: 1
+component:
+  id: ti_tas2562
+  category: class_d_audio_amplifier_smartamp_i2s
+  units: mm
+  role: smartamp_alternative_candidate
+
+source:
+  manufacturer: Texas Instruments
+  part_number: TAS2562
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.ti.com/product/TAS2562
+      description: "TI TAS2562 product page and datasheet"
+
+mechanical:
+  package: WCSP (DSBGA)
+  dimensions_mm: UNKNOWN (WCSP class; typically 1.5 x 1.5 to 2.0 x 2.0 mm — verify per datasheet)
+  source_for_mechanical: TI datasheet summary (specific package dimensions not in the summary)
+
+electrical:
+  interface: I2S / TDM
+  supply_voltage_v: { min: 2.7, typ: 3.6, max: 5.5 }
+  output_power_w: approximately 3.5 (typ into 8 ohm)
+  efficiency_percent: 85 (typical class-D)
+  filterless: yes
+  integrated_speaker_protection: yes (IV sense)
+  source_for_electrical: TI datasheet summary
+
+acoustic:
+  thd_plus_n_percent: less than 0.1 (typ)
+  integrated_DSP: yes (speaker protection, excursion limiting)
+  source_for_acoustic: TI datasheet summary
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: TI datasheet summary
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey
+  unit_price_usd: approximately 3 to 5 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+  source_for_purchase: Mouser, DigiKey, TI store
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact WCSP dimensions not in the summary"
+    - "Speaker protection DSP needs firmware integration (small effort)"
+
+constraints:
+  status: ALTERNATIVE — integrated speaker protection is a plus for micro speakers that can be over-driven. Slightly larger than MAX98390; verify exact dimensions.

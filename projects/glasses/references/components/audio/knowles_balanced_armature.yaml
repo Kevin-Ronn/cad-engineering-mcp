@@ -1,0 +1,53 @@
+schema_version: 1
+component:
+  id: knowles_balanced_armature_FK_series
+  category: balanced_armature_receiver
+  units: mm
+  role: secondary_speaker_candidate_higher_sensitivity
+
+source:
+  manufacturer: Knowles Electronics (hearing-aid components division)
+  part_number: FK-series balanced armature (FK-25941, FK-26821, and similar) — for specific part selection, a Sonion / Knowles application-engineering call is required
+  source_type: market_survey_no_single_pn
+  source_docs:
+    - url: https://www.knowles.com
+      description: "Knowles hearing aid components"
+
+mechanical:
+  dimensions_mm: approximately 5.0 x 3.0 x 2.5 (typical FK class envelope; varies per model)
+  weight_g: approximately 0.3
+  acoustic_port: front-side sound emission; requires tuned acoustic tube / waveguide
+  mounting: solder-pads; typically integrated into an acoustic tube
+  source_for_mechanical: market survey
+
+electrical:
+  impedance_ohm: 100 to 200 (typical hearing-aid class; high-impedance for low-power amplifiers)
+  rated_power_mw: 1 to 5 (continuous)
+  source_for_electrical: market survey
+
+acoustic:
+  sensitivity_db_spl_per_mw: 105 to 115 (higher than dynamic class)
+  frequency_response_hz: 200 to 8000 (typical hearing-aid class; peaks tuned)
+  thd_at_1khz_1mw_percent: less than 2 (typical class)
+  directivity: front-firing; very directional (tube-coupled)
+  leakage_tolerance: very high (designed for open-ear)
+  source_for_acoustic: market survey
+
+purchase:
+  distributor: Knowles direct; Sonion direct
+  unit_price_usd: 5 to 20 (depending on model and volume)
+  moq: 100+ for direct; not available on Alibaba in this class
+  lead_time: 4 to 12 weeks (direct)
+  availability: production; not a stock item
+  source_for_purchase: market survey
+
+confidence:
+  overall: MEDIUM (for the class); LOW (no specific part qualified)
+  sources: market_survey
+  gaps:
+    - "No specific FK-series part number chosen"
+    - "Acoustic response is highly tuned per part; cannot generalize"
+    - "Requires a tuned acoustic tube and back-volume; significant acoustic engineering"
+
+constraints:
+  status: SECONDARY_CANDIDATE — higher sensitivity than dynamic, but smaller volume and requires acoustic-tube engineering. Better fit than dynamic for very tight spaces (e.g., behind the ear near the ear canal entrance). Need to qualify a specific FK part.

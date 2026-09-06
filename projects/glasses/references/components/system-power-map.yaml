@@ -1,0 +1,174 @@
+schema_version: 1
+system_power_map:
+  id: v853_smart_glasses_power_map
+  date: 2026-09-05
+  source: "cross-referenced against the V853 datasheet (v853-datasheet.pdf), the AXP2101 PMIC datasheet (AXP2101_Datasheet_V1_en.pdf, mirrored in projects/glasses/references/components/compute/v853/), the BQ25185 datasheet, and the chosen components"
+  confidence: HIGH for the rail names; MEDIUM for the current estimates (per the power-budget.yaml confidence notation)
+
+  source_priority:
+    - 1: V853 datasheet section 2.3.4 (recommended operating conditions) and section 1.3 (architecture)
+    - 2: AXP2101 datasheet
+    - 3: BQ25185 datasheet
+    - 4: component datasheets (BMI270, MP23DB01HP, MAX98390, etc.)
+    - 5: power-budget.yaml (engineering estimates)
+
+  topology:
+    path: "USB-C 5 V VBUS -> BQ25185 -> single-cell Li-ion battery (or 2x parallel) -> BQ25185 VSYS -> AXP2101 -> V853 + DDR + eMMC + peripherals"
+    note: "5 V USB-C only (no USB-PD). Power-path management in the BQ25185. AXP2101 provides the per-rail V853 supply."
+
+  rails:
+
+    - name: VBUS_5V
+      voltage_v: 5.0
+      source: USB-C receptacle
+      current_ma_max: 1500 (USB-C default 5 V / 1.5 A with 5.1 kohm CC pull-down to GND)
+      consumers: BQ25185 input, optional VBUS-5V TVS (SMAJ5.0CA-class)
+      confidence: DATASHEET
+      notes: "5.1 kohm pull-down on CC1 and CC2 to GND (UFP / device role requesting 5 V default)."
+
+    - name: VBAT
+      voltage_v_range: [3.0, 4.2]
+      source: Li-ion cell(s) (2x EEMB LP402535 in parallel recommended)
+      current_ma_max: approximately 2000 (2x 350 mAh cells in parallel = 2C discharge of 700 mAh = 1400 mA; 2x 1100 mAh = 2200 mA, 2C = 4400 mA; typical glasses load is < 1500 mA)
+      consumers: BQ25185 BAT pin, AXP2101 BAT pin
+      confidence: ENGINEERING_ESTIMATE
+      notes: "Cells are matched (same model, same lot). Battery protection is in the AXP2101 + BQ25185."
+
+    - name: VSYS (output of BQ25185 power-path)
+      voltage_v: 3.6 to 4.2 (battery voltage; ~3.6 V at 30% SoC, ~4.1 V at 100% SoC)
+      source: BQ25185 VSYS pin
+      current_ma_max: approximately 2000 (combined charge + load)
+      consumers: AXP2101 BAT input, IR LED 5 V boost (if used), audio amp PVDD
+      confidence: ENGINEERING_ESTIMATE
+
+    - name: VDD_CPU (V853 core, A7)
+      voltage_v: 0.9
+      source: AXP2101 DCDC1
+      current_ma_max: 1500 (per V853 datasheet typical for active core)
+      consumers: V853 application core (Cortex-A7)
+      confidence: DATASHEET
+      notes: "Per V853 datasheet section 1.3.1, A7 core is 0.9 V (VCC-SYS is 0.9 V in the abs-max table, but the typical operating voltage is 0.9 V). Verify exact nominal in section 2.3.4."
+
+    - name: VDD_DRAM
+      voltage_v: 1.1 (typical; DDR3L uses 1.35 V for the I/O but the V853 internal core is lower)
+      source: AXP2101 DCDC2
+      current_ma_max: 1500
+      consumers: V853 DRAM core, DDR3L I/O (via separate rail)
+      confidence: DATASHEET
+      notes: "V853 datasheet has separate VCC-DRAM (1.8 V) and the DDR3L rail (1.35 V) — verify which AXP2101 rail is which."
+
+    - name: VDDQ_DDR3L
+      voltage_v: 1.35 (DDR3L)
+      source: AXP2101 DCDC4
+      current_ma_max: 500
+      consumers: DDR3L SDRAM I/O
+      confidence: DATASHEET
+
+    - name: VDD_GPU
+      voltage_v: 0.9
+      source: AXP2101 DCDC3
+      current_ma_max: 1500
+      consumers: V853 GPU / ISP
+      confidence: DATASHEET
+
+    - name: VDD_PLL_V853
+      voltage_v: 1.0
+      source: AXP2101 DCDC5 or LDO1
+      current_ma_max: 200
+      consumers: V853 PLL / analog
+      confidence: DATASHEET
+
+    - name: VDD_IO_V853
+      voltage_v: 1.8
+      source: AXP2101 LDO1
+      current_ma_max: 300
+      consumers: V853 I/O + camera + display + audio I2S + I2C + SPI
+      confidence: DATASHEET
+      notes: "All chosen I2C / SPI / IMU / mic / charger / PMIC / fuel-gauge / display / audio amp / Wi-Fi parts are 1.8 V I/O compatible."
+
+    - name: VDD_RTC_V853
+      voltage_v: 0.9
+      source: AXP2101 dedicated LDO
+      current_ma_max: 50
+      consumers: V853 RTC + backup coin-cell
+      confidence: DATASHEET
+
+    - name: AVDD_CAMERA
+      voltage_v: 1.8
+      source: AXP2101 LDO3
+      current_ma_max: 200
+      consumers: 2x camera analog + MIPI
+      confidence: ENGINEERING_ESTIMATE
+      notes: "Per camera: ~50 mA analog + ~30 mA MIPI. 2 cameras = ~160 mA peak. 200 mA allowance."
+
+    - name: AVDD_DISPLAY
+      voltage_v: 1.8
+      source: AXP2101 LDO4
+      current_ma_max: 200
+      consumers: micro-OLED + waveguide display
+      confidence: ENGINEERING_ESTIMATE
+      notes: "0.23 micro-OLED peak current is < 100 mA. 200 mA allowance for the display engine + the LCoS backlight (if LCoS is used)."
+
+    - name: AVDD_AUDIO
+      voltage_v: 3.3
+      source: AXP2101 LDO (or external LDO if AXP2101 LDOs are exhausted)
+      current_ma_max: 100
+      consumers: "MAX98390 logic; 1.8 V logic if I/O is 1.8 V compatible, 3.3 V otherwise"
+      confidence: DATASHEET
+      notes: "MAX98390 I/O voltage must be verified. If 1.8 V, this rail is not needed."
+
+    - name: AUDIO_PVDD
+      voltage_v: 3.6 (VSYS direct)
+      source: VSYS direct
+      current_ma_max: 500
+      consumers: MAX98390 output stage
+      confidence: ENGINEERING_ESTIMATE
+      notes: "Class-D output stage PVDD can be VSYS directly for a 3.6 V typical operating point. 500 mA allowance for 2.5 W into 8 ohm at peak."
+
+    - name: WIFI_VBAT
+      voltage_v: 3.6 (VSYS direct)
+      source: VSYS direct
+      current_ma_max: 600
+      consumers: "Wi-Fi/BT module (AW-CM276SM, FN-LINK 6221, or Murata 1XK)"
+      confidence: DATASHEET
+      notes: "Wi-Fi peak current is 400-600 mA. Direct from VSYS avoids a buck regulator loss."
+
+    - name: LED_IR
+      voltage_v: 3.0 (current-limited from VSYS via resistor or MOSFET driver)
+      source: VSYS via current-limit
+      current_ma_max: 300 (6x VSMA1094750X02 at 50 mA each)
+      consumers: 6x 940 nm IR LEDs
+      confidence: ENGINEERING_ESTIMATE
+      notes: "PWM or GPIO controls the LED enable. 940 nm at 50 mA per LED; 6 LEDs = 300 mA peak (typically 4 temple + 2 front)."
+
+    - name: USB_5V_VBUS
+      voltage_v: 5.0
+      source: USB-C VBUS
+      current_ma_max: 500
+      consumers: V853 USB 2.0 DRD (D+, D-)
+      confidence: DATASHEET
+      notes: "USB 2.0 data only (no super-speed)."
+
+  estimated_total_power:
+    source: power-budget.yaml
+    light_use_mw: 800
+    normal_mixed_mw: 1500
+    camera_wifi_display_mw: 3000
+    high_load_mw: 3500
+    peak_transient_mw: 4100
+    confidence: LOW_TO_MEDIUM (per power-budget.yaml)
+
+  sequencing_requirements:
+    - "V853 requires DCDC1 (core), DCDC2 (DRAM), DCDC3 (GPU) ramped up before I/O. The AXP2101 handles this internally per its datasheet."
+    - "DDR3L must power up after DCDC2 reaches its nominal voltage. The AXP2101's internal sequencing handles this."
+    - "eMMC must power up after the SMHC0 controller is ready. The V853 boot ROM handles this."
+    - "Camera analog must power up after the SMHC0 / CSI controllers are ready. The AXP2101 LDO3 is a separate rail; the SoC can be initialized before the camera analog rail is on."
+    - "Display analog must power up after the DSI controller is ready. The AXP2101 LDO4 is separate."
+    - "Audio amplifier PVDD can be on any time after the system is stable."
+    - "Confidence: REFERENCE_DESIGN (AXP2101 + V853 are the Allwinner reference combo and the sequencing is well-documented in the AXP2101 datasheet)."
+
+  unknown_or_uncertain:
+    - "The exact V853 rail voltages in section 2.3.4 (Recommended Operating Conditions) have not been transcribed into this map. The specific nominal values (0.9 V / 1.1 V / 1.0 V / 1.8 V / 1.35 V / 0.9 V) are taken from the typical Allwinner V-series SoC reference designs. Verify in the V853 datasheet before committing to the AXP2101 rail assignments."
+    - "The AXP2101's exact rail-to-rail assignment (which DCDC1 vs DCDC2 vs DCDC3 vs DCDC4 vs DCDC5 vs LDO1 vs LDO2 vs LDO3 vs LDO4) is configurable in the AXP2101 firmware. The ProjectYosemite reference design uses a specific assignment that the glasses PCB may need to revise."
+    - "The audio amp I/O voltage (1.8 V vs 3.3 V) drives the audio LDO requirement."
+    - "The XR829 / Wi-Fi module supply voltage (3.3 V vs 1.8 V) drives the LDO requirement."

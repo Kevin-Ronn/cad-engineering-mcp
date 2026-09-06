@@ -1,0 +1,54 @@
+schema_version: 1
+haptic_selection:
+  id: smart_ring_haptic_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "Compare ERM vs LRA vs miniature linear actuators. The LRA (Linear Resonant Actuator) is preferred for the ring because it has faster response, lower power, and better haptic fidelity than an ERM. The driver IC must support LRA mode."
+
+  candidates:
+
+    - type: "LRA (Linear Resonant Actuator)"
+      examples:
+        - { part: "Precision Microdrives 308-110", size_mm: "10x10x3.0 (or smaller variants)", frequency_hz: 175, drive_voltage_v: 2.0-3.5, drive_current_ma: 50-100, notes: "10 mm LRA; may be too large for a slim ring" }
+        - { part: "Precision Microdrives 308-101", size_mm: "8x8x3.0", frequency_hz: 175, drive_voltage_v: 2.0-3.5, drive_current_ma: 40-80, notes: "8 mm LRA; smaller; still large for a slim ring" }
+        - { part: "AAC Technologies 9x9 LRA (generic)", size_mm: "9x9x2.5 (or smaller)", frequency_hz: 200, drive_voltage_v: 2.0-3.5, drive_current_ma: 30-60, notes: "9 mm LRA; common in TWS earbuds" }
+      recommended: "Precision Microdrives 308-101 (8 mm LRA; 175 Hz resonance; LRA mode)"
+      reason: "Smallest available LRA; 175 Hz resonance; well-documented; LRA mode is standard."
+
+    - type: "ERM (Eccentric Rotating Mass)"
+      examples:
+        - { part: "Precision Microdrives 310-101 (3 mm ERM)", size_mm: "10x3 (coin)", drive_voltage_v: 3.0, drive_current_ma: 80, notes: "Cheap; widely available; but slow response (50-100 ms) and lower haptic fidelity" }
+      recommended_for_ring: false
+      reason: "ERMs are slow and power-hungry; LRAs are preferred for the ring."
+
+  driver_ic:
+    recommended: "TI DRV2605L (LRA / ERM haptic driver for wearables)"
+    package: "QFN-1.5x1.5 mm"
+    interfaces: "I2C (control); PWM (drive)"
+    supply: "2.5-5.5 V"
+    drive: "LRA (auto-resonance tracking) and ERM modes"
+    notes: "The DRV2605L supports LRA mode with auto-resonance tracking; it adjusts the drive frequency to the LRA's resonance (typically 175 Hz) for maximum efficiency. Smaller variants (DRV2605L-Q1) are also available."
+
+  mounting: "On the inner band of the ring, NOT on the PCB. The LRA must be in direct contact with the finger for the haptic to be felt. The LRA is mounted on a small flexible PCB or a metal frame that presses against the finger when the ring is worn."
+
+  feedback_patterns:
+    one_short_pulse: "command accepted"
+    two_short_pulses: "command complete (e.g. camera capture finished)"
+    three_short_pulses: "low battery"
+    long_pulse: "error or failure"
+    increasing_intensity: "scroll forward / next"
+    decreasing_intensity: "scroll backward / previous"
+    double_short_pulse: "AI query in progress"
+    long_short_short: "AI query complete"
+
+  power_consumption:
+    active: "Approximately 50-80 mA peak during a 100 ms pulse at 2.0-3.5 V (per the LRA datasheet)"
+    sleep: "0 (the driver IC is shutdown between pulses)"
+    average_with_typical_usage: "Approximately 1-2 mA average at 3.3 V with 20 pulses per day (200 ms each). Energy per day: 5-15 mWh."
+
+  sources:
+    - { ref: "Precision Microdrives 308-101", url: "https://www.precisionmicrodrives.com/product/308-101", note: "Verify exact dimensions and resonance frequency before committing." }
+    - { ref: "TI DRV2605L datasheet", url: "https://www.ti.com/product/DRV2605L", note: "Verify exact package and pinout before committing." }
+    - { ref: "Open Ring (reference)", url: "https://github.com/stawiski/open-ring", note: "Open Ring uses a haptic; the specific LRA / ERM is not specified in the README." }
+    - { ref: "RRing (reference)", url: "https://github.com/state-of-the-art/rring", note: "RRing uses a custom vibro motor; the specific part is not in the BOM." }

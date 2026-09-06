@@ -1,0 +1,53 @@
+schema_version: 1
+component:
+  id: discrete_ldo_buck_approach
+  category: discrete_power_tree
+  units: mm
+  role: alternative_pmic_approach_discrete_regulators
+
+source:
+  manufacturer: various (TI, ADI, MPS, etc.)
+  part_number: a combination of buck converters and LDOs selected per rail
+  source_type: design_pattern
+  source_docs:
+    - description: "Standard PMIC-alternative approach: 1-2 small buck converters (e.g. TPS62840 1.5 A 2.5x2.5 mm or similar) for the high-current rails (V853 core, DDR) plus 2-3 LDO regulators (e.g. TPS7A02 200 mA 0.6x0.6 mm or similar) for low-current rails (RTC, I/O, MIPI)."
+
+mechanical:
+  total_components: 4 to 6 small regulators (2 buck + 3 LDO)
+  total_pcb_area_mm2: approximately 15 to 25 (combined)
+  source_for_mechanical: typical small regulator dimensions
+
+electrical:
+  input_voltage_v: { min: 3.0, typ: 3.7, max: 5.5 }  # from battery or USB
+  outputs:
+    - { rail: "V853 core 0.9 V", regulator: "TPS62840-class buck 1.5 A", dimensions_mm: "2.5 x 2.5 WCSP" }
+    - { rail: "V853 DRAM 1.35 V", regulator: "TPS62840-class buck 1.5 A", dimensions_mm: "2.5 x 2.5 WCSP" }
+    - { rail: "V853 I/O 1.8 V", regulator: "TPS7A02-class LDO 200 mA", dimensions_mm: "0.6 x 0.6 WCSP" }
+    - { rail: "V853 RTC 0.9 V", regulator: "TPS7A02-class LDO 200 mA", dimensions_mm: "0.6 x 0.6 WCSP" }
+    - { rail: "Sensor / camera 1.8 V", regulator: "TPS7A02-class LDO 200 mA", dimensions_mm: "0.6 x 0.6 WCSP" }
+  power_path_management: NO (handled by external charger IC)
+  thermal_regulation: yes (per regulator)
+  battery_protection_features: external charger required
+  source_for_electrical: typical regulator datasheets
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: typical regulator datasheets
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey
+  unit_price_usd: approximately 0.50 to 2.00 per regulator; 3 to 8 total
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: design_pattern_plus_typical_datasheets
+  gaps:
+    - "Power-on sequencing must be designed explicitly; the AXP2101 does this internally"
+    - "More PCB area than a single PMIC, but smaller than the PMIC package in some cases"
+    - "Per-rail efficiency is typically 90-95% for a small buck and 70-85% for a small LDO"
+
+constraints:
+  status: ALTERNATIVE — viable, gives finer control per rail, but loses the power-on sequencing and battery management that the AXP2101 provides internally. Best when the V853 rails are not a standard PMIC output set, or when the compute PCB is custom and the design team prefers per-rail control.

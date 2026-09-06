@@ -1,0 +1,35 @@
+schema_version: 1
+temperature_selection:
+  id: smart_ring_temperature_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "Account for finger temperature, battery heat, MCU heat, sensor placement, thermal isolation."
+
+  candidates:
+
+    - { part: "Texas Instruments TMP117", package: "WCSP-1.5x1.5x0.5 mm (BEST for ring)", interfaces: "I2C + SMBus", supply: "1.7-5.5 V", current_active_uA: 3.5 (1 Hz conversion), current_sleep_uA: 0.15, accuracy_c: 0.1 (-20 to +50 C); 0.2 (-40 to +100 C); 0.3 (-55 to +125 C), resolution_c: 0.0078125, notes: "VERY small (1.5x1.5 mm WCSP); VERY low power (3.5 uA active, 0.15 uA sleep); best accuracy in the candidate set; mainline Linux driver (tmp117). RECOMMENDED for V1." }
+
+    - { part: "TI TMP112 (alternative)", package: "SOT-563 (1.6x1.6 mm)", interfaces: "I2C + SMBus", supply: "1.4-3.6 V", current_active_uA: 10, current_sleep_uA: 1, accuracy_c: 0.5, resolution_c: 0.0625, notes: "Cheaper than TMP117; less accurate; NOT recommended for the ring (the TMP117 is small enough)" }
+
+    - { part: "Miniature NTC thermistor (e.g. Murata NCP03XH103)", package: "0402 (1.0x0.5 mm)", notes: "Passive sensor; requires the nRF54L15's SAADC; accuracy depends on the reference resistor and calibration; cheaper than the TMP117; but the digital output of the TMP117 is simpler. NOT recommended for the ring (the TMP117 is small enough)." }
+
+  recommended: "TI TMP117"
+  reason: "Smallest in the candidate set (1.5x1.5 mm WCSP); lowest power (3.5 uA active, 0.15 uA sleep); best accuracy (0.1 C); mainline Linux driver (tmp117)."
+
+  placement: "On the inner band, between the IMU and the touch IC. NOT inside the battery compartment (battery heat would skew the reading). The TMP117 measures the FINGER temperature, not the PCB temperature."
+
+  thermal_considerations:
+    finger_temperature: 28-35 C typical (peripheral skin temperature)
+    battery_heat: 0.5-1 C rise during charging (per the battery selection)
+    mcu_heat: 0.5-1 C rise during BLE TX (per the nRF54L15 datasheet)
+    sensor_placement: "The TMP117 should be placed on the inner band (closest to the finger) and thermally isolated from the battery and the MCU. A small thermal pad between the TMP117 and the battery or MCU is recommended to minimize the heat coupling."
+
+  power_consumption:
+    active_uA: 3.5 (1 Hz conversion)
+    sleep_uA: 0.15
+    average_with_typical_usage_uA: 0.5 (1 Hz conversion is sufficient for thermal monitoring; the ring does not need continuous thermal data)
+    energy_per_day_mWh: "0.04 (typical usage; 0.5 uA average at 3.3 V; 24 hours)"
+
+  sources:
+    - { ref: "TMP117 datasheet", url: "https://www.ti.com/product/TMP117", note: "Verify exact dimensions and accuracy before committing." }

@@ -1,0 +1,763 @@
+schema_version: 1
+ring_pogo_charger_layout:
+  id: smart_ring_pogo_charger_layout
+  date: 2026-09-06
+  status: READ-ONLY. No PCB / CAD / KiCad / FreeCAD / STEP / STL files are created by this artifact. This is an engineering specification, not a final CAD model.
+
+  note: "Engineering specification for the V1 ring's magnetic pogo charging interface. Defines the mechanical and electrical interface architecture without committing to manufacturing geometry. Every physical dimension is either datasheet-derived (with explicit citation) or TBD. The coordinate system is inherited from mechanical/crown-layout.yaml section 1 and mechanical/inner-band-layout.yaml section 1."
+
+  parent_artifacts:
+    - "mechanical/inner-band-layout.yaml"   # Z_PALM_END zone + pogo position
+    - "mechanical/crown-layout.yaml"        # coordinate system
+    - "components/charger-selection.yaml"   # V1 selection (option_B: magnetic pogo + MCP73831)
+    - "components/battery-selection.yaml"   # EEMB-class curved LiPo + NTC
+    - "electrical/power-tree.yaml"          # MCP73831 power path
+    - "electrical/system-architecture.yaml" # V1 power rails + I2C bus
+    - "components/mcu-selection.yaml"       # nRF54L15 GPIO for STAT
+    - "firmware/architecture.md"            # charging state machine + OTA during charge
+    - "electrical/sensor-interface_part2.yaml" # MCP73831 + MAX17048 bring-up + RR04 charging_state
+
+  # =========================================================================
+  # 1. Overview
+  # =========================================================================
+  overview:
+    charging_architecture:
+      description: "the V1 ring charges via a magnetic pogo interface on the inner band (palm-end side). The pogo contacts mate with a separate cradle that supplies 5 V. The MCP73831 charger IC regulates the charge current and provides built-in power-path management."
+      architecture_summary: "cradle (5 V supply) -> magnetic pogo (2 contacts: V+ and GND) -> MCP73831 charger IC -> curved LiPo cell (EEMB-class; 35-60 mAh) -> MAX17048 fuel gauge -> system rails (VCC-3V3 + VCC-1V8 via LDOs)"
+      top_level_components:
+        - { component: "cradle", role: "external; not part of the ring scope; holds the ring and supplies 5 V" }
+        - { component: "magnetic pogo", role: "2 contacts (V+ + GND) on the inner band; magnetically self-aligning with the cradle" }
+        - { component: "MCP73831", role: "stand-alone LiPo charger; SOT-23-5; 5 V input -> 4.2 V (max) battery charge voltage; up to 500 mA charge current; built-in power-path management" }
+        - { component: "curved LiPo cell", role: "EEMB-class; 35-60 mAh; 3.85 V nominal; NTC thermistor for temperature monitoring" }
+        - { component: "MAX17048", role: "fuel gauge on the I2C bus; measures the cell's SOC for RR03" }
+    v1_charger_topology:
+      description: "single-cell LiPo charging via a 2-contact magnetic pogo + MCP73831. No data contacts (charging only); firmware detects the battery via the MAX17048's I2C read after the pogo mates."
+      contact_count: 2
+      contact_functions: ["V+ (5 V from cradle)", "GND"]
+      data_contacts: "none in V1 (no I2C over pogo; the firmware reads the MAX17048 over the ring's internal I2C0 bus once the pogo is mated)"
+    relationship_to_mcp73831:
+      description: "the MCP73831 is the dedicated charger IC. It takes the pogo's 5 V input and charges the LiPo cell. It has built-in power-path management: when the pogo is connected, the system can run from the 5 V pogo input while the battery charges."
+      pin_map: "per the MCP73831 datasheet (TBD on Microchip datasheet): VIN (5 V pogo input), GND (pogo ground), BAT (LiPo cell+), STAT (open-drain status; optional GPIO to nRF54L15), VCC (not used in V1)"
+      notes: "the MCP73831's STAT pin reports the charging state; the firmware reads this GPIO to derive RR04 charging_state (per electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger)"
+    relationship_to_battery:
+      description: "the MCP73831's BAT pin connects directly to the LiPo cell's BAT+ terminal. The BAT- terminal is the cell's GND, which is the PCB ground."
+      cell_voltage_range_v: [3.0, 4.2]
+      charge_voltage_max_v: 4.2
+      charge_current_ma_max: 500
+      notes: "the cell has a built-in PCM (overcharge / overdischarge / overcurrent / short circuit protection) per components/battery-selection.yaml section safety.pcm"
+    relationship_to_ring_mechanical_packaging:
+      description: "the pogo contacts are on the inner band at the palm-end (Z-) section per mechanical/inner-band-layout.yaml section 2.5 (Z_PALM_END zone) and section 4 (battery charging_relationship)."
+      location: "Z_PALM_END (palm end of the inner band)"
+      retention: "the contacts are mounted in a recess in the inner-band plastic shell; a silicone gasket seals the recess against sweat and water"
+      access: "the contacts are accessible from outside the ring without removing the band; the cradle mates by magnetic attraction"
+
+  # =========================================================================
+  # 2. Selected charger architecture
+  # =========================================================================
+  selected_charger_architecture:
+    selected_option: "option_B (magnetic pogo) per components/charger-selection.yaml section recommended_for_V1"
+    selected_charger_ic: "MCP73831 (single-cell LiPo charger; SOT-23-5; standalone; no I2C)"
+    selected_battery_cell: "EEMB-class curved LiPo; 35-60 mAh; 3.85 V nominal; with PCM + NTC thermistor (per components/battery-selection.yaml section safety)"
+    selected_fuel_gauge: "MAX17048 (per electrical/system-architecture.yaml section functional_block_diagram)"
+    selected_pogo_connector:
+      part: "NOT YET SELECTED — only the architecture is decided; the specific commercial pogo connector is TBD"
+      reason: "per components/charger-selection.yaml section ic_candidates, only ICs are listed; no commercial pogo connector is named. NERVA_Ring is cited as a reference style (per components/charger-selection.yaml section example) but NERVA's specific connector is not documented in this project and NERVA's license is UNKNOWN (per research/license-audit.md). No commercial pogo connector is invented here."
+      candidate_search_needed: "YES — a future artifact (mechanical/industrial-design.yaml or the schematic) must select a specific commercial pogo connector with documented mechanical drawings, OR design a custom pogo contact"
+    confirmed_vs_tbd:
+      confirmed:
+        - { item: "charger topology (magnetic pogo + MCP73831)", source: "components/charger-selection.yaml section recommended_for_V1", status: "confirmed" }
+        - { item: "MCP73831 package (SOT-23-5; 1.6 x 1.6 mm)", source: "components/charger-selection.yaml section ic_candidates", status: "datasheet-derived per the MCP73831 datasheet (TBD on Microchip datasheet confirmation)" }
+        - { item: "MCP73831 charge current limit (500 mA)", source: "components/charger-selection.yaml section pros", status: "datasheet-derived per the MCP73831 datasheet" }
+        - { item: "charge voltage max (4.2 V)", source: "components/battery-selection.yaml section candidates", status: "datasheet-derived per the EEMB-class LiPo cell" }
+        - { item: "battery voltage range (3.0-4.2 V)", source: "components/battery-selection.yaml section candidates", status: "datasheet-derived per the EEMB-class LiPo cell" }
+        - { item: "STAT GPIO presence", source: "electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger.stat_gpio", status: "datasheet-derived per the MCP73831 datasheet (TBD on exact encoding)" }
+      tbd:
+        - { item: "specific commercial pogo connector part number", reason: "no commercial pogo connector is named in components/charger-selection.yaml" }
+        - { item: "pogo contact geometry (diameter, length, protrusion)", reason: "depends on the specific pogo connector" }
+        - { item: "pogo contact spacing (centre-to-centre)", reason: "depends on the specific pogo connector" }
+        - { item: "magnet dimensions (diameter, thickness, grade)", reason: "no commercial magnet is named; NERVA is reference-only" }
+        - { item: "magnet polarity (N-S orientation)", reason: "depends on the magnet selection; not documented" }
+        - { item: "cradle interface geometry", reason: "the cradle is not in the V1 ring scope; it is a separate mechanical/industrial-design project" }
+        - { item: "retention force (magnetic attraction force required to hold the ring on the cradle)", reason: "depends on the magnet selection + the ring's mass" }
+        - { item: "shell recess dimensions (the recess that holds the pogo contacts)", reason: "depends on the specific pogo connector geometry" }
+        - { item: "silicone gasket geometry", reason: "depends on the shell recess dimensions" }
+        - { item: "contact protrusion above the shell surface", reason: "depends on the specific pogo connector geometry" }
+    datasheet_facts_vs_engineering_assumptions:
+      description: "the values in this artifact are explicitly tagged so the next artifact knows what is confirmed vs what is an assumption."
+      datasheet_derived:
+        - "MCP73831 charge current limit (500 mA)"
+        - "MCP73831 input voltage range (3.7-6.5 V)"
+        - "MCP73831 charge voltage (4.2 V max for LiPo)"
+        - "MCP73831 package (SOT-23-5)"
+        - "EEMB-class curved LiPo cell voltage range (3.0-4.2 V)"
+        - "EEMB-class curved LiPo capacity (35-60 mAh)"
+      engineering_assumptions:
+        - "the V1 uses 2 charging contacts (V+ + GND); a 3rd STAT contact is NOT used in V1 (the STAT is read via the nRF54L15's GPIO from the MCP73831's STAT pin)"
+        - "the ring's mass is approximately 5-10 g (engineering estimate; depends on the battery + enclosure)"
+        - "the cradle supplies 5 V at up to 500 mA (matches the MCP73831's maximum charge current)"
+        - "the magnetic attraction force is sufficient to hold the ring on the cradle against gravity (engineering estimate: 50-200 g of holding force)"
+        - "the V1's waterproofing target is sweat-resistant (per components/charger-selection.yaml section option_B); full IP68 is NOT a V1 requirement"
+
+  # =========================================================================
+  # 3. Charging contact interface
+  # =========================================================================
+  charging_contact_interface:
+    contact_count: 2
+    contact_functions:
+      - { contact_id: "POGO_V+", function: "5 V supply from the cradle; connects to the MCP73831 VIN pin", notes: "the high-current path; carries up to 500 mA during charging" }
+      - { contact_id: "POGO_GND", function: "ground return from the cradle; connects to the PCB ground plane", notes: "the high-current return; must have a low-impedance connection to the PCB ground" }
+    why_2_contacts_not_more:
+      description: "the V1 uses the minimum number of contacts (2) to keep the mechanical interface simple. Additional contacts are intentionally AVOIDED for the following reasons."
+      rationale:
+        - "data contacts (e.g. I2C-over-pogo) are NOT needed: the ring's internal BLE radio is the only data interface; the cradle supplies only power"
+        - "a third contact for STAT or THERMISTOR is NOT needed: the MCP73831's STAT pin is read by the nRF54L15's GPIO (one wire); the battery's NTC is connected to the MCP73831's TS pin (one wire, internal to the ring)"
+        - "reversed-polarity protection is handled by the magnetic alignment (the magnet orientation prevents V+ and GND from being swapped; see section 4); no diode is needed"
+        - "fewer contacts = smaller pogo footprint = less enclosure area = better sweat-resistance"
+    bat_vbat_path:
+      description: "POGO_V+ -> PCB trace -> MCP73831 VIN pin -> (MCP73831 internal pass element) -> MCP73831 BAT pin -> PCB trace -> curved LiPo cell BAT+"
+      current_rating_ma: 500
+      trace_impedance_requirement: "low-impedance; the trace width must be sized for 500 mA continuous (>= 0.5 mm trace width on the PCB)"
+      fuse_or_pcm: "the cell has a built-in PCM (per components/battery-selection.yaml section safety.pcm); no additional fuse is required in the V1"
+    gnd_path:
+      description: "POGO_GND -> PCB trace -> PCB ground plane -> MCP73831 GND -> cell BAT- (which is the PCB ground)"
+      current_rating_ma: 500
+      trace_impedance_requirement: "low-impedance; same as the V+ trace"
+      single_point_ground: "per electrical/power-tree.yaml section power_path; the PCB ground is a single-point ground"
+    stat_charger_status_handling:
+      description: "the MCP73831's STAT pin is an open-drain output that reports the charging state. The nRF54L15 reads the STAT pin via a GPIO with an internal pull-up (per electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger.stat_gpio)."
+      stat_pin_gpio_to_nrf54l15: "TBD on schematic; the GPIO number is determined when the pin map is finalised"
+      stat_encoding: "per the MCP73831 datasheet (TBD): LOW = charging in progress; HIGH = charge complete or no input; HIGH-Z = fault"
+      firmware_use: "the firmware reads STAT at boot (one-time) and on every GPIO interrupt; the RR04 charging_state is derived from STAT + the MAX17048's voltage reading (per electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger.stat_gpio)"
+      notes: "the STAT pin is OPTIONAL in V1 (per electrical/sensor-interface.yaml section gpio_allocation); the firmware may also infer the charging state from the MAX17048's voltage trend alone"
+    additional_contacts_avoided:
+      description: "the following potential contacts are INTENTIONALLY NOT USED in V1."
+      avoided:
+        - { contact: "data contacts (I2C, USB)", reason: "not needed; the ring uses BLE for data" }
+        - { contact: "third contact for STAT", reason: "STAT is read by the nRF54L15's GPIO, not by a pogo contact" }
+        - { contact: "third contact for THERMISTOR", reason: "the NTC is connected to the MCP73831's TS pin internally; no external contact needed" }
+        - { contact: "ID resistor / cable detect", reason: "the cradle is dedicated to the V1 ring; no ID is needed" }
+    pogo_pin_spacing: "TBD on the specific pogo connector selection; the schematic/industrial-design artifact must select a connector with documented pin spacing"
+    pogo_pin_protrusion: "TBD on the specific pogo connector selection"
+
+  # =========================================================================
+  # 4. Magnetic alignment
+  # =========================================================================
+  magnetic_alignment:
+    description: "the magnetic alignment ensures that the ring self-orients on the cradle and that the V+ and GND contacts mate correctly. Magnets are placed on both the ring (in the inner band recess) and the cradle (matching magnets)."
+
+    conceptual_magnet_arrangement:
+      description: "two magnets (one per contact) or a single bipolar magnet. The exact arrangement is TBD on the magnet selection."
+      option_a_two_magnets:
+        description: "two separate magnets; one near POGO_V+ and one near POGO_GND; the cradle has two matching magnets with reversed polarity"
+        pros: "simple; each magnet provides a localised attraction force"
+        cons: "two magnets add mass; the alignment may be less precise than a single bipolar magnet"
+      option_b_single_bipolar_magnet:
+        description: "a single bipolar magnet (one piece with N pole on one half and S pole on the other); the cradle has a matching bipolar magnet"
+        pros: "more precise angular alignment; single magnet"
+        cons: "custom part; not as widely available as standard disc magnets"
+      recommended_for_v1: "TBD on prototype characterisation; option_a is the starting assumption for simplicity"
+    attraction_alignment_strategy:
+      description: "the magnetic attraction force draws the ring onto the cradle. The magnets are positioned so that the V+ contact on the ring aligns with the V+ contact on the cradle, and the GND contact aligns with the GND contact."
+      alignment_force_range_g: "approximately 50-200 g of holding force (engineering estimate; TBD on magnet selection)"
+      alignment_distance_mm: "the magnets engage when the ring is within approximately 5-10 mm of the cradle (engineering estimate; TBD on magnet strength)"
+    angular_alignment:
+      description: "the magnets enforce a specific angular orientation of the ring on the cradle. The angular orientation is determined by the placement of the magnets on the ring and the cradle."
+      angular_tolerance_deg: "TBD on magnet placement + cradle mechanical features; engineering target: +/- 5 degrees"
+      alignment_features: "the cradle may include a mechanical alignment feature (a peg, a slot, or a curved surface) in addition to the magnets; the alignment feature is TBD on the cradle design"
+    lateral_alignment:
+      description: "the magnets enforce the lateral (X-Y) position of the ring on the cradle. The pogo contacts are spring-loaded; the magnets compress the springs slightly to ensure a good electrical contact."
+      lateral_tolerance_mm: "TBD on pogo contact length + magnet placement"
+      contact_compression_mm: "TBD on pogo spring force vs magnet attraction force; engineering target: 0.5-2 mm of spring compression"
+    polarity_considerations:
+      description: "the magnet polarity determines which way the ring orients on the cradle. The polarity is chosen so that the V+ contact on the ring ALWAYS aligns with the V+ contact on the cradle (not the GND contact)."
+      reversed_orientation_risk: "if the magnet polarity is wrong, the ring would orient 180 degrees from the intended position, mating the V+ contact with the cradle's GND contact"
+      prevention_strategy:
+        - "use a bipolar magnet (option_b) which has a unique orientation"
+        - "OR use two magnets with N-S-N-S arrangement (asymmetric)"
+        - "OR add a mechanical key (a notch or peg) on the cradle that mates with a feature on the ring's inner band"
+      engineering_decision: "TBD on prototype characterisation; the V1 default is a single mechanical key feature on the cradle + asymmetric magnet arrangement"
+    prevention_of_incorrect_mating:
+      description: "the ring is designed so that it CANNOT be mated incorrectly. The prevention is achieved by a combination of magnetic polarity + mechanical key."
+      strategies:
+        - "magnetic polarity (option_b or asymmetric option_a)"
+        - "mechanical key on the cradle (a peg that fits a notch in the ring's inner band)"
+        - "single-orientation pogo contact arrangement (the V+ contact is in a specific position relative to the ring's geometry that the user can visually identify)"
+      notes: "the prevention strategy is TBD on the cradle design; the V1 default is the mechanical key + asymmetric magnet arrangement"
+    magnet_locations_relative_to_other_structures:
+      magnets_vs_pcb: "the magnets are in the inner-band recess, BEHIND the PCB; the PCB ground plane must have a cutout within the magnet's keepout (the magnet's field may interfere with PCB-mounted inductors or other magnetic-sensitive components)"
+      magnets_vs_battery: "the magnets are FAR from the curved LiPo cell (the cell is at Z- but in a different X-Y plane from the pogo recess; TBD on the exact layout); the magnet's static field does NOT affect the LiPo chemistry (per industry knowledge; no datasheet verification)"
+      magnets_vs_antenna: "the magnets are FAR from the antenna (the antenna is at Z+ per mechanical/inner-band-layout.yaml section 4); the magnet's static field does NOT affect 2.4 GHz RF (the magnet's field is DC; the antenna operates at 2.4 GHz)"
+      magnets_vs_haptic: "the magnets are FAR from the LRA (the LRA is at Z- in the centre of the band, not at the pogo end); the magnet's static field does NOT affect the LRA's vibration"
+      magnets_vs_imu: "the magnets are FAR from the BMI270 (the BMI270 is at Z=0; the pogo is at Z-; the Z separation is significant); the magnet's static field may affect the BMI270's magnetometer (but the BMI270 does NOT have a magnetometer per components/imu-selection.yaml section candidates; it is a 6-axis IMU)"
+      magnets_vs_iqs127d: "the magnets are FAR from the IQS127D (the IQS127D is on the crown at Y=+R_crown; the magnets are at Y=-R_inner); the IQS127D is a capacitive sensor and is NOT sensitive to DC magnetic fields"
+      magnets_vs_charging_contacts: "the magnets may be INTEGRATED with the charging contacts (e.g. a magnetic pogo contact that combines the spring contact and the magnet in one assembly); this is a common commercial design; TBD on the specific connector selection"
+    magnet_dimensions_and_polarity:
+      status: "TBD on the specific magnet selection"
+      dimensions: "diameter, thickness, and grade are NOT selected; engineering assumption: N52 neodymium disc magnets (N52 is a common high-energy grade); diameter and thickness are TBD"
+      polarity: "TBD on the magnet arrangement (option_a vs option_b)"
+
+  # =========================================================================
+  # 5. Cradle interface
+  # =========================================================================
+  cradle_interface:
+    description: "the cradle is the external charging accessory. It holds the ring in place during charging and supplies 5 V via the pogo contacts. The cradle is NOT part of the V1 ring scope; it is a separate mechanical/industrial-design project."
+
+    cradle_contact_interface:
+      contacts: "2 contacts (V+ + GND) matching the ring's pogo contacts"
+      contact_type: "spring-loaded pogo pins OR flat contacts; TBD on the cradle design"
+      contact_protrusion: "TBD on the cradle design"
+      supply_voltage: "5 V (USB or wall adapter)"
+      supply_current: "up to 500 mA (matches the MCP73831's max charge current)"
+      supply_source: "USB-C input OR a wall adapter; TBD on the cradle design"
+    ring_orientation_during_charging:
+      description: "the ring sits on the cradle with the inner band facing DOWN (the pogo contacts mate with the cradle's contacts from below). The ring's palm end (Z-) is the end that mates with the cradle."
+      orientation: "inner band down; outer band up; crown facing forward; pogo contacts on the palm-end inner band mate with the cradle's contacts"
+      visual_indicators: "the cradle may include an LED or a marker to indicate where the ring should be placed; TBD on the cradle design"
+    mechanical_alignment_features:
+      description: "the cradle includes mechanical features to ensure correct orientation and prevent incorrect mating."
+      features:
+        - "magnetic alignment (per section 4)"
+        - "a peg or notch that mates with a feature on the ring's inner band"
+        - "a curved surface that matches the ring's outer radius (TBD on industrial-design)"
+      notes: "the exact features are TBD on the cradle design"
+    retention_force_concept:
+      description: "the magnetic attraction force holds the ring on the cradle during charging. The force must be sufficient to overcome the ring's weight + any incidental forces (e.g. the user bumping the cradle)."
+      target_retention_force_g: "approximately 50-200 g (engineering estimate; TBD on magnet selection)"
+      release_mechanism: "the user lifts the ring off the cradle; the magnetic force is overcome by the user's lifting force"
+    insertion_removal_concept:
+      insertion: "the user brings the ring close to the cradle; the magnets engage and pull the ring into the correct position; the pogo contacts mate; the MCP73831 detects the 5 V input and begins charging"
+      removal: "the user lifts the ring straight up (perpendicular to the cradle surface); the magnetic attraction force is overcome; the pogo contacts disengage"
+      notes: "the insertion and removal motions are intuitive (similar to a magnetic phone charger); the cradle does NOT require precise alignment by the user"
+    commercial_cradle_avoidance:
+      description: "this artifact does NOT claim a specific commercial cradle. The cradle is a separate mechanical/industrial-design project; its design is TBD."
+      rationale: "components/charger-selection.yaml does not name a specific commercial cradle; the V1 cradle is designed later as part of the industrial-design artifact"
+
+  # =========================================================================
+  # 6. Electrical safety
+  # =========================================================================
+  electrical_safety:
+    charging_current_path:
+      description: "the charging current path is: cradle 5 V -> POGO_V+ -> PCB trace -> MCP73831 VIN -> (MCP73831 internal) -> MCP73831 BAT -> PCB trace -> curved LiPo cell BAT+"
+      current_max_ma: 500
+      trace_rating: "the V+ trace must be rated for 500 mA continuous; minimum 0.5 mm trace width on a 1 oz copper PCB"
+    protection_considerations:
+      over_charge: "the MCP73831 has built-in over-charge protection (it stops charging at 4.2 V); the cell's PCM is redundant"
+      over_discharge: "the cell's PCM provides over-discharge protection (cuts off at the cell's minimum voltage)"
+      over_current: "the cell's PCM provides over-current protection (cuts off at the cell's max discharge current)"
+      short_circuit: "the cell's PCM provides short-circuit protection"
+      over_temperature: "the cell's NTC thermistor is monitored by the MCP73831's TS input; the MCP73831 reduces or stops the charge current if the cell temperature exceeds the safe range (per the MCP73831 datasheet; TBD)"
+      esd: "the pogo contacts are exposed on the inner band; ESD protection is provided by the MCP73831's internal ESD diodes (per the datasheet; TBD on the exact rating); an additional TVS diode on the pogo input is OPTIONAL in V1"
+    reverse_polarity_considerations:
+      description: "if the cradle's V+ and GND contacts are reversed, the MCP73831 would see a negative voltage on VIN. The MCP73831 has limited reverse-polarity tolerance (per the datasheet; TBD)."
+      prevention: "the magnetic polarity + mechanical key (per section 4) PREVENTS the ring from being mated with reversed polarity in the first place; no additional reverse-polarity protection is required"
+      if_protection_were_needed: "a P-channel MOSFET in the V+ path or a Schottky diode in the GND return would provide reverse-polarity protection; the V1 does NOT include this because the magnetic + mechanical prevention is sufficient"
+    esd_considerations:
+      human_body_model_esd: "the pogo contacts may be touched by the user; the contacts must withstand at least 8 kV HBM ESD (per typical USB-charging-port requirements; TBD on the V1's ESD target)"
+      protection: "the MCP73831 has internal ESD diodes on VIN; additional TVS protection (e.g. a PESD5V0L1BA from Nexperia) on the pogo input is OPTIONAL in V1"
+      tbd: "the exact ESD protection level + the optional TVS diode are TBD on the schematic"
+    exposed_contact_considerations:
+      description: "the pogo contacts are exposed on the inner band. This is a deliberate design choice (per components/charger-selection.yaml section option_B cons: 'less discreet; the pogo pins are visible on the inside of the band')."
+      user_safety: "the contacts are at 5 V (safe extra-low voltage per IEC 60950-1); no electric-shock hazard"
+      corrosion_risk: "the contacts are exposed to sweat + skin oils; corrosion protection (gold plating on the pogo contacts) is REQUIRED; TBD on the specific pogo connector"
+    accidental_shorting_between_contacts:
+      description: "if a conductive object (e.g. a metal ring, a key, sweat with dissolved salt) bridges the V+ and GND contacts, a short circuit occurs. The MCP73831's input current limit + the cell's PCM provide protection."
+      protection: "the MCP73831's VIN current limit (per datasheet; TBD) + the cell's PCM over-current protection"
+      prevention: "the V+ and GND contacts are spaced far enough apart that a typical sweat bridge does NOT short them; the spacing is TBD on the pogo connector selection; engineering target: >= 2 mm centre-to-centre"
+    charger_behavior_when_ring_is_worn:
+      description: "the ring cannot be worn while charging (the cradle holds the ring; the user is not wearing it). This is by design."
+      wear_during_charge: "not supported in V1; the ring is removed from the finger before charging"
+      accidental_wear_during_charge: "the user would have to remove the ring from the cradle to wear it; the magnetic force is overcome by the user's lifting force"
+    charger_behavior_when_ring_is_not_worn:
+      description: "the ring may be charged while not worn (the cradle scenario). The firmware's charging_state (RR04) is derived from the MCP73831's STAT pin + the MAX17048's voltage reading."
+      no_charge_when_idle: "the ring is in SLEEP state (per firmware/architecture.md section 8.1) most of the time; charging wakes the ring periodically to check the STAT pin"
+      wear_state_during_charge: "the wear_state is WEAR_OFF (the ring is not on a finger); the gesture FSM is not active"
+    thermal_charging_considerations:
+      description: "charging the cell generates heat. The MCP73831's charge efficiency is approximately 85 percent (per electrical/power-budget.yaml section charging_time.charge_efficiency); the remaining 15 percent is dissipated as heat in the MCP73831 + the cell."
+      heat_sources:
+        - "MCP73831 (charge IC; ~ 0.4 W at 500 mA input)"
+        - "cell internal resistance (the cell self-heats during charge; the magnitude depends on the cell's internal resistance)"
+      thermal_path: "the heat is conducted through the PCB to the inner-band shell; the user may feel slight warmth if they hold the ring during charging"
+      thermal_protection: "the cell's NTC thermistor is monitored by the MCP73831's TS input; the MCP73831 reduces or stops the charge current if the cell temperature exceeds the safe range"
+      notes: "the exact thermal management is TBD on prototype characterisation"
+
+  # =========================================================================
+  # 7. Battery + charger interaction
+  # =========================================================================
+  battery_charger_interaction:
+    description: "the interaction between the curved LiPo cell and the MCP73831 charger, including the cell's NTC thermistor handling and the charge termination logic."
+
+    eemb_class_curved_lipo_interface:
+      cell_part: "EEMB-class curved LiPo (per components/battery-selection.yaml section recommended)"
+      cell_voltage_range_v: [3.0, 4.2]
+      cell_capacity_mah_range: [35, 60]
+      cell_nominal_voltage_v: 3.85
+      cell_connections:
+        - "BAT+ (positive terminal; connects to MCP73831 BAT)"
+        - "BAT- (negative terminal; connects to PCB ground)"
+        - "NTC (thermistor; connects to MCP73831 TS input)"
+      cell_dimensions_mm: "TBD on the specific cell from the EEMB-class manufacturer; engineering estimate: 6-8 wide x 35-40 long x 2.5-3.5 thick (curved to match the inner ring radius) per components/battery-selection.yaml section candidates"
+      cell_pcm: "the cell has a built-in PCM (overcharge / overdischarge / overcurrent / short circuit protection) per components/battery-selection.yaml section safety.pcm"
+    mcp73831_relationship:
+      vin_input_v_range: [3.7, 6.5]
+      bat_output_v_max: 4.2
+      charge_current_ma_max: 500
+      charge_current_setting: "the MCP73831's charge current is set by an external resistor (per the datasheet; TBD on the specific resistor value)"
+      power_path_management: "the MCP73831 has built-in power-path management (per components/charger-selection.yaml section example); when the pogo is connected, the system can run from the 5 V pogo input while the battery charges"
+      ts_input: "the MCP73831's TS input monitors the cell's NTC thermistor; the MCP73831 reduces or stops the charge current if the cell temperature exceeds the safe range"
+      stat_output: "the MCP73831's STAT output reports the charging state (LOW = charging; HIGH = complete; HIGH-Z = fault); read by the nRF54L15's GPIO"
+    battery_ntc_handling:
+      ntc_present: true
+      ntc_connection: "the cell's NTC thermistor connects to the MCP73831's TS input; the MCP73831 interprets the NTC resistance as a temperature"
+      ntc_thermistor_type: "the EEMB-class cell includes a 10 kohm NTC (B = 3950); TBD on the specific cell datasheet"
+      temperature_thresholds:
+        cold_threshold_c: "TBD on the MCP73831 datasheet; the MCP73831 suspends charging below approximately 0 C"
+        hot_threshold_c: "TBD on the MCP73831 datasheet; the MCP73831 suspends charging above approximately 50 C"
+        optimal_range_c: "approximately 10-40 C (engineering estimate)"
+      tbd: "the exact thresholds are TBD on the MCP73831 + cell datasheets"
+    charge_termination_assumptions:
+      description: "the MCP73831 terminates charging using the standard LiPo charge algorithm: constant current (CC) followed by constant voltage (CV). The transition from CC to CV happens when the cell voltage reaches 4.2 V; the charge terminates when the charge current drops below a threshold (per the MCP73831 datasheet; TBD)."
+      cc_phase:
+        description: "the MCP73831 charges at a constant current (set by the external resistor) until the cell voltage reaches 4.2 V"
+        current_ma_max: 500
+      cv_phase:
+        description: "the MCP73831 holds the cell voltage at 4.2 V and the charge current tapers down"
+        voltage_v: 4.2
+      termination:
+        description: "the MCP73831 terminates charging when the charge current drops below a threshold (per the datasheet; TBD); the STAT pin transitions to HIGH"
+        current_threshold_ma: "TBD on the MCP73831 datasheet"
+      notes: "the exact thresholds are TBD on the MCP73831 + cell datasheets"
+    charging_state_indication:
+      description: "the firmware derives the RR04 charging_state from the MCP73831's STAT pin + the MAX17048's voltage reading. The RR04 encoding is per protocol/ring-gatt-spec.yaml section ring_control_service.RR04."
+      stat_encodings:
+        - { stat: "LOW", charging_state: "0x01 (charging; CC or CV)" }
+        - { stat: "HIGH (no input)", charging_state: "0x00 (not charging; pogo disconnected)" }
+        - { stat: "HIGH (charge complete)", charging_state: "0x02 (charging CV -> termination)" }
+        - { stat: "HIGH-Z (fault)", charging_state: "0x03 (fault; NTC over-temperature or charger timeout)" }
+      tbd: "the exact STAT encodings are TBD on the MCP73831 datasheet; the firmware's mapping is documented in electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger.stat_gpio"
+    battery_datasheet_confirmation_needed:
+      description: "the following items require cell datasheet confirmation before the V1 prototype."
+      items:
+        - "exact cell dimensions (length x width x thickness; curved radius)"
+        - "exact cell capacity (mAh)"
+        - "exact cell internal resistance (mohm)"
+        - "exact cell NTC thermistor type + B constant"
+        - "exact cell PCM trip thresholds"
+        - "exact cell cycle life (cycles to 80 percent capacity)"
+
+  # =========================================================================
+  # 8. Mechanical packaging
+  # =========================================================================
+  mechanical_packaging:
+    interface_location_on_the_ring:
+      description: "the pogo interface is on the inner band at the palm-end (Z-) section per mechanical/inner-band-layout.yaml section 4 (battery.charging_relationship.pogo_position)."
+      zone: "Z_PALM_END (palm end of the inner band)"
+      surface: "Y = -R_inner (the inner-band surface; the finger-facing side of the ring)"
+      orientation: "the contacts are flush or slightly recessed in the inner-band shell; the cradle's magnets + pogo pins press against the contacts"
+    relationship_to_inner_band_layout:
+      mechanical_inner_band_layout_yaml_section_4_pogo_position: "the pogo contacts are at Z- on the inner band, opposite the cradle's magnets"
+      zone_Z_PALM_END: "the Z_PALM_END zone is reserved for the pogo interface; no other components are placed in this zone (per mechanical/inner-band-layout.yaml section 2.5)"
+    contact_access_through_inner_shell:
+      description: "the pogo contacts are accessible from outside the ring through the inner-band shell. The shell has a small recess (or opening) that exposes the contacts."
+      access_methods:
+        - { method: "through-hole", description: "the inner-band shell has two through-holes; the pogo contacts protrude through the holes", pros: "simple; minimal sealing surface", cons: "the holes are potential ingress points for sweat + water" }
+        - { method: "recessed pocket", description: "the inner-band shell has a small recessed pocket; the pogo contacts sit at the bottom of the pocket; the cradle's pins reach into the pocket", pros: "better sealing (the pocket protects the contacts from direct contact with sweat)", cons: "more complex mechanical geometry" }
+      recommended_for_v1: "TBD on prototype characterisation; the recessed pocket is the engineering preference (better sealing) but the through-hole is simpler"
+    shell_opening_recess_concept:
+      description: "the inner-band shell has a recess that holds the pogo contacts. The recess is sealed by a silicone gasket when the ring is not in the cradle."
+      recess_dimensions: "TBD on the specific pogo connector geometry"
+      gasket_material: "silicone; Shore A hardness TBD"
+      gasket_sealing: "the gasket is compressed by the inner-band shell; it seals against sweat and water ingress when the ring is not in the cradle; when the cradle mates, the cradle's pogo pins push through (or compress) the gasket to mate with the contacts"
+      notes: "this is a CONCEPTUAL sealing strategy; the exact geometry is TBD on the industrial-design artifact"
+    sealing_strategy_concept:
+      description: "the V1's waterproofing target is sweat-resistant (per components/charger-selection.yaml section option_B); full IP68 is NOT a V1 requirement."
+      sealing_layers:
+        - "outer shell: plastic; no sealing required (the shell is solid)"
+        - "PCB-to-shell interface: a silicone gasket seals the PCB perimeter (TBD on the schematic)"
+        - "pogo recess: a silicone gasket seals the pogo recess when the ring is not in the cradle"
+        - "pogo contacts: gold plating (TBD on the connector selection) for corrosion resistance"
+      tbd: "the exact sealing geometry is TBD on the industrial-design artifact"
+    tolerance_fit_requirements_conceptually:
+      description: "the V1 ring's mechanical tolerances are TBD on the industrial-design artifact. The conceptual tolerance stack is:"
+      tolerance_stack:
+        - { tolerance: "pogo contact length", typical_mm: "TBD; engineering estimate 1-3 mm of spring compression", notes: "the spring compression absorbs the magnetic alignment tolerance" }
+        - { tolerance: "pogo contact spacing", typical_mm: "TBD on the connector selection", notes: "the spacing must match the cradle's contacts exactly" }
+        - { tolerance: "magnet-to-pogo alignment", typical_mm: "TBD on the magnet placement", notes: "the magnet attraction aligns the ring within the tolerance" }
+        - { tolerance: "shell recess dimensions", typical_mm: "TBD on the industrial-design", notes: "the recess must hold the contacts + the silicone gasket" }
+      notes: "this is a CONCEPTUAL tolerance stack; the exact values are TBD"
+    no_fabricated_dimensions: "no fabricated wall thickness, contact dimensions, or recess dimensions are included in this artifact"
+
+  # =========================================================================
+  # 9. Magnetic and component interference
+  # =========================================================================
+  magnetic_and_component_interference:
+    description: "explicit analysis of every potential magnetic interference. Magnets are static-field sources; the V1 components' sensitivities to DC magnetic fields are documented."
+
+    magnets_vs_bmi270:
+      interaction: "the BMI270 is a 6-axis IMU (accelerometer + gyroscope) per components/imu-selection.yaml section candidates; it does NOT include a magnetometer"
+      sensitivity: "the BMI270 is NOT sensitive to DC magnetic fields (no magnetometer); the static field from a small neodymium magnet does NOT affect the accelerometer or gyroscope readings"
+      mitigation: "none required"
+      validation_status: "datasheet-derived; the BMI270 datasheet confirms no magnetometer (per components/imu-selection.yaml section candidates)"
+
+    magnets_vs_antenna:
+      interaction: "the antenna is a Johanson 2450AT18B100 chip antenna operating at 2.4-2.5 GHz per components/antenna-selection.yaml section recommended"
+      sensitivity: "the antenna is NOT directly sensitive to DC magnetic fields; the antenna's VSWR is determined by the nearby conductive structures, not by static magnetic fields"
+      mitigation: "the magnets are at Z- (palm end); the antenna is at Z+ (finger end); the Z separation is significant (TBD on the band length)"
+      validation_status: "datasheet-derived + spatial separation"
+
+    magnets_vs_battery:
+      interaction: "the curved LiPo cell uses lithium chemistry; the static magnetic field from a small neodymium magnet does NOT affect the cell's electrochemistry"
+      sensitivity: "the cell is NOT sensitive to DC magnetic fields (no magnetic materials in the cell's electrodes; the electrolyte is non-magnetic)"
+      mitigation: "none required"
+      validation_status: "industry knowledge; no cell-datasheet verification needed"
+      notes: "if the cell's PCM uses a magnetic sensor (rare), the magnets could affect the PCM; TBD on the cell datasheet"
+
+    magnets_vs_haptic_actuator:
+      interaction: "the LRA (Precision Microdrives 308-101) is an electromagnetic actuator; it contains a magnetic mass"
+      sensitivity: "the LRA's resonant frequency (175 Hz) and drive amplitude are determined by its internal magnetic circuit; an EXTERNAL static magnetic field may slightly shift the resonant frequency"
+      mitigation: "the magnets are at Z- (palm end); the LRA is at Z- but in a different X-Y plane; the spatial separation is TBD; if the prototype shows a frequency shift, the magnet grade may need to be reduced OR the LRA may need to be moved further from the magnets"
+      validation_status: "engineering assumption; prototype measurement required"
+
+    magnets_vs_iqs127d_electrodes:
+      interaction: "the IQS127D is a capacitive touch IC; the electrodes are metal pads on the crown"
+      sensitivity: "capacitive sensors are NOT sensitive to DC magnetic fields; the static field from the magnets does NOT affect the electrode capacitance"
+      mitigation: "none required"
+      validation_status: "datasheet-derived; the IQS127D is a capacitive sensor, not a magnetic sensor"
+
+    magnets_vs_charging_contacts:
+      interaction: "the pogo contacts may be INTEGRATED with the magnets (a common commercial design); the magnets and the contacts are in close proximity"
+      sensitivity: "the contacts are gold-plated (TBD); the magnets are nickel-plated (typical); the magnet's field does NOT affect the contact resistance"
+      mitigation: "the magnet + contact integration is a standard commercial design; no additional mitigation required"
+      validation_status: "industry knowledge"
+
+    charging_contacts_vs_touch_electrodes:
+      interaction: "the pogo contacts (on the inner band at Z-) and the IQS127D electrodes (on the crown at Y=+R_crown) are physically far apart; no direct coupling"
+      sensitivity: "the pogo contacts carry 5 V DC; the IQS127D electrodes carry capacitive-sensing signals; the two are separated by the PCB + the band plastic"
+      mitigation: "the spatial separation is sufficient; the only potential coupling is via the PCB ground plane (the 5 V pogo return path is a high-current return; the IQS127D's ground reference may be perturbed); the PCB layout must keep the pogo return path away from the IQS127D's ground"
+      validation_status: "PCB layout-dependent; TBD on the schematic"
+
+    charging_contacts_vs_rf_routing:
+      interaction: "the pogo contacts carry 5 V DC; the antenna feed line is a 50 ohm controlled-impedance line; the two are separated by the PCB layers"
+      sensitivity: "the pogo contacts do NOT radiate (5 V DC); the antenna feed line is sensitive to nearby conductive structures; the pogo contacts' PCB traces must be routed AWAY from the antenna feed line"
+      mitigation: "the PCB layout must keep the pogo traces (high-current return) away from the antenna feed line and the antenna keepout zone (per mechanical/inner-band-layout.yaml section 4.2)"
+      validation_status: "PCB layout-dependent; TBD on the schematic"
+
+  # =========================================================================
+  # 10. Charging sequence
+  # =========================================================================
+  charging_sequence:
+    description: "the conceptual sequence of events from the ring approaching the cradle to the ring being removed. Each step is described at a high level; the exact timing is TBD on prototype characterisation."
+
+    sequence:
+      - { step: 1, name: "ring_approaches_cradle", description: "the user brings the ring close to the cradle (within the magnet's attraction distance; engineering estimate 5-10 mm); the magnet's field begins to attract the ring's magnet" }
+      - { step: 2, name: "magnetic_alignment", description: "the magnets pull the ring into the correct angular + lateral position; the ring self-orients on the cradle; the magnetic force compresses the cradle's pogo pins slightly" }
+      - { step: 3, name: "contacts_mate", description: "the ring's pogo contacts mate with the cradle's pogo pins; the 5 V supply is connected to POGO_V+; the POGO_GND return is connected; the cradle supplies up to 500 mA" }
+      - { step: 4, name: "mcp73831_detects_input", description: "the MCP73831 sees 5 V on VIN; it transitions from standby to active; it begins the CC charge phase at the configured current (set by the external resistor); the cell starts charging" }
+      - { step: 5, name: "charging_begins", description: "the MCP73831 charges at the constant current (CC phase); the STAT pin is LOW; the firmware's RR04 charging_state becomes 0x01 (charging)" }
+      - { step: 6, name: "cell_voltage_rises", description: "the cell voltage rises from its current value toward 4.2 V; the MAX17048 reports the SOC via RR03 (per protocol/ring-gatt-spec.yaml section ring_control_service.RR03); the firmware notifies RR03 + RR04 periodically (rate-limited to 1 Hz per electrical/sensor-interface_part2.yaml section sensor_max17048.runtime_health_monitoring)" }
+      - { step: 7, name: "transition_to_cv", description: "when the cell voltage reaches 4.2 V, the MCP73831 transitions from CC to CV; the charge current tapers down; the STAT pin remains LOW; the firmware continues to notify RR03 + RR04" }
+      - { step: 8, name: "charge_termination", description: "when the charge current drops below the MCP73831's termination threshold (TBD on datasheet), the MCP73831 terminates charging; the STAT pin transitions to HIGH; the firmware's RR04 charging_state becomes 0x02 (full)" }
+      - { step: 9, name: "maintenance_trickle", description: "the MCP73831 may apply a small maintenance current (TBD on datasheet) to keep the cell at 100 percent SOC; the STAT pin remains HIGH" }
+      - { step: 10, name: "ring_removal", description: "the user lifts the ring off the cradle; the magnetic force is overcome; the pogo contacts disengage; the MCP73831 sees VIN drop below its UVLO threshold and returns to standby; the firmware's RR04 charging_state becomes 0x00 (not charging)" }
+      - { step: 11, name: "fault_conditions", description: "if any fault occurs (NTC over-temperature, charger timeout, battery absent), the MCP73831's STAT pin enters HIGH-Z; the firmware's RR04 charging_state becomes 0x03 (fault); the firmware emits a TEST_DIAGNOSTIC gesture event with the fault description (per firmware/architecture.md section 10.1)" }
+    notes:
+      - "the exact timing of each step is TBD on prototype characterisation"
+      - "the STAT pin encodings are TBD on the MCP73831 datasheet"
+      - "the firmware's charging_state machine is independent of the mechanical cradle; it reads the STAT pin via GPIO"
+
+  # =========================================================================
+  # 11. Failure modes
+  # =========================================================================
+  failure_modes:
+    description: "explicit analysis of every potential failure mode. Each failure mode is described, the impact is stated, and the mitigation is documented."
+
+    reversed_magnetic_orientation:
+      failure: "the magnet polarity is reversed; the ring orients 180 degrees from the intended position; POGO_V+ mates with the cradle's GND, and POGO_GND mates with the cradle's V+"
+      impact: "reverse polarity on the MCP73831 VIN; the MCP73831's reverse-polarity tolerance is limited (per datasheet; TBD); potential damage to the MCP73831"
+      mitigation:
+        - "the magnet arrangement is verified during factory test"
+        - "the mechanical key (peg + notch; per section 4) prevents 180-degree rotation"
+        - "no firmware-side mitigation (the firmware cannot detect the reversal; the magnet + mechanical key are the only protection)"
+      validation_status: "TBD on prototype characterisation"
+
+    one_contact_not_mating:
+      failure: "one of the two pogo contacts fails to mate (e.g. due to debris, mechanical misalignment, or a damaged spring)"
+      impact: "the 5 V supply is not connected to the MCP73831; the cell does not charge"
+      mitigation:
+        - "the firmware detects no charging (STAT pin remains HIGH with no VIN); the RR04 charging_state stays at 0x00"
+        - "the user is alerted via a haptic (DRV2605L drives the LRA with the LONG_PULSE pattern; per protocol/ring-gatt-spec.yaml section haptic_pattern_table)"
+        - "the user re-seats the ring on the cradle"
+      validation_status: "TBD on prototype characterisation"
+
+    short_between_contacts:
+      failure: "a conductive object (e.g. a metal key, sweat with dissolved salt) bridges the V+ and GND contacts"
+      impact: "a short circuit occurs at the cradle's 5 V output; the cradle's over-current protection (TBD on the cradle design) limits the current; the MCP73831's VIN current limit (TBD on datasheet) also limits the current"
+      mitigation:
+        - "the cradle's over-current protection (TBD)"
+        - "the MCP73831's VIN current limit (TBD)"
+        - "the pogo contact spacing must be >= 2 mm centre-to-centre (engineering target; TBD on the connector selection)"
+      validation_status: "PCB layout-dependent + cradle-dependent; TBD"
+
+    dirty_wet_contacts:
+      failure: "the pogo contacts are contaminated with dirt, sweat, or water"
+      impact: "increased contact resistance; reduced charge current; potential charging failure"
+      mitigation:
+        - "the gold plating on the pogo contacts (TBD on the connector selection) resists corrosion"
+        - "the silicone gasket (per section 8) seals the contacts when the ring is not in the cradle"
+        - "the user can clean the contacts with a soft cloth"
+        - "the firmware detects increased contact resistance as a slower-than-expected charge rate (TBD on the firmware's health monitoring)"
+      validation_status: "TBD on prototype characterisation"
+
+    foreign_conductive_object:
+      failure: "a conductive object (e.g. a paperclip) is placed across the contacts"
+      impact: "same as the short_between_contacts failure"
+      mitigation: "same as the short_between_contacts failure"
+      validation_status: "PCB layout-dependent + cradle-dependent; TBD"
+
+    excessive_contact_resistance:
+      failure: "the pogo contacts have higher-than-expected resistance (e.g. due to corrosion, contamination, or worn springs)"
+      impact: "the charge current is reduced; the charging time is extended; the cell may not charge fully"
+      mitigation:
+        - "the firmware monitors the charge time (per protocol/gesture-vocabulary.yaml §0x7F TEST_DIAGNOSTIC + the diagnostic CLI)"
+        - "the firmware emits a haptic (LONG_PULSE) if the charge time exceeds an expected threshold (TBD)"
+      validation_status: "TBD on prototype characterisation"
+
+    battery_absent_disconnected:
+      failure: "the cell is not connected (e.g. the BAT+ wire is disconnected)"
+      impact: "the MCP73831 cannot charge the cell; the STAT pin reports a fault (HIGH-Z)"
+      mitigation:
+        - "the firmware detects the fault via the STAT pin; the RR04 charging_state becomes 0x03 (fault)"
+        - "the firmware emits a TEST_DIAGNOSTIC gesture event (per firmware/architecture.md section 10.1)"
+      validation_status: "TBD on the MCP73831 datasheet"
+
+    battery_ntc_fault:
+      failure: "the NTC thermistor is disconnected or shorted"
+      impact: "the MCP73831's TS input reads an out-of-range value; the MCP73831 may suspend charging as a precaution (per datasheet; TBD)"
+      mitigation:
+        - "the firmware detects the STAT pin's fault encoding (HIGH-Z); the RR04 charging_state becomes 0x03"
+        - "the firmware emits a TEST_DIAGNOSTIC gesture event"
+      validation_status: "TBD on the MCP73831 datasheet"
+
+    charger_thermal_fault:
+      failure: "the MCP73831's internal temperature exceeds its safe operating range"
+      impact: "the MCP73831 suspends charging; the STAT pin reports a fault"
+      mitigation:
+        - "the MCP73831 has built-in thermal protection (per datasheet; TBD)"
+        - "the firmware detects the STAT pin's fault encoding; the RR04 charging_state becomes 0x03"
+      validation_status: "TBD on the MCP73831 datasheet"
+
+    cradle_supply_fault:
+      failure: "the cradle's 5 V supply is unstable (over-voltage, under-voltage, ripple)"
+      impact: "the MCP73831's VIN may be outside its operating range; the cell may not charge correctly"
+      mitigation:
+        - "the MCP73831 has built-in UVLO + over-voltage protection (per datasheet; TBD)"
+        - "the firmware detects the absence of charging via the STAT pin + the MAX17048's voltage trend"
+        - "the cradle itself should have over-voltage protection (TBD on the cradle design)"
+      validation_status: "TBD on the MCP73831 + cradle datasheets"
+
+    magnet_interfering_with_sensor_operation:
+      failure: "a magnet's static field interferes with a sensor's operation (e.g. the LRA's frequency shift)"
+      impact: "depends on the sensor; see section 9 for the per-sensor analysis"
+      mitigation:
+        - "spatial separation (the magnets are at Z-; the sensors are at Z=0 or Z+)"
+        - "magnet grade reduction (e.g. use N42 instead of N52)"
+        - "prototype characterisation to confirm no interference"
+      validation_status: "TBD on prototype characterisation"
+
+  # =========================================================================
+  # 12. Environmental and wear considerations
+  # =========================================================================
+  environmental_and_wear_considerations:
+    description: "the V1 ring's pogo interface is exposed to sweat, skin oils, and repeated mating cycles. The environmental considerations are documented."
+
+    sweat_moisture:
+      description: "the ring is worn on the finger; sweat + skin oils accumulate on the inner band. The pogo contacts are on the inner band and are exposed to sweat."
+      impact: "corrosion of the pogo contacts; increased contact resistance; potential charging failure"
+      mitigation:
+        - "gold plating on the pogo contacts (TBD on the connector selection)"
+        - "silicone gasket sealing the pogo recess when the ring is not in the cradle (per section 8)"
+        - "the user can clean the contacts with a soft cloth"
+      notes: "the V1's waterproofing target is sweat-resistant (per components/charger-selection.yaml section option_B); full IP68 is NOT a V1 requirement"
+    skin_contact:
+      description: "the pogo contacts are in direct contact with the user's skin when the ring is worn (the inner band is the finger-facing surface)"
+      impact: "the contacts may accumulate dead skin cells + skin oils; potential contact resistance increase"
+      mitigation:
+        - "gold plating on the pogo contacts"
+        - "the silicone gasket covers the contacts when the ring is not in the cradle"
+      notes: "the V1 cannot be charged while worn (per section 6); the contacts are only exposed to skin when the ring is worn, not when it is on the cradle"
+    corrosion:
+      description: "the pogo contacts are made of metal; sweat is corrosive"
+      impact: "long-term corrosion may degrade the contact resistance"
+      mitigation:
+        - "gold plating (TBD on the connector selection)"
+        - "the user can clean the contacts with a soft cloth"
+        - "the silicone gasket protects the contacts when the ring is not in the cradle"
+      notes: "the expected contact lifetime is TBD on prototype characterisation"
+    debris:
+      description: "lint, dust, and other debris may accumulate on the pogo contacts"
+      impact: "increased contact resistance; potential charging failure"
+      mitigation:
+        - "the silicone gasket covers the contacts when the ring is not in the cradle"
+        - "the user can clean the contacts with a soft cloth or compressed air"
+    repeated_mating_cycles:
+      description: "the pogo contacts mate + unmate every time the ring is charged; the expected number of cycles is approximately 1-2 per day = 365-730 cycles per year"
+      impact: "mechanical wear of the pogo springs; potential reduction in spring force over time"
+      mitigation:
+        - "the pogo contacts are rated for >= 10,000 mating cycles (engineering target; TBD on the connector selection)"
+        - "the gold plating resists wear-induced corrosion"
+      notes: "the expected cycle life is TBD on the connector selection"
+    cleaning:
+      description: "the user may clean the contacts with a soft cloth, water, or isopropyl alcohol"
+      impact: "the gold plating resists most cleaning agents; isopropyl alcohol is safe; water may leave residue if not dried"
+      mitigation: "the user is expected to follow standard jewellery-cleaning practices"
+    sealing:
+      description: "the V1's sealing is sweat-resistant only (per components/charger-selection.yaml section option_B); full IP68 is NOT a V1 requirement"
+      impact: "the ring is NOT suitable for swimming, showering, or submerging in water"
+      mitigation: "the user is expected to remove the ring before water exposure"
+      notes: "the sealing strategy is documented in section 8 (mechanical_packaging.sealing_strategy_concept)"
+    contact_wear:
+      description: "the pogo contacts wear over time; the gold plating may eventually wear off, exposing the base metal"
+      impact: "increased contact resistance; potential charging failure"
+      mitigation:
+        - "the pogo contacts are rated for >= 10,000 mating cycles (engineering target; TBD on the connector selection)"
+        - "the cell's PCM + the cradle's over-current protection limit the damage from a worn contact"
+      notes: "the expected contact lifetime is TBD on the connector selection"
+
+  # =========================================================================
+  # 13. Mechanical TBD register
+  # =========================================================================
+  mechanical_tbd_register:
+    description: "explicit list of every unresolved value in this artifact. Each TBD requires a future artifact (mechanical/industrial-design.yaml or the schematic) to resolve."
+
+    tbds:
+      - { parameter: "pogo_contact_dimensions", reason: "depends on the specific commercial pogo connector selection (no connector is named in components/charger-selection.yaml)" }
+      - { parameter: "pogo_contact_spacing", reason: "depends on the specific connector selection; engineering target: >= 2 mm centre-to-centre (for sweat-bridge prevention)" }
+      - { parameter: "magnet_dimensions", reason: "no commercial magnet is named; NERVA_Ring is reference-only (license unknown); engineering assumption: N52 neodymium disc; diameter and thickness are TBD" }
+      - { parameter: "magnet_grade", reason: "engineering assumption: N52; the actual grade is TBD on the magnet selection" }
+      - { parameter: "magnet_polarity", reason: "depends on the magnet arrangement (option_a vs option_b in section 4); the polarity is TBD on the magnet selection" }
+      - { parameter: "cradle_dimensions", reason: "the cradle is a separate mechanical/industrial-design project; its dimensions are NOT in this artifact's scope" }
+      - { parameter: "charging_interface_recess_dimensions", reason: "depends on the specific pogo connector geometry; TBD on the industrial-design artifact" }
+      - { parameter: "shell_opening_dimensions", reason: "depends on the pogo connector geometry + the silicone gasket geometry" }
+      - { parameter: "charging_interface_location", reason: "the X-Y position of the pogo contacts on the inner band is TBD on the industrial-design artifact; the Z position is confirmed as Z- (palm end)" }
+      - { parameter: "contact_protrusion_or_recess", reason: "depends on the industrial-design artifact's sealing strategy" }
+      - { parameter: "sealing_geometry", reason: "the exact silicone gasket dimensions + the shell recess dimensions are TBD on the industrial-design artifact" }
+      - { parameter: "charging_current", reason: "500 mA is the MCP73831 maximum; the actual charge current is set by an external resistor (the resistor value is TBD on the schematic)" }
+      - { parameter: "exact_battery_dimensions", reason: "the EEMB-class curved LiPo cell's exact dimensions are TBD on the cell manufacturer's datasheet" }
+      - { parameter: "mcp73831_external_resistor_value", reason: "the charge current is set by an external resistor; the resistor value is TBD on the schematic" }
+      - { parameter: "mcp73831_stat_encodings", reason: "the exact STAT pin encodings (LOW/HIGH/HIGH-Z) are TBD on the MCP73831 datasheet" }
+      - { parameter: "mcp73831_termination_threshold", reason: "the exact charge-termination current threshold is TBD on the MCP73831 datasheet" }
+      - { parameter: "mcp73831_thermal_protection_threshold", reason: "the exact internal thermal-protection threshold is TBD on the MCP73831 datasheet" }
+      - { parameter: "battery_ntc_type", reason: "the EEMB-class cell's NTC type + B constant are TBD on the cell manufacturer's datasheet" }
+      - { parameter: "battery_pcm_trip_thresholds", reason: "the cell's PCM over-charge / over-discharge / over-current trip thresholds are TBD on the cell manufacturer's datasheet" }
+      - { parameter: "esd_protection_level", reason: "the V1's ESD protection target (e.g. 8 kV HBM) is TBD on the schematic; the optional TVS diode is TBD" }
+      - { parameter: "magnet_arrangement", reason: "option_a (two magnets) vs option_b (single bipolar magnet) is TBD on prototype characterisation" }
+      - { parameter: "mechanical_key_design", reason: "the peg + notch mechanical key on the cradle + ring is TBD on the industrial-design artifact" }
+      - { parameter: "alignment_force", reason: "the target magnetic retention force (50-200 g) is an engineering estimate; TBD on the magnet selection" }
+      - { parameter: "shell_recess_access_method", reason: "through-hole vs recessed pocket is TBD on prototype characterisation" }
+      - { parameter: "v1_waterproofing_target", reason: "the V1's waterproofing target is sweat-resistant (per components/charger-selection.yaml); the exact IP rating target is TBD on the brief" }
+
+  # =========================================================================
+  # 14. Cross-document consistency
+  # =========================================================================
+  cross_document_consistency:
+    description: "explicit list of cross-checks against parent artifacts."
+
+    consistency_points:
+      - { artifact: "mechanical/inner-band-layout.yaml", point: "Z_PALM_END zone + pogo position (Z-) + battery relationship + magnetic interference analysis (per section 4 + 9 of inner-band-layout.yaml) are mirrored and consistent" }
+      - { artifact: "mechanical/crown-layout.yaml", point: "the coordinate system (X, Y, Z) is inherited; the pogo interface is on the inner band (Y = -R_inner) at the palm end (Z-) which is OPPOSITE the crown (Y = +R_crown, Z = 0)" }
+      - { artifact: "components/charger-selection.yaml", point: "option_B (magnetic pogo + MCP73831) is the V1 selected architecture; this document does NOT change the selection; the pros/cons are mirrored" }
+      - { artifact: "components/battery-selection.yaml", point: "EEMB-class curved LiPo + PCM + NTC are mirrored; the safety requirements (swelling, cycle life, NTC monitoring) are mirrored" }
+      - { artifact: "electrical/power-tree.yaml", point: "the MCP73831 power path (pogo -> VIN -> BAT -> cell) is mirrored; the single-point ground is mirrored; the 3.3 V + 1.8 V LDO power path is independent of the charging path" }
+      - { artifact: "electrical/system-architecture.yaml", point: "the V1 power rails (VBAT, VSYS, VCC-3V3, VCC-1V8) are mirrored; the I2C0 bus topology is mirrored; the RR03 + RR04 BLE characteristics are referenced" }
+      - { artifact: "components/mcu-selection.yaml", point: "the nRF54L15's GPIO count (32) is sufficient for the STAT GPIO + the touch INT + the IMU INTs + the haptic EN + the LDO EN (per electrical/sensor-interface.yaml section gpio_allocation)" }
+      - { artifact: "firmware/architecture.md", point: "the firmware's charging state machine (per firmware/architecture.md section 8 power-state machine) is consistent with the charging sequence in section 10 of this document; the wear_state is WEAR_OFF during charging" }
+      - { artifact: "electrical/sensor-interface_part2.yaml", point: "the MCP73831 bring-up (passive; STAT GPIO read) is mirrored; the MAX17048 bring-up (I2C; SOC model load) is mirrored; the RR04 charging_state encoding (0x00..0x04) is mirrored" }
+
+    contradictions_found:
+      description: "contradictions discovered during cross-checking. NONE were found that require modification of existing artifacts."
+      contradictions: []
+      notes: "all values in this artifact are consistent with the parent artifacts. No modifications to existing artifacts were required."
+
+    remaining_cross_document_tbds:
+      description: "TBDs that this artifact does NOT resolve; they remain TBD in other documents."
+      tbd_list:
+        - "MCP73831 STAT pin encodings (per electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger.stat_gpio)"
+        - "MCP73831 charge-termination current threshold (per the MCP73831 datasheet; TBD)"
+        - "MCP73831 thermal protection threshold (per the MCP73831 datasheet; TBD)"
+        - "EEMB-class curved LiPo cell exact dimensions (per components/battery-selection.yaml)"
+        - "EEMB-class curved LiPo cell NTC type + B constant (per the cell datasheet; TBD)"
+        - "EEMB-class curved LiPo cell PCM trip thresholds (per the cell datasheet; TBD)"
+        - "rotate_cw_ccw_threshold_dps + wear thresholds (per protocol/gesture-vocabulary.yaml section unresolved_gesture_parameters)"
+        - "all sensor register addresses (per electrical/sensor-interface_part2.yaml section known_uncertainties.register_addresses)"
+
+  # =========================================================================
+  # 15. Design gate
+  # =========================================================================
+  design_gate:
+    what_is_now_resolved:
+      - "the V1 charger architecture is confirmed: magnetic pogo + MCP73831 (per components/charger-selection.yaml)"
+      - "the V1 charging contact interface is confirmed: 2 contacts (V+ + GND); no data contacts"
+      - "the V1 pogo location is confirmed: Z_PALM_END (palm end of the inner band)"
+      - "the V1 magnetic alignment strategy is conceptualised: magnets in the ring + magnets in the cradle; bipolar-magnet or asymmetric-magnet arrangement to prevent 180-degree rotation"
+      - "the V1 cradle concept is documented: external accessory; magnetic attraction; 5 V supply; not part of the ring scope"
+      - "the V1 electrical safety analysis is documented: ESD protection (optional TVS); reverse-polarity prevention (magnetic + mechanical key); contact-resistance monitoring (firmware)"
+      - "the V1 battery + charger interaction is documented: EEMB-class curved LiPo + PCM + NTC; MCP73831 charge algorithm (CC -> CV -> termination); RR04 charging_state mapping from STAT pin"
+      - "the V1 mechanical packaging is conceptualised: pogo recess in the inner-band shell; silicone gasket; gold-plated contacts"
+      - "the V1 magnetic interference analysis is documented: no interference expected with the BMI270 (no magnetometer), the antenna (DC field), the IQS127D (capacitive), or the cell (no magnetic materials); potential interference with the LRA (TBD on prototype)"
+      - "the V1 charging sequence is documented: 11-step sequence from approach to removal"
+      - "the V1 failure modes are documented: 11 explicit failure modes with mitigations"
+      - "the V1 environmental + wear considerations are documented: sweat resistance, contact wear, cleaning, sealing"
+
+    what_remains_tbd:
+      - "specific commercial pogo connector (no connector is named in components/charger-selection.yaml)"
+      - "specific commercial magnet (no magnet is named; NERVA is reference-only)"
+      - "all physical dimensions (contact geometry, magnet dimensions, shell recess dimensions, sealing geometry)"
+      - "all electrical specifics (charge current setting, STAT encodings, termination thresholds, NTC type, PCM trip thresholds)"
+      - "the cradle design (separate mechanical/industrial-design project)"
+      - "the magnet arrangement (option_a vs option_b) — TBD on prototype characterisation"
+      - "the mechanical key design (peg + notch) — TBD on the industrial-design artifact"
+      - "the waterproofing target (sweat-resistant vs full IP68) — TBD on the brief"
+
+    is_charger_architecture_sufficiently_defined:
+      answer: "YES — the V1 charger architecture is sufficiently defined at the engineering-specification level. The next artifact can proceed."
+      rationale:
+        - "the architecture is confirmed: magnetic pogo + MCP73831 + EEMB-class curved LiPo"
+        - "the contact interface is confirmed: 2 contacts (V+ + GND)"
+        - "the location is confirmed: Z_PALM_END (palm end of the inner band)"
+        - "the magnetic alignment strategy is conceptualised"
+        - "the cradle concept is documented (the cradle is a separate project)"
+        - "the failure modes + safety analysis are documented"
+        - "the TBDs are explicitly tracked for the next artifact to resolve"
+
+    what_must_not_yet_be_designed_in_cad:
+      description: "items that MUST NOT be designed in CAD until the TBDs in section 13 are resolved."
+      items:
+        - "pogo contact geometry (depends on the specific connector selection)"
+        - "pogo contact spacing (depends on the specific connector selection)"
+        - "magnet geometry (depends on the specific magnet selection)"
+        - "magnet placement (depends on the magnet arrangement selection; option_a vs option_b)"
+        - "shell recess geometry (depends on the pogo connector + the silicone gasket)"
+        - "silicone gasket geometry (depends on the shell recess)"
+        - "cradle geometry (separate mechanical/industrial-design project)"
+        - "mechanical key geometry (depends on the cradle design)"
+        - "any commercial part dimensions (the specific pogo connector + the specific magnet are NOT selected)"
+
+  references:
+    - { ref: "mechanical/inner-band-layout.yaml", url: "internal", note: "Z_PALM_END zone + pogo position + magnetic interference analysis" }
+    - { ref: "mechanical/crown-layout.yaml", url: "internal", note: "Coordinate system" }
+    - { ref: "components/charger-selection.yaml", url: "internal", note: "V1 selection: option_B magnetic pogo + MCP73831" }
+    - { ref: "components/battery-selection.yaml", url: "internal", note: "EEMB-class curved LiPo + PCM + NTC + safety" }
+    - { ref: "components/mcu-selection.yaml", url: "internal", note: "nRF54L15 GPIO count for STAT" }
+    - { ref: "electrical/power-tree.yaml", url: "internal", note: "MCP73831 power path + LDOs + decoupling" }
+    - { ref: "electrical/system-architecture.yaml", url: "internal", note: "V1 power rails + I2C bus + RR03 + RR04" }
+    - { ref: "firmware/architecture.md", url: "internal", note: "Charging state machine + wear_state" }
+    - { ref: "electrical/sensor-interface_part2.yaml", url: "internal", note: "MCP73831 + MAX17048 bring-up + STAT GPIO encoding" }
+    - { ref: "protocol/ring-gatt-spec.yaml", url: "internal", note: "RR04 charging_state encoding + RR03 battery encoding + RR07 configuration" }
+    - { ref: "research/smart-ring-landscape.md", url: "internal", note: "NERVA_Ring reference style for magnetic pogo" }
+    - { ref: "research/license-audit.md", url: "internal", note: "NERVA_Ring license is UNKNOWN; no NERVA BOM copied" }
+    - { ref: "MCP73831 datasheet", url: "https://www.microchip.com/en-us/product/MCP73831", note: "Authoritative for charge algorithm + STAT encoding + TS input + thermal protection; every MCP73831 specification in this document is TBD until this datasheet is consulted" }
+    - { ref: "EEMB LiPo datasheet (cell-specific)", url: "https://www.eemb.com/", note: "Authoritative for cell dimensions + NTC type + PCM thresholds; every cell-specific value in this document is TBD until the cell datasheet is consulted" }
+    - { ref: "Johanson 2450AT18B100 datasheet", url: "https://www.johansontechnology.com/products/antennas/2450AT18B100", note: "Authoritative for antenna RF behaviour; referenced for the magnets_vs_antenna analysis (DC field)" }
+    - { ref: "Bosch BMI270 datasheet", url: "https://www.bosch-sensortec.com/products/smart-sensors/bmi270.html", note: "Authoritative for IMU no-magnetometer fact" }
+    - { ref: "Azoteq IQS127D datasheet", url: "https://www.azoteq.com/products/iqs127d", note: "Authoritative for capacitive (not magnetic) touch IC" }
+    - { ref: "Precision Microdrives 308-101 datasheet", url: "https://www.precisionmicrodrives.com/", note: "Authoritative for LRA magnetic circuit + 175 Hz resonance" }
+

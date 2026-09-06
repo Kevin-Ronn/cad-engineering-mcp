@@ -1,0 +1,49 @@
+schema_version: 1
+component:
+  id: generic_6x10_dynamic_speaker_knowles_class
+  category: micro_speaker_dynamic_small
+  units: mm
+  role: smallest_envelope_speaker_candidate
+
+source:
+  manufacturer: various (Knowles hearing-aid division, Sonion, Bujeon, Fortune, Goertek)
+  part_number: "generic 6 x 10 mm dynamic receiver / hearing-aid class"
+  source_type: market_survey_no_specific_pn
+  source_docs:
+    - url: https://www.knowles.com
+      description: "Knowles official site (hearing-aid components)"
+
+mechanical:
+  dimensions_mm: { length: 6.0, width: 10.0, height: 3.0 }
+  weight_g: approximately 0.5
+  port_orientation: front (sound emission from the 6 mm side; acoustic port can be a tube / waveguide)
+  acoustic_type: sealed (rear enclosed by the small volume; or open-backed depending on the part)
+  source_for_mechanical: typical hearing-aid class
+
+electrical:
+  impedance_ohm: 32 (typical hearing-aid class) or 16 (some parts)
+  rated_power_w: 0.01 to 0.05 (hearing-aid class; low-power)
+  maximum_power_w: 0.05 to 0.1
+  sensitivity_db_spl_per_w_1m: 95 to 110 (hearing-aid class; high sensitivity at low power)
+  frequency_response_hz: 200 to 8000 (tuned per part)
+  source_for_electrical: typical hearing-aid class
+
+environmental:
+  operating_temperature_c: { min: -20, max: 60 }
+
+purchase:
+  distributor: Knowles direct; Sonion direct; Bujeon direct; LCSC (some); Alibaba (small aftermarket)
+  unit_price_usd: 5 to 20 (single-piece)
+  moq: 100+ for direct
+  lead_time: 4 to 12 weeks
+  availability: production
+
+confidence:
+  overall: LOW_FOR_SPECIFIC_PART
+  sources: market_survey_hearing_aid_class
+  gaps:
+    - "No specific part number chosen"
+    - "Many options in the 6 x 10 mm hearing-aid class; acoustic measurement required"
+
+constraints:
+  status: REJECTED_FOR_GLASSES_USE_CASE — the 6 x 10 mm hearing-aid class is tuned for in-ear canal use with the wearer's ear canal as a sealed back-volume. In a glasses-temple pod, the back-volume is too large and the resonance is wrong. The 15 x 11 mm (or 16 x 9 mm) dynamic class is the right form factor for glasses. The 6 x 10 mm class is included here for reference only.

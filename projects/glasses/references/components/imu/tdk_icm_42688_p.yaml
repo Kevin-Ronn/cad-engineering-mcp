@@ -1,0 +1,49 @@
+schema_version: 1
+component:
+  id: tdk_icm_42688_p
+  category: 6_axis_imu_accel_gyro_high_perf
+  units: mm
+  role: high_performance_imu_candidate
+
+source:
+  manufacturer: TDK InvenSense
+  part_number: ICM-42688-P
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://invensense.tdk.com/products/motion-tracking/6-axis/icm-42688-p/
+      description: "TDK ICM-42688-P product page"
+
+mechanical:
+  package: 14-pin LGA
+  dimensions_mm: { length: 2.5, width: 3.0, height: 0.8 }
+  source_for_mechanical: TDK datasheet
+
+electrical:
+  supply_voltage_v: { min: 1.71, typ: 1.8, max: 3.6 }
+  interfaces: [I2C, SPI up to 24 MHz]
+  accelerometer_ranges_g: [2, 4, 8, 16, 32]
+  gyroscope_ranges_dps: [15.625, 31.25, 62.5, 125, 250, 500, 1000, 2000]
+  odr_max_hz: 32000 (gyro); 8000 (accel)
+  current_active_uA: 700 (accel + gyro, typical)
+  current_sleep_uA: 8
+  fifo_bytes: 2048
+  interrupts: 2
+  source_for_electrical: TDK datasheet summary
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: TDK direct; Mouser; DigiKey
+  unit_price_usd: 4 to 7 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+
+constraints:
+  status: SERIOUS — high-end performance (32 kHz ODR, 32 g range); more expensive than BMI270. Best for advanced gesture / head-tracking pipelines.
+  linux_support: "Mainline Linux IIO driver (icm42600 family); device-tree binding exists."

@@ -1,0 +1,182 @@
+schema_version: 1
+system_interface_inventory:
+  id: v853_smart_glasses_signal_inventory
+  date: 2026-09-05
+  source: cross-referenced against the V853 datasheet, AXP2101 PMIC, and the chosen components in the audio/camera/display/power/imu/support reference libraries
+  confidence: MEDIUM_to_HIGH (signal-level inventory); LOW for specific V853 pin assignments (see UNKNOWN notes below)
+
+  interfaces:
+
+    - name: camera_1_mipi_csi
+      bus: MIPI CSI-2
+      lane_count: 2 (each camera on its own 2-lane sub-channel)
+      signals: CSI_D0P, CSI_D0N, CSI_D1P, CSI_D1N, CSI_CLKP, CSI_CLKN, plus I2C control (sensor SCCB) and clock
+      voltage_domain: 1.8 V (MIPI PHY); 1.8 V I2C for sensor control
+      level_shifter_required: NO
+      pull_required: NO (MIPI is differential; sensor I2C has internal pull-ups on most sensors)
+      esd_required: YES (TVS on FPC pins near the connector)
+      v853_peripheral: MIPI CSI (V853 supports 1x 4-lane OR 2x 2-lane per datasheet section 1.3.6.4)
+      v853_pin_assignment: UNKNOWN (datasheet has the MIPI CSI pin list in section 2.2; the glasses PCB must assign the specific SoC ball to each CSI lane)
+      glasses_target: 1x 2-lane sub-channel to the left camera
+
+    - name: camera_2_mipi_csi
+      bus: MIPI CSI-2
+      lane_count: 2
+      signals: CSI_D0P, CSI_D0N, CSI_D1P, CSI_D1N, CSI_CLKP, CSI_CLKN, plus I2C control and clock
+      voltage_domain: 1.8 V
+      level_shifter_required: NO
+      pull_required: NO
+      esd_required: YES
+      v853_peripheral: MIPI CSI
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x 2-lane sub-channel to the right camera
+
+    - name: display_mipi_dsi
+      bus: MIPI DSI
+      lane_count: 4
+      signals: DSI_D0P, DSI_D0N, DSI_D1P, DSI_D1N, DSI_D2P, DSI_D2N, DSI_D3P, DSI_D3N, DSI_CLKP, DSI_CLKN, plus TE (tearing-effect), reset, and backlight enable
+      voltage_domain: 1.8 V (MIPI PHY); 1.8 V GPIO for TE/reset
+      level_shifter_required: NO
+      pull_required: NO
+      esd_required: YES (TVS on FPC pins)
+      v853_peripheral: MIPI DSI (V853 supports 4-lane DSI up to 1920 x 1200 @ 60 fps per datasheet section 1.3.5)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x 4-lane DSI to the monocular micro-OLED/waveguide display engine
+
+    - name: imu_i2c
+      bus: I2C
+      signals: SDA, SCL
+      voltage_domain: 1.8 V
+      level_shifter_required: NO
+      pull_required: YES (4.7 kohm typical to 1.8 V; the IMU does not have strong internal pull-ups)
+      esd_required: NO (the IMU is on a flex / PCB inside the glasses, not on an exposed connector)
+      v853_peripheral: TWI0 or TWI1 (V853 has 5x TWI per datasheet section 1.3.8)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x BMI270 IMU on the compute-PCB (temple)
+
+    - name: microphone_pdm
+      bus: PDM (Digital PDM, single-bit data + clock)
+      signals: PDM_DATA, PDM_CLK
+      voltage_domain: 1.8 V
+      level_shifter_required: NO
+      pull_required: NO
+      esd_required: NO (the mic is inside the glasses, on a flex / PCB; acoustic port only)
+      v853_peripheral: DMIC (V853 supports up to 8 digital PDM mics on the DMIC block per datasheet section 1.3.7.3)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x MP23DB01HP on the upper-front-frame
+
+    - name: audio_amp_i2s
+      bus: I2S (3-wire: BCLK, LRCLK, DIN; plus optional SDOUT for feedback)
+      signals: BCLK, LRCLK, DIN
+      voltage_domain: 1.8 V (verify per amplifier datasheet)
+      level_shifter_required: POSSIBLY (if the chosen amp has 3.3 V I/O)
+      pull_required: NO
+      esd_required: NO
+      v853_peripheral: I2S0 or I2S1 (V853 has 2x I2S/PCM per datasheet section 1.3.7.2)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x class-D amp per temple (2x total)
+
+    - name: wifi_bt_sdio_uart
+      bus: SDIO 2.0 (Wi-Fi) + UART (BT) + control
+      signals: SDIO_CLK, SDIO_CMD, SDIO_D0-D3, UART_TXD, UART_RXD, UART_RTS, UART_CTS, plus chip-enable, reset, host-wake, device-wake
+      voltage_domain: 1.8 V (verify per XR829 datasheet; some XR829 variants are 3.3 V)
+      level_shifter_required: POSSIBLY (depends on XR829 I/O voltage)
+      pull_required: YES (4.7 kohm on SDIO_CMD and SDIO_D0 typically; verify per XR829)
+      esd_required: NO (antenna is via IPEX MHF; no exposed signal)
+      v853_peripheral: SDIO (V853 has SDIO 2.0/3.0 per datasheet section 1.2) + UART
+      v853_pin_assignment: UNKNOWN
+      glasses_target: XR829 module on the compute-PCB (temple)
+
+    - name: emmc
+      bus: eMMC 5.1
+      signals: 8 data lines (D0-D7), 1 clock, 1 command, plus reset, power-on, and VCC/VCCQ
+      voltage_domain: 1.8 V (VCCQ) for the I/O; 3.3 V (VCC) for the cell
+      level_shifter_required: NO
+      pull_required: NO
+      esd_required: NO
+      v853_peripheral: SMHC0 (V853 has 3x SMHC per datasheet section 1.2)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: eMMC 5.1 8 GB or 32 GB on the compute-PCB (temple)
+
+    - name: usb_c
+      bus: USB 2.0 DRD (data) + VBUS (charging)
+      signals: USB_DP, USB_DN, VBUS, CC1, CC2, GND
+      voltage_domain: 3.3 V (USB D+/D-); 5 V (VBUS)
+      level_shifter_required: NO (V853 USB 2.0 DRD I/O is 3.3 V tolerant)
+      pull_required: YES (5.1 kohm on CC1 and CC2 to GND for UFP / device role requesting 5 V default)
+      esd_required: YES (TPD4E05U04 4-channel TVS on CC1, CC2, D+, D-)
+      v853_peripheral: USB 2.0 DRD (1x per datasheet section 1.3.8)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x USB-C receptacle on a temple exterior
+
+    - name: fuel_gauge_i2c
+      bus: I2C
+      signals: SDA, SCL
+      voltage_domain: 1.8 V (verify per MAX17048 datasheet; 2.5 to 4.5 V supply but I/O can be 1.8 V)
+      level_shifter_required: NO
+      pull_required: YES (shared with the I2C bus)
+      esd_required: NO
+      v853_peripheral: TWI0 (shared bus)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x MAX17048 on the compute-PCB (temple)
+
+    - name: charger_pmic_i2c
+      bus: I2C
+      signals: SDA, SCL (charger + PMIC control)
+      voltage_domain: 1.8 V
+      level_shifter_required: NO
+      pull_required: YES (shared with the I2C bus)
+      esd_required: NO
+      v853_peripheral: TWI0 (shared bus) or TWI1 (separate bus)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x BQ25185 + 1x AXP2101 on the compute-PCB (temple)
+
+    - name: ir_led_control
+      bus: GPIO + PWM (or just GPIO)
+      signals: 1x or 6x GPIO (one per LED or a common driver); 1x PWM optional for brightness control
+      voltage_domain: 1.8 V (V853 GPIO)
+      level_shifter_required: NO (the LED driver MOSFET is logic-level at 1.8 V)
+      pull_required: NO
+      esd_required: NO
+      v853_peripheral: GPIO
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 6x VSMA1094750X02 IR LEDs (4 temple, 2 front) with a current-limit resistor or MOSFET driver per LED
+
+    - name: ambient_light_sensor_i2c
+      bus: I2C
+      signals: SDA, SCL
+      voltage_domain: 1.8 V
+      level_shifter_required: NO
+      pull_required: YES (shared)
+      esd_required: NO
+      v853_peripheral: TWI0 (shared bus)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 1x VEML7700 in the upper-front-frame with a light pipe
+
+    - name: temperature_sensor_i2c
+      bus: I2C
+      signals: SDA, SCL
+      voltage_domain: 1.8 V
+      level_shifter_required: NO
+      pull_required: YES (shared)
+      esd_required: NO
+      v853_peripheral: TWI0 (shared bus)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: 2x TMP117 (one per temple, in thermal contact with the cell)
+
+    - name: gpio_misc
+      bus: GPIO
+      signals: 1-3 GPIO (e.g. for haptic driver enable, user button, status LED, IR-cut filter switch)
+      voltage_domain: 1.8 V
+      level_shifter_required: NO
+      pull_required: depends on the GPIO function
+      esd_required: depends on exposure
+      v853_peripheral: GPIO (8 banks per datasheet section 1.3.8)
+      v853_pin_assignment: UNKNOWN
+      glasses_target: depends on final feature set
+
+  unknown_pin_assignments:
+    note: "The V853 datasheet (YuzukiHD mirror at v853-datasheet.pdf) lists the full pin map in section 2.2. The glasses PCB must assign the specific SoC ball to each interface. The ProjectYosemite reference board (Hardware/Project/ProProject...zip) has the actual SoC ball assignments for ProjectYosemite's specific feature set. The glasses PCB will need a new ball assignment that fits the temple-mounted, dual-temple, dual-camera, monocular-display feature set. This work is the next step and is NOT part of this reference-acquisition pass."
+
+  shared_i2c_bus_topology:
+    note: "All I2C devices (IMU, mic PMIC, fuel gauge, charger, ALS, temperature sensor, optional haptic driver) can share one I2C bus on the V853, with the V853 as the master. Each device has a unique 7-bit address. Pull-ups (4.7 kohm typical) are required on SDA and SCL to 1.8 V. The ProjectYosemite reference uses 2x TWI controllers; the glasses design can use TWI0 for the shared bus and TWI1 if a second bus is needed (e.g. for the audio amplifier control)."

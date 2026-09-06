@@ -1,0 +1,178 @@
+schema_version: 1
+component:
+  id: allwinner_v853_soc
+  category: system_on_chip
+  units: mm
+  role: compute_target_soc
+
+source:
+  manufacturer: Allwinner Technology
+  part_number: V853 (V853S is the lower-NPU variant; 0.8 TOPS)
+  family: AI vision / smart camera SoC
+  process_node: 22 nm
+  source_type: manufacturer_datasheet
+  source_docs:
+    - path: projects/glasses/references/components/compute/v853/v853-datasheet.pdf
+      description: "V853 & V853S Datasheet, Revision 1.1, 2022-03-23"
+      url: https://raw.githubusercontent.com/YuzukiHD/ProjectYosemite/main/Datasheets/v853-amp-v853s_datasheet_v1.1%201.pdf
+    - path: projects/glasses/references/components/compute/v853/v853-brief.pdf
+      description: "V853 brief v1.4"
+      url: https://raw.githubusercontent.com/YuzukiHD/ProjectYosemite/main/Datasheets/v853-brief_en_v1.4.pdf
+
+mechanical:
+  package: LFBGA
+  pin_count: 318
+  body_size_mm:
+    x: 12.0
+    y: 12.0
+  ball_pitch_mm: 0.50
+  source_for_mechanical: datasheet_section_2.1.1
+  weight_g: UNKNOWN
+  mounting: BGA, reflow-soldered to carrier PCB; not a stand-alone board
+
+electrical:
+  recommended_operating_conditions:
+    ambient_temperature_c:
+      min: -20
+      max: 70
+    junction_temperature_c:
+      min: -40
+      max: 115
+    avcc_analog_v:
+      min: 1.77
+      typ: 1.80
+      max: 1.83
+    vcc_io_3v3_v:
+      min: 2.97
+      typ: 3.30
+      max: 3.63
+  source_for_electrical: datasheet_section_2.3.4
+
+cpu:
+  application_cores:
+    - core: ARM Cortex-A7
+      clock_max_mhz: 1000
+      cache: "32 KB I-cache + 32 KB D-cache + 128 KB L2"
+  real_time_core:
+    - core: Alibaba Xuantie E907 (RISC-V)
+      clock_max_mhz: 600
+      cache: "16 KB I-cache + 16 KB D-cache"
+  source_for_cpu: datasheet_section_1.3.2
+
+npu:
+  v853_max_tops_int8: 1.0
+  v853s_max_tops_int8: 0.8
+  internal_buffer_kb: 128
+  frameworks: TensorFlow, Caffe, Tflite, PyTorch, Onnx
+  glasses_use_case: "Heavy AI runs on the phone. V853 NPU is reserved for light on-device preprocessing (motion-trigger prefilter, exposure/AE pre-stat, voice keyword)."
+
+memory_interface:
+  dram: 16-bit DDR3 / DDR3L
+  dram_capacity_supported: "module-dependent (V853S integrates 128 MB DDR3L SiP)"
+  storage_interfaces: SMHC x 3 (SD3.0 / eMMC), SPI x 4 (SPI NOR/NAND)
+  source_for_memory: datasheet_section_1.2
+
+video_input:
+  isp: 5 MP @ 30 fps, max 3072 x 3072
+  parallel_csi:
+    data_width_bits: [8, 10, 12, 16]
+    standards: [BT.656, BT.601, BT.1120]
+    max_pixel_clock_mhz: 148.5
+  mipi_csi:
+    version: "MIPI CSI-2 V1.1 / D-PHY V1.1"
+    configurations:
+      - "1x 4-lane"
+      - "2x 2-lane"
+    per_lane_max_gbps: 1.2
+    max_video_capture: "5 MP @ 30 fps"
+  glasses_use_case: "Two forward cameras each on a 2-lane MIPI CSI sub-channel. Two independent 2-lane is preferred over a shared 4-lane because each camera then has its own ISP virtual channel and the cameras never need to share bandwidth."
+
+video_output:
+  mipi_dsi:
+    version: "MIPI DSI V1.02 / D-PHY V1.2"
+    lanes: 4
+    max_resolution: "1920 x 1200 @ 60 fps"
+    per_lane_max_gbps: 1.0
+  rgb_lcd:
+    max_resolution: "1920 x 1080 @ 60 fps (DE/SYNC mode)"
+    i8080_max: "800 x 480 @ 60 fps"
+  glasses_use_case: "1x 4-lane MIPI DSI to the monocular micro-OLED/waveguide engine."
+
+audio:
+  internal_codec:
+    dac_channels: 1
+    dac_resolution_bits: [16, 20]
+    dac_sample_rate_khz: [8, 192]
+    adc_channels: 2
+    adc_resolution_bits: [16, 20]
+    adc_sample_rate_khz: [8, 48]
+    microphone_inputs: "MICIN1P/N + MICIN2P/N (differential)"
+    line_outputs: "LINEOUTP/N (differential)"
+  i2s_pcm:
+    count: 2
+    names: [I2S0, I2S1]
+    max_channels: 16
+    sample_rate_khz: [8, 384]
+  dmic:
+    max_microphones: 8
+    sample_rate_khz: [8, 48]
+  glasses_use_case: "DMIC for the single microphone. I2S0/1 to the two small speaker amps (one per temple)."
+
+wireless:
+  integrated: false
+  notes: "V853 has no integrated Wi-Fi/BT. Must be added via SDIO/UART/USB with an external module (e.g. XR829, AW859A, RTL8723DS)."
+  recommended_external_modules:
+    - id: xr829_module
+      interface: SDIO 2.0 + UART (BT)
+      notes: "Xradio XR829 2.4 GHz Wi-Fi 4 + BT 4.2; used on 100ASK V853 Pro."
+    - id: aw859a
+      interface: SDIO 2.0 + UART (BT)
+      notes: "Allwinner AW859A 2.4 GHz Wi-Fi 4 + BT 4.2; recommended for Allwinner ecosystem."
+
+usb:
+  count: 1
+  type: "USB 2.0 DRD (Dual-Role Device, OTG-capable)"
+  glasses_use_case: "USB-C receptacle on a temple exterior; DRD allows host or device mode (charging in, data to phone in host mode)."
+
+ethernet:
+  mac: 10/100/1000 EMAC
+  phy: external (RMII/RGMII)
+  glasses_use_case: "Not used in glasses; documented for completeness."
+
+security:
+  crypto_engine: AES, DES, 3DES, RSA up to 4096-bit, ECC up to 521-bit, MD5, SHA, HMAC
+  trng_bits: 256
+  efuse_bits: 2048
+
+peripherals:
+  twi: 5
+  uart: 4
+  spi: 4
+  pwm_channels: 12
+  gpadc_channels: 4
+  gpio: 8 banks (per-pin count varies)
+
+operating_temperature:
+  ambient_c: [-20, 70]
+  junction_c: [-40, 115]
+  storage_c: [-40, 150]
+  source_for_temperature: datasheet_section_2.3.2_and_2.3.4
+
+purchase:
+  die_only_price: UNKNOWN
+  die_only_moq: UNKNOWN
+  evaluation_boards_available_from: [100ask, Allwinner direct, LCSC for some SKUs]
+  source_for_purchase: UNKNOWN
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet
+  gaps:
+    - "Power consumption parameters: datasheet directs to Allwinner FAE."
+    - "Power-on/power-off sequence diagram only in datasheet Figure 2-2; not extracted here."
+    - "Detailed MIPI CSI/DSI electrical timing tables (Table 2-17 .. 2-37) present but not extracted into this YAML."
+
+constraints:
+  exact_dimensions_required: true
+  guessed_dimensions_forbidden: true
+  bare_die_is_not_a_glasses_module: "V853 is a BGA-318 SoC. A wearable product cannot be built around the bare die; a carrier PCB with PMU, DRAM, eMMC, and an M.2/board-to-board connector is required. See the SoM candidate YAMLs."

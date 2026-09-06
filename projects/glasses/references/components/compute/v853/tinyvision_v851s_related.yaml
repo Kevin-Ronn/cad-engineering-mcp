@@ -1,0 +1,48 @@
+schema_version: 1
+component:
+  id: tinyvision_v851se_v851s3
+  category: open_source_sbc
+  units: mm
+  role: documentation_only_related_part
+  status: NOT_A_V853 - included here for reference only
+
+source:
+  manufacturer: YuzukiHD
+  part_number: TinyVision
+  soc: Allwinner V851se (64 MB DDR2) or V851s3 (128 MB DDR3L)
+  source_type: open_source_hardware_repository
+  source_docs:
+    - url: https://github.com/YuzukiHD/TinyVision
+      description: "Repository"
+
+note: "TinyVision is built on the V851se / V851s3, NOT the V853. It is included here as a reference for an existing small-form-factor Allwinner RISC-V SBC pattern, and to make explicit that it must not be confused with the V853 line. The V851s has 0.5 TOPS NPU and 1x 2-lane MIPI CSI only, which is insufficient for the 2-camera + DSI + heavier-processing V853 target. Do not adopt TinyVision for this project."
+
+mechanical:
+  dimensions_mm: UNKNOWN
+  pcb_thickness_mm: UNKNOWN
+  mounting_holes: UNKNOWN
+
+electrical:
+  cpu: Cortex-A7 up to 1200 MHz
+  rtos_core: RISC-V E907GC @ 600 MHz
+  npu: 0.5 TOPS int8
+  ram: 64 MB DDR2 (V851se) or 128 MB DDR3L (V851s3)
+  storage: TF card (UHS-SDR104) + onboard SD NAND
+
+video_input:
+  mipi_csi: 1x 2-lane
+  isp: 1 individual ISP, max 2560 x 1440
+  supported_sensors: GC2053, GC2083
+
+video_output:
+  mipi_dsi: NOT_PRESENT_per_repo
+
+purchase:
+  taobao: https://item.taobao.com/item.htm?&id=756255119524
+  docs: https://yuzukihd.top/TinyVision/#/
+
+confidence:
+  overall: HIGH_that_this_is_NOT_V853
+
+constraints:
+  do_not_adopt_for_glasses: "TinyVision is V851se/s3 only, not V853. Only one 2-lane MIPI CSI is exposed. No MIPI DSI on the V851s line. Wrong part for this project."

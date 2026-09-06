@@ -1,0 +1,235 @@
+schema_version: 1
+v853_logical_connectivity:
+  id: v853_logical_connectivity
+  date: 2026-09-05
+  status: READ-ONLY logical schematic-capture preparation. No physical BGA ball numbers are invented. No PCB routing.
+
+  note: "Every entry in this file is a LOGICAL name (signal, function, bus). Physical V853 BGA ball numbers are NOT in this file; they are in the V853/V853S_PINOUT.sls (not publicly available; see NDA-BLOCKERS.md)."
+
+  v853_peripheral_logical_signals:
+
+    - peripheral: MIPI_CSI_0 (Camera 1, left)
+      logical_signals:
+        - { name: "CSI0_D0_P", type: "MIPI data lane 0+", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI0_D0_N", type: "MIPI data lane 0-", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI0_D1_P", type: "MIPI data lane 1+", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI0_D1_N", type: "MIPI data lane 1-", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI0_CLK_P", type: "MIPI clock+", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI0_CLK_N", type: "MIPI clock-", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI0_MCLK0", type: "CSI master clock (optional, for cameras that need it; IMX708 does NOT)", voltage: "1.8 V (VCC18-MCSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.6.4; 100ASK public dts uses PA12 for this" }
+      control_signals:
+        - { name: "CAM1_RESET", type: "GPIO output", voltage: "1.8 V", direction: "output (to camera)", pull: "no internal pull (verify per camera FPC)", source: "100ASK public dts uses PA18 for sensor0_reset" }
+        - { name: "CAM1_STANDBY", type: "GPIO output", voltage: "1.8 V", direction: "output (to camera)", pull: "no", source: "100ASK public dts uses PA19 for sensor0_pwdn" }
+      i2c_control:
+        - { name: "CAM1_SCL", type: "I2C clock (SCCB)", voltage: "1.8 V", direction: "output (from V853)", pull: "external 4.7 kohm to 1.8 V on the SoC's I2C bus", source: "100ASK public dts uses TWI0 PE16/PE17 (kernel dts) or TWI4 PI1/PI2 (U-Boot dts)" }
+        - { name: "CAM1_SDA", type: "I2C data (SCCB)", voltage: "1.8 V", direction: "bidirectional", pull: "external 4.7 kohm to 1.8 V on the SoC's I2C bus", source: "same as CAM1_SCL" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The 2-lane sub-channel A is the first half of the V853's 4-lane CSI block per the V853 datasheet section 1.3.6.4. The 100ASK reference uses PA12 for CSI MCLK0; the IMX708 sensor does NOT require an external MCLK, so this pin can be left as GPIO if unused. The camera FPC pinout is 15-pin 1.0 mm pitch (RPi CM3 compatible)."
+
+    - peripheral: MIPI_CSI_1 (Camera 2, right)
+      logical_signals:
+        - { name: "CSI1_D0_P", type: "MIPI data lane 0+ (sub-channel B, same D0 as CSI0 in 2x 2-lane mode)", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI1_D0_N", type: "MIPI data lane 0-", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI1_D1_P", type: "MIPI data lane 1+", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI1_D1_N", type: "MIPI data lane 1-", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI1_CLK_P", type: "MIPI clock+ (SHARED with CSI0 in 2x 2-lane mode)", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI1_CLK_N", type: "MIPI clock- (SHARED with CSI0)", voltage: "1.8 V (VCC18-MCSI)", direction: "input (to V853)", pull: "no", source: "V853 datasheet section 1.3.6.4" }
+        - { name: "CSI1_MCLK1", type: "CSI master clock (optional, for cameras that need it; IMX708 does NOT)", voltage: "1.8 V (VCC18-MCSI)", direction: "output (from V853)", pull: "no", source: "100ASK public dts uses PA13 for this" }
+      control_signals:
+        - { name: "CAM2_RESET", type: "GPIO output", voltage: "1.8 V", direction: "output (to camera)", pull: "no", source: "100ASK public dts uses PH13 for sensor1_reset" }
+        - { name: "CAM2_POWER_EN", type: "GPIO output (or LDO enable)", voltage: "1.8 V", direction: "output (to LDO or to camera)", pull: "no", source: "100ASK public dts uses PI0 for sensor1_power_en" }
+      i2c_control:
+        - { name: "CAM2_SCL", type: "I2C clock (SCCB; SAME bus as CAM1)", voltage: "1.8 V", direction: "output (from V853)", pull: "external 4.7 kohm to 1.8 V on the SoC's I2C bus", source: "100ASK public dts: TWI0 PE16/PE17 OR TWI4 PI1/PI2" }
+        - { name: "CAM2_SDA", type: "I2C data (SCCB; SAME bus as CAM1, DIFFERENT address)", voltage: "1.8 V", direction: "bidirectional", pull: "external 4.7 kohm to 1.8 V on the SoC's I2C bus", source: "same as CAM2_SCL" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The 2-lane sub-channel B is the second half of the V853's 4-lane CSI block per the V853 datasheet section 1.3.6.4. In the 2x 2-lane mode, BOTH sub-channels share the D0/D1 data lanes + the clock lane (per MIPI CSI-2 virtual-channel). The two cameras are differentiated by their SCCB (I2C) addresses. The IMX708's SCCB address is 0x1A or 0x10 depending on the variant; the two camera FPCs must select DIFFERENT addresses. The 100ASK reference uses PH13 for sensor1_reset and PI0 for sensor1_power_en."
+
+    - peripheral: MIPI_DSI_0 (display)
+      logical_signals:
+        - { name: "DSI_D0_P", type: "MIPI DSI data lane 0+", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_D0_N", type: "MIPI DSI data lane 0-", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_D1_P", type: "MIPI DSI data lane 1+", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_D1_N", type: "MIPI DSI data lane 1-", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_D2_P", type: "MIPI DSI data lane 2+", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_D2_N", type: "MIPI DSI data lane 2-", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_D3_P", type: "MIPI DSI data lane 3+", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_D3_N", type: "MIPI DSI data lane 3-", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_CLK_P", type: "MIPI DSI clock+", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DSI_CLK_N", type: "MIPI DSI clock-", voltage: "1.8 V (VCC18-MDSI)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.5.1" }
+      control_signals:
+        - { name: "DISP_TE", type: "GPIO input (tearing-effect signal from the display)", voltage: "1.8 V", direction: "input (to V853)", pull: "no internal pull; the display typically has a 100 kohm pull-up on TE", source: "V853 datasheet section 1.3.5.1 (DSI standard)" }
+        - { name: "DISP_RESET", type: "GPIO output (active low; held high during normal operation)", voltage: "1.8 V", direction: "output (to display)", pull: "100 kohm pull-up on the display FPC", source: "V853 datasheet section 1.3.5.1" }
+        - { name: "DISP_BL_EN", type: "GPIO output (backlight enable; for the LCoS backlight; the micro-OLED does not need a backlight)", voltage: "1.8 V", direction: "output (to display)", pull: "no", source: "V853 datasheet section 1.3.5.1; only needed if the display engine has a backlight" }
+        - { name: "DISP_PWM", type: "PWM output (backlight brightness; only needed if the display engine has a backlight)", voltage: "1.8 V", direction: "output (to display)", pull: "no", source: "V853 has 12 PWM channels per datasheet section 1.3.8" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "V853 supports 4-lane DSI up to 1920x1200@60 fps per datasheet section 1.3.5.1. The 640x400 target is well within this. The DSI data and clock pins are in the SoC pinctrl dtsi (NOT publicly available). The 100ASK reference uses RGB LCD, not DSI; the DSI pin set is not enumerated in the public dts. A custom Linux DRM/KMS panel driver is required for the chosen 0.23-inch 640x400 micro-OLED."
+
+    - peripheral: SMHC_0 (eMMC)
+      logical_signals:
+        - { name: "eMMC_CLK", type: "eMMC clock (52 MHz max for HS200; 200 MHz for HS400)", voltage: "1.8 V or 3.3 V (per eMMC mode)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 4.2 (SMHC); 100ASK public dts uses sdc2 with PC0..PC11" }
+        - { name: "eMMC_CMD", type: "eMMC command", voltage: "1.8 V or 3.3 V", direction: "bidirectional", pull: "no (the eMMC has internal pull-up)", source: "100ASK public dts uses sdc2 PC1" }
+        - { name: "eMMC_D0..D7", type: "eMMC data 0..7 (8-bit data bus)", voltage: "1.8 V or 3.3 V", direction: "bidirectional", pull: "no (eMMC has internal pull-up)", source: "100ASK public dts uses sdc2 PC2..PC9" }
+        - { name: "eMMC_RSTN", type: "eMMC reset (active low; held high during normal operation)", voltage: "1.8 V or 3.3 V", direction: "output (from V853)", pull: "100 kohm pull-up on the eMMC", source: "100ASK public dts uses sdc2 PC11" }
+        - { name: "eMMC_DS", type: "eMMC data strobe (HS400 only)", voltage: "1.8 V", direction: "bidirectional (returned by the eMMC; used for synchronous data output)", pull: "no (eMMC drives DS)", source: "100ASK public dts uses sdc2 PC10" }
+      control_signals:
+        - { name: "eMMC_PWR_EN", type: "GPIO output (eMMC LDO enable; the LDO is on the glasses' compute PCB)", voltage: "1.8 V", direction: "output (from V853 to LDO)", pull: "no", source: "V853 datasheet section 4.2" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "100ASK uses SDC2 / SMHC2 for eMMC. The glasses' design uses SMHC0 (per v853-glasses-pin-assignment.yaml); the 100ASK uses SMHC0 for SD card. The mapping between SMHC0/SMHC1/SMHC2 and the V853's ball pins is in the SoC pinctrl dtsi (NOT publicly available). For the glasses' design, the eMMC must be on an SMHC controller that supports 8-bit data and HS400 mode. The V853 has 3 SMHC controllers per datasheet section 4.2; the choice between SMHC0 / SMHC1 / SMHC2 is open until the SoC pinctrl dtsi is obtained. For the glasses' design, SMHC0 is the natural choice (per the v853-glasses-pin-assignment.yaml)."
+
+    - peripheral: SMHC_1 (SDIO Wi-Fi)
+      logical_signals:
+        - { name: "WIFI_SDIO_CLK", type: "SDIO clock (50 MHz max per 100ASK dts; SDIO 2.0 standard)", voltage: "1.8 V or 3.3 V (per the Wi-Fi module's IO voltage; AW-CM276SM is 3.3 V)", direction: "output (from V853)", pull: "10 kohm to VIO (per SDIO spec)", source: "100ASK public dts uses sdc1 PG0/PG1/PG2/PG3/PG4/PG5" }
+        - { name: "WIFI_SDIO_CMD", type: "SDIO command", voltage: "1.8 V or 3.3 V", direction: "bidirectional", pull: "10 kohm to VIO (per SDIO spec)", source: "100ASK public dts uses sdc1 PG0..PG5" }
+        - { name: "WIFI_SDIO_D0..D3", type: "SDIO data 0..3 (4-bit data bus)", voltage: "1.8 V or 3.3 V", direction: "bidirectional", pull: "10 kohm to VIO on D0 (per SDIO spec)", source: "same" }
+      control_signals:
+        - { name: "WIFI_REG_ON", type: "GPIO output (Wi-Fi module regulator enable; held high for normal operation)", voltage: "1.8 V", direction: "output (from V853 to AW-CM276SM REG_ON pin)", pull: "no", source: "100ASK public dts uses PH15 for wlan_regon" }
+        - { name: "WIFI_HOST_WAKE", type: "GPIO input (Wi-Fi module wakes the SoC; asserted when the module has data for the SoC)", voltage: "1.8 V", direction: "input (to V853)", pull: "10 kohm pull-up on the SoC side", source: "100ASK public dts uses PG7 for wlan_hostwake" }
+        - { name: "WIFI_CHIP_EN", type: "GPIO output (Wi-Fi module chip enable; held high for normal operation)", voltage: "1.8 V", direction: "output (from V853 to AW-CM276SM)", pull: "no", source: "standard AW-CM276SM / 100ASK reference" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The AW-CM276SM is 3.3 V IO; the 100ASK reference uses 3.3 V SDIO. The V853's SMHC1 must be configured for 3.3 V IO. The GPIO bank that hosts WIFI_REG_ON, WIFI_HOST_WAKE, and WIFI_CHIP_EN must be 1.8 V or 3.3 V compatible (per the V853/V853S_PINOUT.sls when obtained)."
+
+    - peripheral: UART_2 (Bluetooth HCI)
+      logical_signals:
+        - { name: "BT_UART_TX", type: "UART transmit (SoC -> Bluetooth module)", voltage: "1.8 V or 3.3 V (per the Wi-Fi/BT module's IO; AW-CM276SM is 3.3 V)", direction: "output (from V853)", pull: "no", source: "100ASK public dts uses uart2 on PE10/PE11/PE12/PE13 for btlpm with uart_index=2" }
+        - { name: "BT_UART_RX", type: "UART receive (SoC <- Bluetooth module)", voltage: "1.8 V or 3.3 V", direction: "input (to V853)", pull: "100 kohm pull-up on the SoC side", source: "same" }
+        - { name: "BT_UART_RTS", type: "UART request-to-send (SoC -> Bluetooth module)", voltage: "1.8 V or 3.3 V", direction: "output (from V853)", pull: "no", source: "100ASK public dts uses uart2 4-wire" }
+        - { name: "BT_UART_CTS", type: "UART clear-to-send (SoC <- Bluetooth module)", voltage: "1.8 V or 3.3 V", direction: "input (to V853)", pull: "100 kohm pull-up on the SoC side", source: "same" }
+      control_signals:
+        - { name: "BT_WAKE_HOST", type: "GPIO input (Bluetooth module wakes the SoC; asserted when the module has data for the SoC)", voltage: "1.8 V", direction: "input (to V853)", pull: "10 kohm pull-up on the SoC side", source: "AW-CM276SM / Bluetooth standard" }
+        - { name: "BT_HOST_WAKE", type: "GPIO output (SoC wakes the Bluetooth)", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "same" }
+        - { name: "BT_REG_ON", type: "GPIO output (Bluetooth regulator enable; same as Wi-Fi_REG_ON on a shared module)", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "shared with Wi-Fi_REG_ON on the AW-CM276SM" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The 100ASK reference uses uart2 (PE10/PE11/PE12/PE13) for the Bluetooth HCI. The 4-wire configuration (TX, RX, RTS, CTS) is required for high-throughput Bluetooth data. The AW-CM276SM Bluetooth IO voltage is 3.3 V; the V853's UART2 must be configured for 3.3 V IO. NOTE: the V853 has 4 UART controllers (UART0, UART1, UART2, UART3); the 100ASK uses UART2 for Bluetooth. The glasses' design also uses UART2 per the v853-glasses-pin-assignment.yaml. UART0 and UART1 are reserved for the debug console."
+
+    - peripheral: I2S_0 (digital audio output 0, left speaker MAX98390)
+      logical_signals:
+        - { name: "I2S0_BCLK", type: "I2S bit clock (1.5-3 MHz at 48 kHz / 16-bit / stereo; 1.5 MHz typical)", voltage: "1.8 V (verify per MAX98390 datasheet IO voltage)", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.7.2; 100ASK public dts uses daudio0 on PH0/PH1/PH2/PH3/PH4" }
+        - { name: "I2S0_LRCK", type: "I2S word select / left-right clock (48 kHz)", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "same" }
+        - { name: "I2S0_DOUT", type: "I2S data out (audio data from V853 to MAX98390)", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "same" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The 100ASK reference uses I2S0 on PH0/PH1/PH2/PH3/PH4. The 100ASK dts disables DMIC and uses I2S0 on these pins. The glasses' design needs BOTH DMIC (for the microphone) AND I2S0 (for the speakers). The 100ASK reference's I2S0 pin set conflicts with DMIC. The glasses' design must use an ALTERNATIVE I2S0 pin set (per the SoC pinctrl dtsi) to coexist with DMIC. The SoC pinctrl dtsi is NOT publicly available; this is a YELLOW item per v853-public-pin-function-audit.md. The MAX98390 IO voltage must be verified in the ADI datasheet PDF (the previous pass said 1.8 V compatible; verify before declaring it final)."
+
+    - peripheral: I2S_1 (digital audio output 1, right speaker MAX98390)
+      logical_signals:
+        - { name: "I2S1_BCLK", type: "I2S bit clock (1.5-3 MHz at 48 kHz / 16-bit / stereo; 1.5 MHz typical; can be shared with I2S0_BCLK)", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.7.2; 100ASK public dts uses daudio1 on PE7/PE8/PE9/PE10/PE11" }
+        - { name: "I2S1_LRCK", type: "I2S word select", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "same" }
+        - { name: "I2S1_DOUT", type: "I2S data out (audio data from V853 to MAX98390)", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "same" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "I2S1 on PE7/PE8/PE9/PE10/PE11 conflicts with GMAC0 RGMII (PE0..PE15). The glasses' design disables GMAC0 in the device tree (the glasses do not need Ethernet) and uses PE7..PE11 for I2S1. The MAX98390 IO voltage must be verified."
+
+    - peripheral: DMIC (microphone)
+      logical_signals:
+        - { name: "DMIC_CLK", type: "PDM clock (1.024 MHz or 2.048 MHz or 3.072 MHz)", voltage: "1.8 V", direction: "output (from V853)", pull: "no", source: "V853 datasheet section 1.3.7.3; 100ASK public dts uses dmic on PH0/PH1/PH2/PH3/PH4" }
+        - { name: "DMIC_DATA0", type: "PDM data 0 (1 microphone)", voltage: "1.8 V", direction: "input (to V853)", pull: "100 kohm pull-down (optional; the MP23DB01HP has a push-pull data output)", source: "same" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The 100ASK reference uses DMIC on PH0/PH1/PH2/PH3/PH4. The glasses' design needs BOTH DMIC AND I2S0. The 100ASK reference's I2S0 uses the SAME pins; the 100ASK resolves this by disabling the on-die audio codec AND using I2S0 on PH0/PH4. The glasses' design must find an alternative I2S0 pin set (per the SoC pinctrl dtsi) to coexist with DMIC. The V853 supports 8 PDM microphones; the glasses use 1 (mono voice)."
+
+    - peripheral: TWI_4 (shared I2C bus for 7 devices)
+      logical_signals:
+        - { name: "TWI4_SCL", type: "I2C clock (400 kHz Fast-Mode)", voltage: "1.8 V", direction: "bidirectional (open-drain with pull-up)", pull: "4.7 kohm to 1.8 V (single set for the whole bus)", source: "100ASK public dts uses twi4 on PI1/PI2" }
+        - { name: "TWI4_SDA", type: "I2C data", voltage: "1.8 V", direction: "bidirectional (open-drain with pull-up)", pull: "4.7 kohm to 1.8 V", source: "same" }
+      devices_on_bus:
+        - { address_7bit: "0x34", device: "AXP2101 PMU", note: "always on; cannot be put on a gated bus" }
+        - { address_7bit: "0x36", device: "MAX17048 fuel gauge", note: "default address per ADI datasheet" }
+        - { address_7bit: "0x48", device: "TMP117 temperature (left temple)", note: "A0 = GND" }
+        - { address_7bit: "0x49", device: "TMP117 temperature (right temple)", note: "A0 = VDD" }
+        - { address_7bit: "0x10", device: "VEML7700 ambient light sensor", note: "fixed address" }
+        - { address_7bit: "0x6A", device: "BQ25185 charger", note: "default address per TI datasheet" }
+        - { address_7bit: "0x68", device: "BMI270 IMU", note: "SDO = GND" }
+      status: VERIFIED_for_address_audit; PROVISIONAL_for_pin_assignment
+      physical_bga_ball: UNKNOWN
+      notes: "All 7 I2C addresses are unique per projects/glasses/references/components/compute/v853/i2c-audit.yaml. The 100ASK public dts uses TWI4 on PI1/PI2 for the AXP2101; the glasses' design can use the same TWI4 bus for all 7 devices (PI1/PI2 is the natural choice). The shared I2C bus can also be TWI0 (PE16/PE17 per the kernel dts) or TWI0 (PA0/PA1 per the U-Boot dts)."
+
+    - peripheral: USB_2_0_DRD (USB-C receptacle)
+      logical_signals:
+        - { name: "USB_DP", type: "USB 2.0 data+ (high-speed 480 Mbps)", voltage: "3.3 V (VCC33_USB analog + VCC-IO 3.3 V digital)", direction: "bidirectional", pull: "the V853 has an internal 1.5 kohm pull-up on D+ for device role; no external pull-up needed", source: "V853 datasheet section 1.3.8" }
+        - { name: "USB_DN", type: "USB 2.0 data-", voltage: "3.3 V", direction: "bidirectional", pull: "no (no pull-up on D-)", source: "same" }
+        - { name: "USB_ID", type: "USB OTG ID (device role; not used in the glasses)", voltage: "3.3 V", direction: "input (to V853)", pull: "no (the V853 has internal pull-up; configure as floating or tied to GND for device role)", source: "100ASK public dts uses PH14 for usb_id_gpio" }
+        - { name: "USB_VBUS_DET", type: "GPIO input (VBUS presence detect; redundant with the AXP2101's VBUS detection)", voltage: "1.8 V (resistor-divided from 5 V VBUS)", direction: "input (to V853)", pull: "the V853's GPIO has internal pull; an external 100 kohm + 33 kohm divider is recommended", source: "100ASK public dts uses PH3 for gpio_charger" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The V853 has a dedicated USB 2.0 DRD PHY. The exact USB_DP, USB_DN, USB_ID, USB_VBUS balls are in the V853/V853S_PINOUT.sls (NOT publicly available). The 100ASK reference uses a USB-C mid-mount receptacle with the TPD4E05U04-class ESD protection. For the glasses' design, the USB-C receptacle is on a temple exterior; the VBUS_DET GPIO is for the data-path management (not the charging path; the AXP2101 handles charging)."
+
+    - peripheral: GPIO_misc
+      gpio_signals:
+        - { name: "WIFI_HOST_WAKE", type: "GPIO input", voltage: "1.8 V", direction: "input (to V853)", source: "see SMHC_1 / Wi-Fi/BT section above" }
+        - { name: "WIFI_REG_ON", type: "GPIO output", voltage: "1.8 V", direction: "output (from V853)", source: "see SMHC_1 / Wi-Fi/BT section above" }
+        - { name: "WIFI_CHIP_EN", type: "GPIO output", voltage: "1.8 V", direction: "output (from V853)", source: "see SMHC_1 / Wi-Fi/BT section above" }
+        - { name: "BT_WAKE_HOST", type: "GPIO input", voltage: "1.8 V", direction: "input (to V853)", source: "see UART_2 / Bluetooth section above" }
+        - { name: "BT_HOST_WAKE", type: "GPIO output", voltage: "1.8 V", direction: "output (from V853)", source: "see UART_2 / Bluetooth section above" }
+        - { name: "BT_REG_ON", type: "GPIO output (shared with WIFI_REG_ON on the AW-CM276SM)", voltage: "1.8 V", direction: "output (from V853)", source: "see UART_2 / Bluetooth section above" }
+        - { name: "IMU_INT1", type: "GPIO input (BMI270 INT1; interrupt-driven)", voltage: "1.8 V", direction: "input (to V853)", pull: "no internal pull on the SoC side; the BMI270 has push-pull output", source: "V853 datasheet section 1.3.8; not in 100ASK reference" }
+        - { name: "IMU_INT2", type: "GPIO input (BMI270 INT2; data-ready)", voltage: "1.8 V", direction: "input (to V853)", pull: "no", source: "same" }
+        - { name: "ALS_INT", type: "GPIO input (VEML7700 INT; threshold-cross)", voltage: "1.8 V", direction: "input (to V853)", pull: "no", source: "VEML7700 INT pin is open-drain; external 100 kohm pull-up to 1.8 V" }
+        - { name: "TMP117_L_ALERT", type: "GPIO input (TMP117 left temple ALERT)", voltage: "1.8 V", direction: "input (to V853)", pull: "no; TMP117 ALERT is open-drain; external 100 kohm pull-up" }
+        - { name: "TMP117_R_ALERT", type: "GPIO input (TMP117 right temple ALERT)", voltage: "1.8 V", direction: "input (to V853)", pull: "no; same" }
+        - { name: "FUEL_GAUGE_ALERT", type: "GPIO input (MAX17048 ALERT; low-battery)", voltage: "1.8 V", direction: "input (to V853)", pull: "no; MAX17048 ALERT is open-drain; external 100 kohm pull-up" }
+        - { name: "CHARGER_INT", type: "GPIO input (BQ25185 INT; charging state change)", voltage: "1.8 V", direction: "input (to V853)", pull: "no; BQ25185 INT is open-drain; external 100 kohm pull-up" }
+        - { name: "PMIC_IRQ", type: "GPIO input (AXP2101 IRQ; power events)", voltage: "1.8 V", direction: "input (to V853)", pull: "no; AXP2101 IRQ is open-drain; external 100 kohm pull-up", source: "100ASK public dts uses interrupts = <0 IRQ_TYPE_LEVEL_LOW>; interrupt-parent = <&nmi_intc>" }
+        - { name: "IR_LED_EN", type: "GPIO output (940 nm IR LED enable; high = on)", voltage: "1.8 V", direction: "output (from V853 to a MOSFET driver)", pull: "no", source: "V853 has 12 PWM channels per datasheet section 1.3.8; a dedicated GPIO can be used for on/off, a PWM for brightness" }
+        - { name: "IR_LED_PWM", type: "PWM output (940 nm IR LED brightness)", voltage: "1.8 V", direction: "output (from V853 to a MOSFET driver)", pull: "no", source: "same" }
+        - { name: "USER_BUTTON", type: "GPIO input (user button; debounced in software)", voltage: "1.8 V", direction: "input (to V853)", pull: "10 kohm pull-up on the SoC side; the button shorts to GND" }
+        - { name: "STATUS_LED", type: "GPIO output (status LED; optional)", voltage: "1.8 V", direction: "output (from V853 to an LED + 1 kohm resistor)", pull: "no" }
+        - { name: "HAPTIC_EN", type: "GPIO output (haptic driver enable; optional)", voltage: "1.8 V", direction: "output (from V853)", pull: "no" }
+        - { name: "HAPTIC_PWM", type: "PWM output (haptic drive; LRA drive frequency 175 Hz; optional)", voltage: "1.8 V", direction: "output (from V853 to a TI DRV2605-class driver or to a direct MOSFET driver)", pull: "no" }
+        - { name: "CAM1_RESET", type: "GPIO output (camera 1 reset; active low)", voltage: "1.8 V", direction: "output (from V853 to camera 1)", pull: "100 kohm pull-up on the camera FPC" }
+        - { name: "CAM1_STANDBY", type: "GPIO output (camera 1 standby; active low)", voltage: "1.8 V", direction: "output (from V853 to camera 1)", pull: "100 kohm pull-up on the camera FPC" }
+        - { name: "CAM2_RESET", type: "GPIO output (camera 2 reset)", voltage: "1.8 V", direction: "output (from V853 to camera 2)", pull: "100 kohm pull-up on the camera FPC" }
+        - { name: "CAM2_POWER_EN", type: "GPIO output (camera 2 power LDO enable)", voltage: "1.8 V", direction: "output (from V853 to LDO)", pull: "no" }
+        - { name: "DISP_TE", type: "GPIO input (display tearing-effect signal)", voltage: "1.8 V", direction: "input (to V853)", pull: "the display has a 100 kohm pull-up on TE" }
+        - { name: "DISP_RESET", type: "GPIO output (display reset; active low)", voltage: "1.8 V", direction: "output (from V853 to display)", pull: "100 kohm pull-up on the display FPC" }
+        - { name: "DISP_BL_EN", type: "GPIO output (display backlight enable; only if the display has a backlight)", voltage: "1.8 V", direction: "output (from V853)", pull: "no" }
+        - { name: "DISP_PWM", type: "PWM output (display backlight brightness; only if the display has a backlight)", voltage: "1.8 V", direction: "output (from V853)", pull: "no" }
+        - { name: "USB_VBUS_DET", type: "GPIO input (USB-C VBUS presence; redundant with the AXP2101's VBUS detection)", voltage: "1.8 V (resistor-divided from 5 V VBUS)", direction: "input (to V853)", pull: "the V853's GPIO has internal pull; an external 100 kohm + 33 kohm divider is recommended" }
+        - { name: "BOOT_SEL0", type: "GPIO / boot mode strap 0", voltage: "1.8 V", direction: "input (to V853)", pull: "the V853 has internal pull on boot mode pins; verify per SoC pinctrl dtsi" }
+        - { name: "BOOT_SEL1", type: "GPIO / boot mode strap 1", voltage: "1.8 V", direction: "input (to V853)", pull: "same" }
+        - { name: "FEL_TRIGGER", type: "GPIO (USB-C VBUS + FEL pin combo for FEL mode; the FEL mode is entered when VBUS is detected AND a specific boot pin is held)", voltage: "1.8 V", direction: "input (to V853)", pull: "the FEL mode is triggered by boot mode pin; verify per SoC pinctrl dtsi" }
+        - { name: "RESET_IN", type: "SoC reset input (from the AXP2101's RESET_OUT)", voltage: "1.8 V", direction: "input (to V853)", pull: "the AXP2101 holds the SoC's RESET for 100-300 ms after all rails are stable" }
+      status: PROVISIONAL
+      physical_bga_ball: UNKNOWN
+      notes: "The V853 has 8 GPIO banks (PA, PB, PC, PD, PE, PF, PG, PH, PI) with approximately 128 GPIO total. The glasses' design uses approximately 20 GPIO functions plus 2 PWM channels. The specific bank-to-function mapping is in the SoC pinctrl dtsi (NOT publicly available). The chosen banks must be 1.8 V or 3.3 V per the VCC-PA / VCC-PC / VCC-PD / VCC-PE / VCC-PG / VCC-PI power domains. The glasses' design uses 1.8 V for all chosen banks."
+
+  peripherals_NOT_USED:
+    - peripheral: GMAC0 (RGMII Ethernet)
+      reason: "Glasses do not need Ethernet. The 100ASK reference uses PE0..PE15 for GMAC0 RGMII; the glasses' design disables GMAC0 in the device tree to free PE0..PE15 for I2S1 (PE7..PE11) and other GPIO."
+    - peripheral: SPI0 (SPI NOR flash)
+      reason: "Glasses do not need SPI NOR flash. eMMC is the boot device. The 100ASK reference uses PC0..PC5 for SPI0; the glasses' design disables SPI0 in the device tree to free PC0..PC5 for SDC2 (eMMC, which also uses PC0..PC11)."
+    - peripheral: SPI1 (SPI DBI for display)
+      reason: "Glasses use MIPI DSI, not SPI DBI. The 100ASK reference uses PH5..PH9 for SPI1; the glasses' design disables SPI1 in the device tree."
+    - peripheral: SPIF0 (SPI flash controller)
+      reason: "Same as SPI0. The 100ASK reference uses PF20..PF31 for SPIF0; the glasses' design disables SPIF0."
+    - peripheral: RGB LCD (RGB18, RGB24 parallel output)
+      reason: "Glasses use MIPI DSI, not RGB parallel. The 100ASK reference uses PD0..PD27 for RGB18/RGB24; the glasses' design disables the RGB LCD controller in the device tree to free PD0..PD27 for GPIO (these can be used for IR LED enable, haptic enable, etc.)."
+    - peripheral: On-die audio codec
+      reason: "Glasses use external I2S-based MAX98390 amplifiers. The on-die audio codec is bypassed. The PA pin (PH4) is not used."
+    - peripheral: SDC0 (SD card)
+      reason: "Glasses do not need an SD card slot. SMHC0 is used for eMMC; SMHC1 is used for SDIO Wi-Fi. The 100ASK reference uses SDC0 / SMHC0 for the SD card; the glasses' design disables SDC0 (or uses it for a different SMHC assignment per the SoC pinctrl dtsi)."
+    - peripheral: GPADC (general purpose ADC)
+      reason: "Glasses do not need the general-purpose ADC. The TMP117 temperature sensors cover the thermal monitoring need. The 100ASK reference uses the GPADC for 5-key keypad; the glasses' design uses a GPIO-based user button."
+    - peripheral: Wiegand
+      reason: "Glasses do not need Wiegand (the Wiegand protocol is for RFID readers). The 100ASK reference enables Wiegand on PH13/PH14; the glasses' design disables Wiegand."
+    - peripheral: UART3
+      reason: "Glasses use UART0 for debug console and UART2 for Bluetooth HCI. UART1 is reserved. UART3 is on PH0/PH1 which conflicts with DMIC and I2S0; the glasses' design disables UART3."
+    - peripheral: S_TWI0 (Secure TWI)
+      reason: "Glasses do not need the secure TWI. The 100ASK reference uses PL0/PL1 (Port L) for s_twi0; the glasses' design disables s_twi0. NOTE: Port L (PL) is a separate GPIO bank from PA..PI; it has its own power domain."
+
+  summary:
+    total_v853_peripherals_in_use: 13
+    total_v853_peripherals_NOT_in_use: 11
+    v853_signal_count_for_glasses: approximately 60 (CSI 12 + DSI 11 + eMMC 13 + SDIO 6 + UART 7 + I2S 6 + DMIC 2 + I2C 2 + USB 4 + GPIO ~22 + reset 1 + boot 1)
+    status_summary:
+      VERIFIED_peripheral_blocks: 13 / 13 (all chosen peripherals exist in the V853 datasheet)
+      VERIFIED_pin_function_mux: 11 / 13 (TWI0..TWI4, UART2, SDC2, SDC1, SPI0, I2S1, DMIC, USB, GPIO are documented in the 100ASK public dts)
+      PROVISIONAL_pin_function_mux: 2 / 13 (CSI data/clock lanes, DSI data/clock lanes; the public dts references labels without enumerating the pins)
+      UNKNOWN_physical_bga_ball: 13 / 13 (the V853/V853S_PINOUT.sls is NDA-only)
+    pcb_layout_readiness: FALSE
+    pcb_schematic_readiness: TRUE_at_peripheral_block_level

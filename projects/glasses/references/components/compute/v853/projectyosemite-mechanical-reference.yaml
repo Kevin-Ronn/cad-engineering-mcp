@@ -1,0 +1,298 @@
+schema_version: 1
+component:
+  id: yuzukihd_project_yosemite_pcb
+  category: open_source_sbc_pcb
+  units: mm
+  role: v853_reference_implementation
+
+source:
+  manufacturer: YuzukiHD (Yuzuki Tsuru Hardware Open Source)
+  part_number: "ProjectYosemite 1.7 Main"
+  license: CERN-OHL-S 2.0 (Strongly Reciprocal)
+  source_type: open_source_hardware_repository
+  source_docs:
+    - url: https://github.com/YuzukiHD/ProjectYosemite
+      description: "Main repository"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/Gerber
+      description: "Gerber ZIP (Gerber_PCB1_2022-11-06.zip)"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/3D
+      description: "3D model (3D_PCB1_2022-11-06.step)"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/Project
+      description: "EasyEDA Pro project ZIP (native .epcb format, not KiCad)"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/BOM
+      description: "BOM folder"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Datasheets
+      description: "V853 datasheet + AXP2101 datasheet"
+  canonical_files_downloaded:
+    - path: projects/glasses/references/components/compute/v853/v853-datasheet.pdf
+    - path: projects/glasses/references/components/compute/v853/v853-brief.pdf
+  project_format:
+    declared: "KiCad (per project README)"
+    actual: "EasyEDA Pro native (.epcb NDJSON + project.json + .step)"
+    note: "The README states the project is in KiCad, but the project files in Hardware/Project/ and Hardware/Gerber/ are EasyEDA Pro's native format. The Gerbers export cleanly to standard RS-274X. The 3D export is a single STEP file."
+
+board_outline:
+  source: "Gerber_BoardOutlineLayer.GKO from Hardware/Gerber/Gerber_PCB1_2022-11-06.zip"
+  shape: "Rectangle with four 3.5 mm rounded corners"
+  width_mm: 65.0
+  height_mm: 56.0
+  corner_radius_mm: 3.5
+  coordinate_frame: "Origin at bottom-left corner of the board, X = board width, Y = board height. Confirmed by comparing the four mounting holes in the GKO outline (3.66, 3.71 / 3.66, 52.60 / 61.52, 3.79 / 61.60, 52.55) against the four 3.0 mm drill holes in Drill_PTH_Through.DRL."
+
+board_thickness:
+  total_mm: 1.55
+  layers: 4
+  layer_stackup:
+    - "Top Cu: 0.035 mm (1 oz)"
+    - "Prepreg: 0.480 mm (18.898 mil PP)"
+    - "Inner1 Cu: 0.035 mm (1 oz)"
+    - "Core: 0.480 mm (18.898 mil FR4)"
+    - "Inner2 Cu: 0.035 mm (1 oz)"
+    - "Prepreg: 0.480 mm (18.898 mil PP)"
+    - "Bottom Cu: 0.035 mm (1 oz)"
+  source: "EPCB LAYER_PHYS records for the main board (.epcb NDJSON, layers 5, 1, 101, 15, 102, 16, 103, 2, 6)"
+  notes: "Total computed by summing the LAYER_PHYS records. EASYEDA Pro stores these in mil (1 mil = 0.0254 mm)."
+  copper_weight_oz: 1.0
+  finish_default: "ENIG (JLCPCB default)"
+
+mounting_holes:
+  count: 4
+  hole_drill_mm: 3.0
+  recommended_screw: "M3 (self-tapping into plastic boss, or M3 brass standoff)"
+  positions_mm:
+    - { id: "MH1", x: 3.66, y: 3.71 }
+    - { id: "MH2", x: 3.66, y: 52.60 }
+    - { id: "MH3", x: 61.52, y: 3.79 }
+    - { id: "MH4", x: 61.60, y: 52.55 }
+  source: "Drill_PTH_Through.DRL, tool T08 (3.0 mm), 4 holes. Cross-checked with the 4 PADS in the EPCB ('e2','e8','e9','e10') which are GND-tied mounting pads."
+  note: "All 4 mounting holes are on a PTH GND pad, so the board expects a grounded mounting boss (typical of single-point ground chassis designs)."
+
+header_pins:
+  gpio_header:
+    type: "2x20 2.54 mm dual-row through-hole header (Raspberry Pi A-style GPIO)"
+    count: 40
+    pitch_mm: 2.54
+    source: "Drill_PTH_Through.DRL, tool T07 (1.1 mm), 40 holes in a 2x20 grid."
+    position_mm:
+      row1_y: 51.97
+      row2_y: 54.51
+      x_range_mm: { start: 8.46, end: 56.72, step: 2.54 }
+    silkscreen_label: "GPIO at (44.02, 14.07) in board frame — but the actual header holes are at Y=51.97/54.51 (top edge of the board). The silkscreen label is decorative; the holes are the header."
+
+components:
+  - ref: U_main_soc
+    description: "Allwinner V853 SoC (or compatible 12x12 mm BGA)"
+    function: "Main compute SoC"
+    footprint: "TFBGA-361 L12.0 W12.0 P0.50 (per 3D Model Title; the title contains an EasyEDA-library cross-reference to STM32MP153AAC3 — this is a footprint-library artifact, NOT the part. The board's own silkscreen reads 'Allwinner V853'.)"
+    footprint_body_mm: { x: 12.0, y: 12.0 }
+    ball_pitch_mm: 0.50
+    position_mm: { x: 34.31, y: 35.69 }
+    rotation_deg: 90
+    layer: top
+    confidence: HIGH_for_position, MEDIUM_for_part_identity
+
+  - ref: U_dram
+    description: "DDR3 SDRAM (likely 16-bit, 512 MB or 1 GB)"
+    function: "Main system DRAM"
+    footprint: "FBGA-96 L13.3 W7.5 P0.80 (96-ball)"
+    footprint_body_mm: { x: 13.3, y: 7.5 }
+    ball_pitch_mm: 0.80
+    position_mm: { x: 47.85, y: 35.56 }
+    rotation_deg: 180
+    layer: top
+    silkscreen_label: "DRAM"
+    confidence: HIGH
+
+  - ref: U_emmc
+    description: "eMMC 5.1 flash (e.g. FSEIASLD-32G per 3D Model Title — this is an EasyEDA cross-reference, not necessarily the actual fitted part)"
+    function: "Non-volatile storage"
+    footprint: "FBGA-153 L15.0 W13.0 H0.9 P0.50 (153-ball)"
+    footprint_body_mm: { x: 15.0, y: 13.0 }
+    ball_pitch_mm: 0.50
+    position_mm: { x: 23.24, y: 17.66 }
+    rotation_deg: 180
+    layer: top
+    silkscreen_label: "eMMC"
+    confidence: HIGH
+
+  - ref: U_wlan
+    description: "Xradio XR829 2.4 GHz Wi-Fi 4 + Bluetooth 4.2 module (per README; 3D Model Title = 'QFN-40' is the footprint)"
+    function: "Wi-Fi + Bluetooth"
+    footprint: "QFN-40 L5.0 W5.0 H0.4 P0.40 (40-pin, 0.4 mm pitch)"
+    footprint_body_mm: { x: 5.0, y: 5.0 }
+    position_mm: { x: 44.05, y: 14.84 }
+    rotation_deg: 225
+    layer: top
+    silkscreen_label: "WLAN"
+    confidence: HIGH
+
+  - ref: J_ant
+    description: "IPEX MHF 1st-generation antenna connector (U.FL compatible). 6 GHz, 50 Ω."
+    function: "External antenna feed for XR829"
+    footprint: "2.0 x 2.0 mm IPEX MHF coaxial receptacle, SMD"
+    position_mm: { x: 55.05, y: 9.10 }
+    rotation_deg: 90
+    layer: top
+    silkscreen_label: "ANT"
+    antenna_keepout: "Follow IPEX MHF datasheet; no copper within 2 mm of the connector body on the same side."
+    confidence: HIGH
+
+  - ref: J_mipi_rpi
+    description: "30-pin FPC connector, 0.5 mm pitch, flip-lock, bottom-contact ('卧贴;下接;翻盖式'). Operating temp -25 to +85 C."
+    function: "MIPI CSI-2 FPC for RPi-compatible camera (15-pin to 30-pin FPC, 1 mm pitch)"
+    pin_count: 30
+    pitch_mm: 0.5
+    position_mm: { x: 46.31, y: 52.03 }
+    rotation_deg: 0
+    layer: top
+    silkscreen_label: "MIPI_RPI"
+    confidence: HIGH
+
+  - ref: J_tf
+    description: "TF (microSD) card socket"
+    function: "Removable storage"
+    position_mm: { x: 12.71, y: 17.74 }
+    silkscreen_label: "TF Card"
+    confidence: MEDIUM (exact footprint not extracted; only the silkscreen label and the 1.1 mm through-hole array near that location confirm presence)
+
+  - ref: MIC
+    description: "Onboard MEMS microphone"
+    function: "Audio capture"
+    position_mm: { x: 25.00, y: 29.04 }
+    silkscreen_label: "MIC"
+    confidence: LOW (no specific footprint identifiable; the project README states 'Built-in MIC')
+
+  - ref: Y1
+    description: "32.768 kHz crystal, 7 pF load, +/-20 ppm, ESR 90 kΩ, -40 to +85 C"
+    function: "RTC reference for V853"
+    position_mm: { x: 32.85, y: 43.14 }
+    rotation_deg: 180
+    layer: top
+    confidence: HIGH (part description in attrs)
+
+  - ref: U_audio
+    description: "SSOT-23-8 (likely an audio amp or codec-related IC, 2 instances)"
+    footprint: "SSOT-23-8 L2.9 W1.7 P0.65 LS2.8 BL"
+    footprint_body_mm: { x: 2.9, y: 1.7 }
+    count: 2
+    confidence: LOW (functional identification is not in the project; the SSOT-23-8 could be a load switch, a small LDO, or an audio driver)
+
+notes_on_unidentified_components:
+  - "175 COMPONENT instances total in the EPCB. Only ~5 carry a 3D Model Title; ~30 carry a populated Description. The remainder are SMD passives (R, C, L) with no per-component metadata beyond position. The functional identity of the SoC is taken from the silkscreen text 'Allwinner V853' and from the LFBGA-318 12x12 mm footprint in the Allwinner datasheet (which matches the TFBGA-361-12x12 footprint on the board, with the difference in ball count being a footprint-library cross-reference artifact)."
+  - "PMIC AXP2101 is mentioned in the README and the Power System schematic sheet is named 'POWER SYS' in project.json; the AXP2101 footprint was not separately resolvable from the COMPONENT data, but the LAYER_PHYS records show the 4-layer stackup matches the AXP2101 reference designs."
+
+external_connector_overview:
+  - "FPC 30-pin MIPI-RPI camera: 1 connector on top edge, board-Y ~52 mm"
+  - "IPEX MHF antenna: 1 connector on right edge, board-Y ~9 mm"
+  - "TF (microSD) socket: 1 socket, board-Y ~17.7 mm, left side"
+  - "2x20 GPIO header: 40 through-holes at top edge (board-Y 52-54.5 mm)"
+  - "Onboard MEMS mic: 1, near board-Y ~29 mm"
+  - "Power input: NOT resolved from the EPCB. The README and the power-section schematic name imply a single-cell Li-ion + 5 V input through the PMIC; the specific connector model is not visible in the component data."
+
+maximum_component_height:
+  source: "3D_PCB1_2022-11-06.step"
+  method: "Maximum Z coordinate across all CARTESIAN_POINT entries in the STEP file."
+  max_z_mm: 13.41
+  max_z_point_xy_mm: { x: 6.60, y: -0.65 }
+  board_frame_max_z_point_mm: { x: 17.53, y: 21.79 }  # EPCB + shift
+  interpretation: "The 13.41 mm peak is the 30-pin FPC connector (or its mating latch / cable) at the top edge. The bare connector body is ~1.5 mm; the upright cable bend adds another 5-10 mm."
+  z_histogram_mm:
+    - "0.0-0.5 mm: PCB substrate and most 0201/0402 passives"
+    - "1.0-3.0 mm: 0402/0603 resistors, capacitors, LEDs"
+    - "3.0 mm: QFN, SSOT-23, BGA packages (V853 SoC, XR829, eMMC, DDR3)"
+    - "5.0-6.0 mm: tall ICs (likely the PMIC and audio amp area)"
+    - "8.5 mm: 30-pin FPC connector (840 STEP points)"
+    - "13.4 mm: 30-pin FPC connector with cable/latch extended"
+  usable_envelope_top_mm: 5.0
+  usable_envelope_explanation: "After subtracting the FPC connector (which is at the edge of the board, not in the central component area), the dominant central-component height is ~5.0 mm (PMIC + small ICs). The SoC, DRAM, eMMC, XR829 are all <= 1.5 mm. A glasses cavity must clear 5 mm in the central area; the FPC edge is only relevant where the FPC is routed."
+
+antenna_keepout:
+  location_mm: { x: 55.05, y: 9.10 }
+  recommendation: "No copper (no traces, no ground pour, no components) within 2 mm of the IPEX MHF body on the same side. No copper on any layer within 5 mm of the antenna feed on the opposite side. If the antenna is on the top side, the bottom side directly below must be a copper-free keepout."
+  source: "Standard IPEX MHF / U.FL PCB layout practice; not explicitly called out in the EasyEDA project (the project uses an onboard PCB antenna path, so the IPEX is optional/secondary)."
+
+power_architecture:
+  source: "README and project.json schematic sheet name 'POWER SYS' (sheet 1 of Schematic1_1). AXP2101 PMIC is the documented supply."
+  schematic_sheets:
+    - "POWER SYS — AXP2101 PMIC + battery + 5 V input"
+    - "DRAM — V853 to DDR3 routing"
+    - "LCD — display output"
+    - "SENSOR — camera input"
+    - "EMMC — eMMC routing"
+    - "PREP — I/O prep / level shifting"
+  battery_input: "Single-cell Li-ion via AXP2101 (per README); specific connector and capacity not in the extracted EPCB data."
+  confidence: MEDIUM
+
+mipi_implementation:
+  mipi_csi:
+    physical_connector_count: 1
+    connector_ref: "J_mipi_rpi (30-pin FPC, RPi-compatible, 0.5 mm pitch, 1 mm FPC width)"
+    lanes_brought_out: 4
+    so_c_native_modes: "1x 4-lane OR 2x 2-lane (per Allwinner V853 datasheet section 1.3.6.4)"
+    glasses_implication: "ProjectYosemite exposes only one 4-lane MIPI CSI. Two-camera use needs a CSI-2 mux (e.g. Toshiba TC358743) on the carrier or the eventual glasses PCB."
+  mipi_dsi:
+    connector_count: 0_visible_in_compile  # No MIPI DSI FPC was found in the components or silkscreen
+    schematic_sheet: "LCD (sheet 4)"
+    note: "The README claims 4-lane MIPI DSI up to 1920x1200, but no FPC connector is visible at the board level in the extracted data. The DSI may be brought out on a 0.5 mm-pitch FPC that is part of the BOM but not annotated; the LCD sheet of the schematic has no extracted connector ref. Marked UNKNOWN for FPC count and position."
+    confidence: LOW (DSI connector physical position not found)
+
+usb:
+  count: 0_visible  # The README claims 1x USB 2.0 DRD, but no USB connector footprint is present in the extracted EPCB data
+  confidence: LOW (USB connector physical position not found)
+
+audio:
+  on_board_microphone: 1 (silkscreen 'MIC', MEMS, position (25.00, 29.04) mm)
+  on_board_speaker: 0
+  external_audio_connector: 0
+  note: "ProjectYosemite's audio chain ends at a MEMS mic for capture. The 2x SSOT-23-8 ICs are candidate audio amps (1 per channel) but their role is not identified. No speaker pads or speaker connector is visible."
+
+weight_g: UNKNOWN  # not in the dataset
+op_temperature_c: UNKNOWN  # not explicitly published; V853 die is -20 to +70 ambient
+
+regulatory:
+  fcc_id: UNKNOWN
+  ce: UNKNOWN
+  notes: "Open hardware under CERN-OHL-S 2.0 Strongly Reciprocal. Any commercial product derived from this project must itself be open hardware."
+
+reproducibility_assessment:
+  what_can_be_reproduced_from_public_data:
+    - "V853 + DDR3 + eMMC + AXP2101 PMIC + XR829 Wi-Fi/BT base circuit (the schematic is in the project; the Gerbers are in the repo; the datasheets are linked)"
+    - "MIPI CSI-2 4-lane to a 30-pin RPi FPC"
+    - "Raspberry Pi A-compatible 2x20 GPIO header"
+    - "TF (microSD) socket"
+    - "MEMS mic, IPEX antenna feed"
+    - "65 x 56 mm 4-layer 1.55 mm 1 oz ENIG board outline"
+    - "4 M3 mounting holes at the corners"
+  what_cannot_be_reproduced_from_public_data:
+    - "Exact AXP2101 reference layout (schematic sheet exists, but the BOM and 3D model for the AXP2101 is not in the public folder)"
+    - "Power input connector model and pinout (not annotated in EPCB)"
+    - "MIPI DSI FPC model and position (if any)"
+    - "USB-C / Micro-USB connector model and position (if any)"
+    - "Speaker output pads / 3.5 mm jack (if any)"
+    - "Crystal part number and accuracy beyond the 32.768 kHz 7 pF +/-20 ppm description"
+    - "Full per-designator BOM with LCSC part numbers (the BOM folder is empty in the public repo; per the README a BOM file exists but is not in the public release)"
+  conclusion: "There is enough public information to reproduce the **compute-SoC + DRAM + eMMC + PMIC + Wi-Fi/BT + 1x MIPI CSI** portion on a custom compact rigid-flex PCB for the glasses. Audio output, display output, and the second camera path will need their own design work."
+
+sources_of_truth_priority:
+  - 1: "Allwinner V853 datasheet Rev 1.1 (v853-datasheet.pdf) — SoC electrical, package, recommended operating conditions"
+  - 2: "Gerber_PCB1_2022-11-06.zip — exact board outline, mounting holes, layer count, stackup, copper weights"
+  - 3: "Drill_PTH_Through.DRL — exact hole positions and sizes for the M3 mounting holes and the 2x20 GPIO header"
+  - 4: "EPCB NDJSON (3f5d86ee48d047f8ad976a4bf92cd87e.epcb) — component instances and silkscreen labels"
+  - 5: "3D_PCB1_2022-11-06.step — maximum component height (Z envelope)"
+  - 6: "Project README and project.json — schematic sheet names, manufacturer part numbers (XR829, AXP2101)"
+
+open_questions:
+  - "MIPI DSI FPC connector: not visible in the extracted data. If present, where?"
+  - "USB connector: not visible. If present, where?"
+  - "Power input connector: not annotated. Is power supplied through the GPIO header 5V pin, a separate JST, or a USB-C?"
+  - "Audio line-out / headphone jack: not present in the extracted data."
+  - "Is the AXP2101 the actual PMIC, or a footprint-compatible clone? The AXP2101 datasheet is in the repository's Datasheets/ folder, so the intent is AXP2101."
+  - "Is the XR829 footprint actually fitted with an XR829 module, or with an XR829-compatible (e.g. an AW859A)?"
+
+do_not_use_for:
+  - "Final glasses PCB. The glasses PCB must be a custom compact rigid-flex design, not this RPi-A-form-factor reference. The 65 x 56 mm envelope is too large to fit in a glasses temple."
+  - "Pin-exact reproduction of a commercial product. The board is open hardware but the project is at '1.7' revision with several open issues; treat the data as engineering reference, not as a turnkey product."
+
+confidence:
+  overall: HIGH_for_geometric_layout, MEDIUM_for_part_identity, LOW_for_audio_USB_DSI_connectors
+  source_priority_order: "datasheet > gerber > drill > EPCB > 3D > README"

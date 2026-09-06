@@ -1,0 +1,87 @@
+schema_version: 1
+component:
+  id: oppo_air_glass
+  category: monocular_smart_glass_with_waveguide
+  units: mm
+  role: consumer_reference_design
+
+source:
+  manufacturer: OPPO (BBK Electronics)
+  part_number: Air Glass (announced OPPO Inno Day December 2021; China release February 2022; limited production)
+  source_type: manufacturer_public_announcement
+  source_docs:
+    - url: https://www.oppo.com/en/newsroom/press/oppo-air-glass/
+      description: "OPPO press release"
+  notes: "Air Glass is a finished consumer monocular smart glass, not a board-level OEM module. It uses a micro-LED (not micro-OLED) panel, a 640x400 resolution, and OPPO's own diffractive waveguide. The numbers below are from public launch materials. OPPO has not sold the engine or waveguide separately to third parties; this is reference data for what a 0.23 inch-class 640x400 monocular waveguide system looks like in a shipping product, not a buy-able OEM component."
+
+optical:
+  display_technology: micro-LED (single-color, green per public materials; full-color requires a separate path)
+  resolution: 640 x 400
+  diagonal_size_inch: NOT_PUBLISHED (the engine is described as 'tiny' but no exact mm)
+  aspect_ratio: 8:5
+  fov_horizontal_deg: NOT_PUBLISHED (public materials say 'monocular AR' but no exact FOV number)
+  waveguide_technology: diffractive optical waveguide (OPPO's own)
+  waveguide_thickness_mm: NOT_PUBLISHED
+  waveguide_dimensions_mm: NOT_PUBLISHED
+  waveguide_lens_construction: 5 high-precision glass lenses, 2 sapphire glass lenses
+  eyebox: NOT_PUBLISHED
+  eye_relief_mm: NOT_PUBLISHED
+  exit_pupil: NOT_PUBLISHED
+  brightness_nits: up to 1400 (per public materials)
+  contrast: NOT_PUBLISHED
+  colors: monochrome (green) standard; 16-level and 256-level grayscale
+  transparency_transmittance: NOT_PUBLISHED
+  refresh_rate_hz: NOT_PUBLISHED
+  distortion: NOT_PUBLISHED
+  focus_distance: NOT_PUBLISHED
+  source_for_optical: OPPO public materials
+
+mechanical:
+  lens_weight_g: 22.7
+  total_weight_g: 30
+  optical_engine_dimensions_mm: NOT_PUBLISHED
+  optical_engine_weight_g: NOT_PUBLISHED
+  waveguide_dimensions_mm: NOT_PUBLISHED
+  complete_module_dimensions_mm: NOT_PUBLISHED
+  source_for_mechanical: OPPO public materials
+
+electronics:
+  interface: NOT_PUBLIC (the Air Glass is paired with an OPPO phone or watch over Bluetooth / Wi-Fi; the display itself is driven by an internal processor)
+  mipi_dsi_lanes: NOT_PUBLIC
+  controller_driver_ic: NOT_PUBLIC (the Air Glass uses a Qualcomm Snapdragon Wear 4100 in the paired accessory)
+  required_supply_voltages: NOT_PUBLIC
+  power_consumption: 3-hour battery life (per OPPO)
+  connector_type: NOT_PUBLIC
+  fpc_dimensions: NOT_PUBLIC
+  fpc_length_mm: NOT_PUBLIC
+  pin_count: NOT_PUBLIC
+  source_for_electronics: NOT_PUBLIC
+
+purchase:
+  distributor: OPPO China (limited release; not exported widely)
+  unit_price_usd: approximately 500 (China retail)
+  moq: N/A (consumer product)
+  lead_time: stock (China)
+  availability: limited / not a continuous production part; no OEM module sales
+  source_for_purchase: OPPO China
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_public_announcement
+  gaps:
+    - "Engine and waveguide dimensions are NOT publicly disclosed"
+    - "Interface to a host SoC is NOT publicly disclosed"
+    - "Power consumption and FOV are NOT publicly disclosed"
+    - "Not available as an OEM module"
+
+constraints:
+  status: REFERENCE_ONLY — finished consumer product, not an OEM module
+  not_recommended: "Cannot be bought as a board-level module for the glasses. Included as a reference for what the spec envelope looks like in a shipping 0.23 inch-class 640x400 monocular waveguide product."
+
+geometry_relevance:
+  conceptual_fit_against_wayfarer:
+    target: monocular display in front of one eye
+    optical_engine_location: the Air Glass engine sits in a stem/pod that hangs from the right temple; the waveguide is in the right lens
+    minimum_temple_requirement: total product weight 30 g; engine weight unknown; temple stem has a fixed non-Wayfarer shape
+    blocker: the Air Glass is not a Wayfarer-shaped product; its temple is a stem. Cannot be transplanted into a Wayfarer frame. Reference data only.
+    source_for_frame_comparison: projects/glasses/analysis/structure/full-mechanical-inspection.md

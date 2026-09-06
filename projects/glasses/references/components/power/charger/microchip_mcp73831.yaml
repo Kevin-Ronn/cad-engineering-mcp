@@ -1,0 +1,48 @@
+schema_version: 1
+component:
+  id: microchip_mcp73831t
+  category: single_cell_li_ion_charger_simple_linear
+  units: mm
+  role: secondary_charger_candidate_simple
+
+source:
+  manufacturer: Microchip Technology
+  part_number: MCP73831T-2ACI/OT (the T suffix is tape-and-reel; -2ACI is the 4.2V regulation option; /OT is the SOT-23-5 package)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.microchip.com/en-us/product/MCP73831
+      description: "Microchip MCP73831 product page and datasheet"
+
+mechanical:
+  package: SOT-23-5
+  dimensions_mm: { length: 2.9, width: 1.6, height: 1.1 }
+  source_for_mechanical: SOT-23-5 standard
+
+electrical:
+  input_voltage_v: { min: 3.75, typ: 5.0, max: 6.0 }
+  charge_current_ma: { min: 15, typ: 500, max: 500 }  # set by external resistor
+  charge_voltage_v: 4.2 (fixed for the -2 variant; -3 is 4.35, etc.)
+  interface: NONE (standalone; no I2C)
+  power_path_management: NO
+  thermal_regulation: yes (linear regulator foldback)
+  safety_timers: yes (4-hour or 8-hour, optional)
+  battery_protection_features: overcharge (Vreg cutoff), overdischarge (battery-side, external), thermal
+  source_for_electrical: MCP73831 datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: MCP73831 datasheet
+
+purchase:
+  distributor: Microchip direct; Mouser; DigiKey; LCSC
+  unit_price_usd: approximately 0.50 to 1.20 (single-piece retail); 0.20 to 0.50 in volume
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+
+constraints:
+  status: SERIOUS — well-known, cheap, simple, but no I2C, no power-path management. Used as a backup / reference for simpler designs. The brief asks for power-path management and I2C, so MCP73831 is secondary.

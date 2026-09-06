@@ -1,0 +1,40 @@
+schema_version: 1
+component:
+  id: lontium_lt8912b_bridge_review
+  category: rgb_lvds_to_mipi_dsi_bridge
+  units: mm
+  role: display_bridge_for_lcos_engine
+
+source:
+  manufacturer: Lontium Semiconductor
+  part_number: LT8912B (RGB / LVDS to MIPI DSI)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: http://www.lontium.com/product/html/?3.html
+      description: "Lontium product line (display bridge ICs)"
+
+mechanical:
+  package: QFN-64 (typical for the Lontium LT89xx family)
+  dimensions_mm: approximately 7.0 x 7.0 (verify per datasheet)
+  source_for_mechanical: Lontium datasheet summary
+
+electrical:
+  input: RGB / LVDS (up to 1080p60)
+  output: MIPI DSI (up to 4 lanes, 1.5 Gbps/lane)
+  supply_voltage_v: { core: 1.2, io: 1.8 or 3.3 }
+  source_for_electrical: Lontium datasheet summary
+
+linux_driver:
+  status: "Out-of-tree; check the Lontium product page for a reference driver."
+  source_for_linux_driver: Lontium product page
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact package dimensions not in the summary"
+    - "Linux driver availability is not in the summary"
+
+constraints:
+  status: ALTERNATIVE_BRIDGE — use only if the chosen LCoS engine requires RGB or LVDS input. The V853 DSI is the natural output; a bridge is only needed if the display engine does not accept DSI directly.
+  use_case: "Most 0.23 640x400 micro-OLED panels accept MIPI DSI directly (no bridge). LCoS engines are more likely to need RGB / LVDS / sub-LVDS input, in which case the LT8912B is a candidate."

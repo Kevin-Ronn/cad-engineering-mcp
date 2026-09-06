@@ -1,0 +1,48 @@
+schema_version: 1
+component:
+  id: cui_cms_1609
+  category: micro_speaker_dynamic_smaller
+  units: mm
+  role: smaller_speaker_candidate
+
+source:
+  manufacturer: CUI Devices
+  part_number: CMS-1609 (8 ohm variant; the "078" suffix typically indicates 2.5 mm thickness, verify per part number)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.cuidevices.com/product/buzzers-speakers/speakers/
+      description: "CUI Devices speaker catalog"
+
+mechanical:
+  dimensions_mm: { length: 16.0, width: 9.0, height: 2.5 }  # verify per exact part number; the 1609/1511 are sibling products
+  weight_g: approximately 0.6
+  port_orientation: top
+  acoustic_type: sealed
+  source_for_mechanical: CUI datasheet summary
+
+electrical:
+  impedance_ohm: 8
+  rated_power_w: 0.5
+  maximum_power_w: 0.7
+  sensitivity_db_spl_per_w_1m: 85 to 90 (typical class)
+  frequency_response_hz: 300 to 10000 (typical class)
+  source_for_electrical: CUI datasheet
+
+environmental:
+  operating_temperature_c: { min: -20, max: 60 }
+
+purchase:
+  distributor: CUI Devices direct; Mouser; DigiKey
+  unit_price_usd: 1.5 to 3 (single-piece)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact part number suffix must be confirmed; the 1609/1511 are sibling products with different height / sensitivity"
+
+constraints:
+  status: ALTERNATIVE — slightly different aspect ratio (16 x 9 vs 15 x 11). Use if a 16 x 9 pod is preferred.

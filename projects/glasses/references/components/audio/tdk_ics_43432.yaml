@@ -1,0 +1,57 @@
+schema_version: 1
+component:
+  id: tdk_ics_43432
+  category: mems_microphone_digital_i2s
+  units: mm
+  role: secondary_microphone_candidate
+
+source:
+  manufacturer: TDK InvenSense
+  part_number: ICS-43432
+  source_type: distributor_listing_plus_manufacturer_summary
+  source_docs:
+    - url: https://invensense.tdk.com/
+      description: "TDK InvenSense product line"
+  notes: "MEMS microphone, bottom-port, I2S output, multi-mic capable."
+
+mechanical:
+  package: LGA
+  dimensions_mm: { width: 3.5, height: 2.65, depth: 0.98 }
+  acoustic_port: bottom
+  source_for_mechanical: TDK datasheet summary
+
+electrical:
+  interface: digital I2S
+  supply_voltage_v: { min: 1.62, typ: 1.8, max: 3.6 }
+  active_current_uA: UNKNOWN
+  standby_current_uA: UNKNOWN
+  source_for_electrical: TDK datasheet summary
+
+acoustic:
+  sensitivity_dbfs: -26 (typ class)
+  snr_db: 65 (typ, A-weighted)
+  aop_db_spl: 120 (typ)
+  frequency_response_hz: 50 to 20000 (per I2S-mode spec)
+  directivity: omnidirectional
+  source_for_acoustic: TDK datasheet summary
+
+environmental:
+  operating_temperature_c: UNKNOWN
+  source_for_environmental: NOT_PUBLISHED in summary
+
+purchase:
+  distributor: Mouser; DigiKey; LCSC
+  unit_price_usd: 3.19 (Mouser, 1 pc)
+  moq: 1
+  lead_time: stock
+  availability: in production
+  source_for_purchase: Mouser, DigiKey
+
+confidence:
+  overall: MEDIUM
+  sources: distributor_listing_plus_manufacturer_summary
+  gaps:
+    - "Detailed THD and operating temperature not in the summary"
+
+constraints:
+  status: SERIOUS — popular TDK I2S microphone, 50 Hz to 20 kHz bandwidth. Use I2S interface.

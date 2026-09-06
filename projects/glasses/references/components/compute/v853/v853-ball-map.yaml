@@ -1,0 +1,93 @@
+schema_version: 1
+v853_ball_map:
+  id: v853_official_ball_map
+  date: 2026-09-05
+  source: Allwinner V853 & V853S Datasheet, Rev 1.1, 2022-03-23 (projects/glasses/references/components/compute/v853/v853-datasheet.pdf)
+  confidence: HIGH for package, rail, peripheral, and architecture-level information; LOW for per-ball coordinates (see "missing data" below)
+
+  package:
+    name: LFBGA
+    pin_count: 318 (V853), 318 (V853S)
+    body_size_mm: 12.0 x 12.0
+    ball_pitch_mm: 0.50
+    source: datasheet section 2.1.1, 2.1.2
+
+  power_domains:
+    note: "Each power domain has its own supply pin(s); the exact ball numbers are in the V853/V853S_PINOUT.sls file, NOT in the PDF datasheet. The power domain NAMES and voltage TYP values below are from the datasheet section 2.3.4 (Recommended Operating Conditions)."
+
+    - { name: VDD-SYS, typ_v: 0.9, max_v: 1.0, purpose: "System core supply (Cortex-A7 + RISC-V + SoC logic)" }
+    - { name: AVCC, typ_v: 1.8, range_v: [1.77, 1.83], purpose: "Analog part supply" }
+    - { name: VCC-RTC, typ_v: 1.8, range_v: [1.62, 1.98], purpose: "RTC domain" }
+    - { name: VCC-PLL, typ_v: 1.8, range_v: [1.62, 1.98], purpose: "System PLL" }
+    - { name: VCC-DRAM, typ_v: 1.5 (DDR3) or 1.35 (DDR3L), range_v: [1.425, 1.575] DDR3 / [1.28, 1.45] DDR3L, purpose: "DRAM I/O domain" }
+    - { name: VDD18-DRAM, typ_v: 1.8, range_v: [1.7, 1.95], purpose: "DRAM internal pad power" }
+    - { name: VCC-IO, typ_v: 3.3, range_v: [2.97, 3.63], purpose: "Digital 3.3 V part (USB, GPIO F at 3.3 V mode, etc.)" }
+    - { name: VCC-PA, typ_v: 1.8 or 3.3, range_v: [1.62, 1.98] or [2.97, 3.63], purpose: "GPIO Port A power (1.8 V or 3.3 V mode)" }
+    - { name: VCC-PC, typ_v: 1.8 or 3.3, range_v: [1.62, 1.98] or [2.97, 3.63], purpose: "GPIO Port C power (1.8 V or 3.3 V mode)" }
+    - { name: VCC-PD, typ_v: 1.8 or 3.3, range_v: [1.62, 1.98] or [2.97, 3.63], purpose: "GPIO Port D power (1.8 V or 3.3 V mode)" }
+    - { name: VCC-PE, typ_v: 1.8 or 3.3, range_v: [1.62, 1.98] or [2.97, 3.63], purpose: "GPIO Port E power (1.8 V or 3.3 V mode)" }
+    - { name: VCC18-PF, typ_v: 1.8, range_v: [1.62, 1.98], purpose: "GPIO Port F 1.8 V power" }
+    - { name: VCC33-PF, typ_v: 3.3, range_v: [2.97, 3.63], purpose: "GPIO Port F 3.3 V power" }
+    - { name: VCC-PG, typ_v: 1.8 or 3.3, range_v: [1.62, 1.98] or [2.97, 3.63], purpose: "GPIO Port G power (1.8 V or 3.3 V mode)" }
+    - { name: VCC-PI, typ_v: 1.8 or 3.3, range_v: [1.62, 1.98] or [2.97, 3.63], purpose: "GPIO Port I power (1.8 V or 3.3 V mode)" }
+    - { name: VCC18-MCSI, typ_v: 1.8, range_v: [1.62, 1.98], purpose: "MIPI CSI PHY power" }
+    - { name: VCC18-MDSI, typ_v: 1.8, range_v: [1.62, 1.98], purpose: "MIPI DSI PHY power" }
+    - { name: VCC-EFUSE, typ_v: 1.8, range_v: [1.62, 1.98], purpose: "EFUSE program power" }
+    - { name: VCC33_USB, typ_v: 3.3, range_v: [2.97, 3.63], purpose: "USB analog 3.3 V" }
+    - { name: VDD09_USB, typ_v: 0.9, range_v: [0.81, 0.99], purpose: "USB digital 0.9 V" }
+    - { name: VDD33, typ_v: 3.3, range_v: [2.97, 3.63], purpose: "3.3 V analog part" }
+
+  gpio_bank_count: 8 (PA, PB, PC, PD, PE, PF, PG, PH, PI per the ProjectYosemite EPCB; datasheet section 1.3.8 lists 8 GPIO banks)
+  gpio_pin_count: typical Allwinner V-series GPIO bank = 16 pins per bank; total ~128 GPIO (with the I/O multlexed onto specific functions)
+
+  power_on_sequence:
+    source: datasheet section 2.3.5 and Figure 2-2
+    sequence:
+      - "1. VCC-RTC must ramp no later than other power rails (it is the first rail to come up)."
+      - "2. RESET rail starts to ramp after VDD-SYS is stable with a minimum delay of 8 ms."
+      - "3. 24 MHz crystal oscillator starts oscillating 4 ms after the RESET signal is released."
+      - "4. VCC-DRAM (1.5 V for DDR3 / 1.35 V for DDR3L) ramps; T1 >= 8 ms between VCC-RTC and VCC-DRAM stable."
+      - "5. VDD18-DRAM ramps within 0 ms <= T2 <= 4 ms after VDD-SYS."
+      - "6. VCC-PLL, VCC18-DSI, VCC-EFUSE, VCC18-PF, VCC-PA&MCSI, VCC-IO, VCC-PC, VCC-PD, VCC-PG, VCC33-USB, VCC33-PF, AVCC ramp; T3 >= 8 ms between VCC-DRAM and these rails."
+    note: "The AXP2101 PMIC handles this sequencing internally. The glasses PCB must use the AXP2101's per-rail DCDC / LDO enable sequencing, not a free-running external sequencer."
+    sequencing_source: DATASHEET (datasheet Figure 2-2)
+
+  peripherals_published_in_datasheet:
+    note: "The following peripheral blocks are documented in the V853 datasheet. Specific ball assignments for each signal are in the V853/V853S_PINOUT.sls file (not in the PDF)."
+
+    - { peripheral: "MIPI CSI (CSIC)", block: section 6.1, configurations: "1x 4-lane OR 2x 2-lane (per datasheet section 1.3.6.4)", protocol: "MIPI CSI-2 V1.1, D-PHY V1.1", max_video_capture: "5 MP @ 30 fps", power_domain: "VCC18-MCSI + VCC18-MDSI (1.8 V)" }
+    - { peripheral: "MIPI DSI", block: section 7.2, configurations: "4-lane, up to 1920 x 1200 @ 60 fps", protocol: "MIPI DSI V1.02, D-PHY V1.2", power_domain: "VCC18-MDSI (1.8 V)" }
+    - { peripheral: "SD/MMC Host Controller (SMHC)", block: section 4.2, count: 3, protocol: "SDIO 3.0 / eMMC 5.1", power_domain: "VCC-IO (3.3 V) or VCC18 (1.8 V) for eMMC HS200/HS400 mode" }
+    - { peripheral: "USB 2.0 DRD", block: section 10.4, count: 1, protocol: "USB 2.0 with OTG (DRD = dual-role device)", power_domain: "VCC33_USB (3.3 V analog) + VDD09_USB (0.9 V digital)" }
+    - { peripheral: "I2S / PCM", block: section 8.1, count: 2, protocol: "Philips I2S, left-justified, right-justified, PCM, TDM", power_domain: "VCC-IO (3.3 V) or VCC18 (1.8 V) for the digital I/O" }
+    - { peripheral: "DMIC", block: section 8.2, count: 1, protocol: "PDM (single-bit data + clock), up to 8 microphones", power_domain: "VCC-IO (3.3 V) or VCC18 (1.8 V) for the digital I/O" }
+    - { peripheral: "TWI (I2C)", block: section 10.x, count: 5, protocol: "Standard, Fast, Fast-Plus", power_domain: "VCC-IO (3.3 V) or VCC18 (1.8 V)" }
+    - { peripheral: "SPI", block: section 10.x, count: 4, protocol: "SPI master/slave, up to 50 MHz (typical AHB APB class)", power_domain: "VCC-IO (3.3 V) or VCC18 (1.8 V)" }
+    - { peripheral: "UART", block: section 10.x, count: 4, protocol: "UART, up to 4 Mbaud", power_domain: "VCC-IO (3.3 V) or VCC18 (1.8 V)" }
+    - { peripheral: "PWM", block: section 10.x, count: 12, protocol: "PWM", power_domain: "VCC-IO (3.3 V) or VCC18 (1.8 V)" }
+    - { peripheral: "GPADC", block: section 10.6, count: 4, protocol: "12-bit SAR ADC", power_domain: "AVCC (1.8 V)" }
+    - { peripheral: "Audio Codec (on-die)", block: section 8, contents: "1x DAC, 2x ADC, 2x diff mic inputs, 1x diff line out, 2x I2S/PCM, DMIC up to 8" }
+    - { peripheral: "EMAC (Ethernet)", block: section 10.x, count: 1, protocol: "10/100/1000 Mbit/s RGMII/RMII" }
+    - { peripheral: "Crypto Engine (CE)", block: section 1.3.9, contents: "AES, DES, 3DES, RSA up to 4096-bit, ECC up to 521-bit, MD5, SHA, HMAC" }
+    - { peripheral: "Crypto Engine SID (eFuse)", block: section 1.3.9, contents: "2048-bit eFuse" }
+
+  missing_data:
+    note: "The PDF datasheet does NOT contain the per-ball pin assignment table. The full pin map is in the separate V853/V853S_PINOUT.sls file (Excel/CSV), which the brief says is the source of truth. The glasses pin assignment therefore cannot be done with per-ball precision in this pass; only peripheral-to-bank-class mapping is possible from the PDF."
+    required_for_complete_pin_assignment:
+      - "V853/V853S_PINOUT.sls (the Excel/CSV file in the Allwinner datasheet package)"
+      - "If only the PDF is available, the Allwinner BSP (BSP / Tina Linux SDK) device tree files for the V853 reference board, which contain the per-pin mux assignments"
+    what_can_be_done_from_pdf:
+      - "Peripherals available and their voltage domains (CONFIRMED)"
+      - "Power-on sequencing (CONFIRMED from Figure 2-2)"
+      - "Recommended operating conditions (CONFIRMED from Table 2-6)"
+      - "GPIO bank count and pull-up/down resistor values (CONFIRMED from Table 2-7)"
+    what_cannot_be_done_from_pdf:
+      - "Specific ball numbers (UNCONFIRMED; need the .sls file or the BSP device tree)"
+      - "GPIO port A vs B vs C pin count (UNCONFIRMED; the 8-bank count is confirmed but the per-bank pin count is not in the PDF excerpt I have)"
+      - "MIPI CSI/DSI lane-to-ball mapping (UNCONFIRMED)"
+      - "USB DP/DN exact balls (UNCONFIRMED)"
+
+  status_for_glasses_design:
+    pcb_design_blocked_until: "the V853/V853S_PINOUT.sls file or the equivalent BSP device tree is obtained. Without this, the glasses PCB cannot be routed with per-ball precision."
+    work_around: "The ProjectYosemite EPCB has the actual ProjectYosemite-specific ball map, but the ProjectYosemite feature set is different from the glasses (ProjectYosemite has 1x 4-lane CSI; the glasses have 2x 2-lane CSI). The ProjectYosemite ball map CAN be used as a starting point but every signal must be re-mapped to the glasses feature set, and any signal that is unique to the glasses (e.g. the second CSI 2-lane sub-channel) must be verified against the datasheet .sls file."
+    recommendation: "ACQUIRE THE V853/V853S_PINOUT.sls FILE FROM ALLWINNER OR THE BSP BEFORE PROCEEDING TO PCB SCHEMATIC CAPTURE."

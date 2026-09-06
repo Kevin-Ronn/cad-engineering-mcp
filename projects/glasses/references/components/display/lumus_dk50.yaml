@@ -1,0 +1,91 @@
+schema_version: 1
+component:
+  id: lumus_dk50_reference_design
+  category: ar_optical_engine_with_waveguide
+  units: mm
+  role: waveguide_display_reference_candidate
+
+source:
+  manufacturer: Lumus Ltd (Israel)
+  part_number: DK-50 development kit / reference design (older generation)
+  source_type: manufacturer_public_announcement_plus_distributor_price_benchmark
+  source_docs:
+    - url: https://lumusvision.com/
+      description: "Lumus official site (general product info; detailed mechanical drawings typically under NDA)"
+  notes: "Lumus publicly described the DK-50 as 640x400 resolution with approximately 40 deg FOV. The newer Maximus generation is 1280x720 / 50 deg FOV, ~6 mm engine thickness, ~2 mm waveguide thickness. Exact mechanical drawings for the DK-50 reference design are NOT publicly downloadable; they are released under NDA to qualified partners. The 0.23 inch panel class in the brief corresponds to this generation."
+
+optical:
+  display_technology: LCoS (reflective liquid-crystal-on-silicon) microdisplay
+  resolution: 640 x 400
+  diagonal_size_inch: 0.23
+  aspect_ratio: approximately 8:5 (640/400 = 1.6:1)
+  fov_horizontal_deg: approximately 26
+  fov_vertical_deg: approximately 16
+  fov_diagonal_deg: approximately 40
+  waveguide_technology: Lumus reflective (2D pupil-expansion) waveguide
+  waveguide_thickness_mm: approximately 2 (per public Lumus statements about their 2D reflective waveguides)
+  waveguide_dimensions_mm: NOT_PUBLISHED (NDA)
+  eyebox: NOT_PUBLISHED
+  eye_relief_mm: NOT_PUBLISHED
+  exit_pupil: NOT_PUBLISHED
+  brightness_nits: NOT_PUBLISHED; Lumus has stated > 4000 nits/Watt for Maximus
+  contrast: NOT_PUBLISHED
+  colors: monochrome (single-color) standard; full-color requires RGB illuminator
+  transparency_transmittance: NOT_PUBLISHED
+  refresh_rate_hz: NOT_PUBLISHED for DK-50; 60 Hz typical for this class
+  distortion: NOT_PUBLISHED
+  focus_distance: focuses at infinity (per public statements)
+  source_for_optical: manufacturer public statements
+
+mechanical:
+  # Per the brief, record envelopes separately. The Lumus DK-50 and later
+  # Maximus engines are described as fitting into standard eyeglass frames.
+  # The Maximus optical engine is ~6 mm thick; the waveguide is ~2 mm thick.
+  optical_engine_dimensions_mm: NOT_PUBLISHED for DK-50; Maximus class ~14 x 12 x 6 (estimated, NOT_VERIFIED)
+  optical_engine_weight_g: NOT_PUBLISHED
+  waveguide_dimensions_mm: NOT_PUBLISHED
+  complete_module_dimensions_mm: NOT_PUBLISHED
+  source_for_mechanical: Lumus public announcements only
+
+electronics:
+  interface: NOT_PUBLISHED (DK-50 was a development kit; production module would expose the LCoS driver interface, likely RGB or MIPI DSI via an FPGA bridge)
+  mipi_dsi_lanes: NOT_PUBLISHED (the V853 supports 4-lane MIPI DSI up to 1920x1200@60; 640x400 is well within this capability but Lumus has not publicly committed to a MIPI DSI reference)
+  controller_driver_ic: NOT_PUBLISHED
+  required_supply_voltages: NOT_PUBLISHED
+  power_consumption: NOT_PUBLISHED
+  connector_type: NOT_PUBLISHED
+  fpc_dimensions: NOT_PUBLISHED
+  fpc_length_mm: NOT_PUBLISHED
+  pin_count: NOT_PUBLISHED
+  source_for_electronics: NOT_PUBLISHED in public materials
+
+purchase:
+  distributor: Lumus direct (NDA required for pricing); DigiLens DesignLink comparable retail ~$950 per engine (per third-party benchmark)
+  unit_price_usd: NOT_PUBLIC (quote-based, estimated 400 to 2000 for OEM module depending on volume and FOV variant)
+  moq: NOT_PUBLIC
+  lead_time: NOT_PUBLIC
+  availability: production / NDA-gated for OEMs
+  source_for_purchase: third-party press benchmarks and Lumus direct
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_public_announcement_plus_third_party_benchmarks
+  gaps:
+    - "Exact mechanical dimensions of the DK-50 optical engine and waveguide are NDA-gated"
+    - "Exact interface / MIPI DSI lane count not publicly committed"
+    - "Exact power consumption not publicly committed"
+    - "Exact brightness in nits not publicly committed for the DK-50 generation"
+    - "Eyebox, eye relief, exit pupil, distortion, refresh rate not publicly committed"
+
+constraints:
+  status: SERIOUS_CANDIDATE for waveform/waveguide reference design
+  glasses_fit_unverified: "Public statements say 'fits in standard eyeglass frames' but exact mm-level dimensions of the optical engine, waveguide, and complete module are not in the public datasheet. Without an NDA, this cannot be placed in the Wayfarer geometry with confidence."
+
+geometry_relevance:
+  conceptual_fit_against_wayfarer:
+    target: monocular display in front of one eye, waveguide inside the lens cavity
+    optical_engine_location: must sit above or to the side of the lens cavity (the engine is too thick to sit inside the lens-cavity space); most likely mounted in the upper-bridge area or in a temple-integrated pod
+    waveguide_location: sits inside the lens cavity as a flat combiner; in a Wayfarer, the lens cavity is between Y=89.10 and Y=210.90 mm (121.8 mm depth); the cavity's Z range is 0 to 42.85 mm
+    minimum_temple_requirement: optical engine ~6 mm thick, ~14 x 12 mm; if the engine is in a temple, the temple interior must be at least 14 x 12 mm cross-section, which the existing 1.6 mm temple transition does NOT provide. The engine would have to be in the upper-front-frame region with a flat-cable run into the temple
+    blocker: Wayfarer temples are 1.6 mm thick (see full-mechanical-inspection.md); a Lumus-class engine cannot fit in a Wayfarer-style temple at all. Must be in the front frame.
+    source_for_frame_comparison: projects/glasses/analysis/structure/full-mechanical-inspection.md

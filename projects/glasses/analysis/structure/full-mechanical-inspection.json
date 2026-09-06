@@ -1,0 +1,252 @@
+{
+  "inspection_metadata": {
+    "working_file": "WORKING_FRAME_SOLID.FCStd",
+    "n_solids": 1,
+    "n_faces": 21882,
+    "n_edges": 32823,
+    "n_vertices": 10939,
+    "is_valid": true,
+    "volume_mm3": 6067.6991246278285,
+    "stl_conversion_tolerance_mm": 0.05,
+    "practical_uncertainty_mm": 0.1,
+    "measurement_resolution": "0.5 mm or finer at critical points"
+  },
+  "coordinate_system": {
+    "X": {
+      "physical": "front-back depth",
+      "extent": 17.73,
+      "confidence": "HIGH"
+    },
+    "Y": {
+      "physical": "lateral width",
+      "extent": 143.0,
+      "confidence": "HIGH"
+    },
+    "Z": {
+      "physical": "vertical height",
+      "extent": 42.85,
+      "confidence": "HIGH"
+    }
+  },
+  "frame_geometry": {
+    "width": 143.0,
+    "depth": 17.7,
+    "height": 42.8,
+    "bbox_x": [
+      156.8,
+      174.5
+    ],
+    "bbox_y": [
+      78.5,
+      221.5
+    ],
+    "bbox_z": [
+      -0.0,
+      42.8
+    ],
+    "volume_mm3": 6067.699,
+    "geometric_center": [
+      165.7,
+      150.0,
+      21.4
+    ]
+  },
+  "lens_openings": {
+    "left_lens": {
+      "y_min": 89.5,
+      "y_max": 139.8,
+      "width": 50.3,
+      "x_min": 156.8,
+      "x_max": 174.5,
+      "depth": 17.7
+    },
+    "right_lens": {
+      "y_min": 160.2,
+      "y_max": 210.5,
+      "width": 50.3,
+      "x_min": 156.8,
+      "x_max": 174.5,
+      "depth": 17.7
+    },
+    "nose_bridge_outer_y": [
+      143.1,
+      156.9
+    ],
+    "nose_bridge_outer_width": 13.8
+  },
+  "lens_z_extent": {
+    "z_min": 4.0,
+    "z_max_where_open": 28.0,
+    "height": 24.0
+  },
+  "lens_rims_material_thickness": {
+    "left_outer_top_min": 5.67,
+    "left_outer_top_max": 9.36,
+    "left_inner_top_min": 3.34,
+    "left_inner_top_max": 3.74,
+    "left_inner_top_median": 3.55,
+    "right_outer_top_min": 5.67,
+    "right_outer_bottom": 4.54,
+    "right_inner_top_min": 3.34,
+    "right_inner_top_max": 3.74,
+    "right_inner_top_median": 3.55,
+    "temple_left": 1.61,
+    "temple_right": 1.61
+  },
+  "nose_bridge": {
+    "y_range": [
+      149.0,
+      152.0
+    ],
+    "y_width": 3.0,
+    "z_range": [
+      28.0,
+      36.0
+    ],
+    "z_height": 8.0,
+    "x_range": [
+      169.3,
+      173.1
+    ],
+    "x_depth": 3.8,
+    "center": [
+      171.2,
+      150.5,
+      32.0
+    ],
+    "available_volume": 91.2
+  },
+  "camera_fit": {
+    "target_dimensions": [
+      8.5,
+      8.5,
+      6.5
+    ],
+    "target_volume_mm3": 469.6,
+    "fits_original_8_5": false,
+    "fits_at_bridge_center_fill_pct": 39.4,
+    "alternative_orientation_fits": true,
+    "working_orientation": [
+      3.0,
+      8.5,
+      6.5
+    ],
+    "working_orientation_fill_pct": 97.9,
+    "working_orientation_position": [
+      171.0,
+      150.5,
+      32.0
+    ],
+    "working_orientation_description": "Camera X dimension (depth) along frame Y axis; camera Y dimension (width) along frame X (depth) axis; camera Z along frame Z (vertical)",
+    "compact_3x3x6_fits": true,
+    "compact_3x3x6_fill_pct": 96.6,
+    "limiting_factor": "Frame Y (lateral) width at bridge is only ~3mm",
+    "recommendation": "Either redesign bridge to widen to \u22659mm Y, or orient camera with Y axis through the depth direction"
+  },
+  "led_pockets": {
+    "led_dimensions": [
+      3.4,
+      3.4,
+      1.5
+    ],
+    "minimum_rim_width_needed": 4.4,
+    "outer_rim_width_at_z20": {
+      "left": 5.1,
+      "right": 5.1,
+      "fits": true
+    },
+    "inner_rim_width_at_z20": {
+      "left": 3.3,
+      "right": 3.3,
+      "fits": false
+    },
+    "outer_rim_depth_at_z20": {
+      "left": 5.1,
+      "right": 5.1
+    },
+    "candidate_positions_per_lens": [
+      "Top-outer (Z=32-36, outer rim corner)",
+      "Bottom-outer (Z=4-10, outer rim corner)",
+      "Top-inner corner near bridge (Z=30, inner side)",
+      "Side-outer (mid-height outer rim)",
+      "Side-inner (mid-height inner rim - requires rim thickening)"
+    ],
+    "fit_tests": [],
+    "recommendation": "Outer rim corners and middle are feasible for LED placement with proper orientation. LED must be oriented with its depth (1.5mm + clearance) along frame Y (lateral) and its width (3.4mm + clearance) along frame Z (vertical) or X (depth)."
+  },
+  "pcb_channel_feasibility": {
+    "target_width": 3.5,
+    "target_depth": 1.2,
+    "wall_thickness": 1.5,
+    "regions": {
+      "outer_rim_top": {
+        "class": "GREEN",
+        "reason": "5.1mm wide, 9.4mm deep at corners"
+      },
+      "outer_rim_mid": {
+        "class": "GREEN",
+        "reason": "5.1mm wide, 5-7mm deep"
+      },
+      "outer_rim_bottom": {
+        "class": "GREEN",
+        "reason": "4.5mm wide enough, depth 4.5mm"
+      },
+      "inner_rim_mid": {
+        "class": "RED",
+        "reason": "Only 3.3mm wide; cannot fit 3.5mm channel + walls"
+      },
+      "inner_rim_top": {
+        "class": "RED",
+        "reason": "Only 3.3-3.7mm wide; YELLOW only at very top corners"
+      },
+      "inner_rim_bottom": {
+        "class": "RED",
+        "reason": "Only 3.3-3.5mm wide"
+      },
+      "nose_bridge": {
+        "class": "RED",
+        "reason": "Y width is only ~3mm; cannot accommodate 3.5mm channel"
+      },
+      "temple_transitions": {
+        "class": "YELLOW",
+        "reason": "Material thin (~1.6mm); needs reinforcement"
+      }
+    },
+    "must_change_dimensions": [
+      "Inner rim needs ~1.0mm additional material on inner side to widen",
+      "Nose bridge needs to be widened by ~2mm or redesigned to be wider/flatter",
+      "Outer rim corners can accommodate without modification"
+    ],
+    "channel_path_alternative": "Route channel on the OUTER side of the rim only, avoiding inner side"
+  },
+  "mechanical_constraints": {
+    "tightest_dimension": "Inner rim Y width = 3.3mm (only 0.1mm margin to fit PCB channel width)",
+    "tightest_location": "Z=20-28 mid-height of inner rims of both lenses",
+    "bridge_constraint": "Bridge Y width of 3mm cannot accommodate the 3.5mm channel width",
+    "frame_front_face_x": 156.8,
+    "frame_back_face_x": 174.5,
+    "structural_floor": 1.5
+  },
+  "risks": [
+    "Bridge is too narrow (~3mm Y) for 8.5x8.5x6.5 camera. Camera redesign required.",
+    "Inner rim width (3.3mm) is just below 3.5mm channel requirement.",
+    "Front face is at X=156.8; the rim curves backward, reducing usable depth near lens openings.",
+    "Triangulated STL conversion adds \u00b10.05mm uncertainty; critical fits require \u00b10.1mm tolerance.",
+    "Wayfarer geometry has a strong taper toward the bottom (Z<10), reducing usable material at lens bottom corners."
+  ],
+  "confidence_summary": {
+    "HIGH": [
+      "frame dimensions",
+      "coordinate system",
+      "lens opening bounds (Z=20)",
+      "outer rim thickness"
+    ],
+    "MEDIUM": [
+      "inner rim exact width",
+      "bridge tight Z range"
+    ],
+    "LOW": [
+      "exact camera envelope (binary search not run due to avoid isInside patterns)"
+    ]
+  }
+}

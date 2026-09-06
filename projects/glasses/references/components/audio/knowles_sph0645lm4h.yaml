@@ -1,0 +1,60 @@
+schema_version: 1
+component:
+  id: knowles_sph0645lm4h_b
+  category: mems_microphone_digital_i2s
+  units: mm
+  role: secondary_microphone_candidate_alternative_interface
+
+source:
+  manufacturer: Knowles Electronics
+  part_number: SPH0645LM4H-B
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.knowles.com
+      description: "Knowles official site (full datasheet requires login)"
+
+mechanical:
+  package: LGA
+  dimensions_mm: { width: 3.5, height: 2.65, depth: 0.98 }
+  acoustic_port: bottom
+  source_for_mechanical: Knowles datasheet summary
+
+electrical:
+  interface: digital I2S (not PDM; uses standard I2S word-select + bit-clock + data)
+  supply_voltage_v: { min: 1.62, typ: 1.8, max: 3.6 }
+  active_current_uA: UNKNOWN
+  standby_current_uA: UNKNOWN
+  clock_frequency_mhz: UNKNOWN
+  source_for_electrical: Knowles datasheet summary
+
+acoustic:
+  sensitivity_dbfs: UNKNOWN
+  snr_db: 65 (typical class)
+  aop_db_spl: UNKNOWN
+  frequency_response_hz: 50 to 12000 (usable class)
+  directivity: omnidirectional
+  source_for_acoustic: Knowles datasheet summary
+
+environmental:
+  operating_temperature_c: UNKNOWN
+  source_for_environmental: NOT_PUBLISHED in summary
+
+purchase:
+  distributor: DigiKey; Mouser; LCSC
+  unit_price_usd: 1 to 3 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+  source_for_purchase: Knowles, Mouser, DigiKey
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary_plus_distributor_listing
+  gaps:
+    - "Detailed sensitivity, AOP, THD, flatness not in the summary"
+    - "Operating temperature not in the summary"
+    - "I2S interface: requires the V853's I2S controller, not the DMIC block; this is a routing change, not a performance change"
+  notes: "I2S output means the mic uses a separate data line, not a 1-bit PDM data line. The V853 has two I2S controllers and a separate DMIC block. Either interface works; PDM is more common for multi-mic arrays because both mics can share one bit-clock and one data line with separate L/R select."
+
+constraints:
+  status: SERIOUS — popular Knowles part, well-known, second-source to ST. Use I2S interface (the SPH0645LM4H-B has built-in decimation filter, so it presents standard I2S data).

@@ -1,0 +1,107 @@
+schema_version: 1
+component:
+  id: yuzukihd_project_yosemite
+  category: open_source_sbc
+  units: mm
+  role: compute_sbc_candidate
+
+source:
+  manufacturer: YuzukiHD (Yuzuki Tsuru Hardware Open Source)
+  part_number: ProjectYosemite ("Small Heterogeneous & AI Powered Computing SBC Based on V853")
+  license: CERN-OHL-S 2.0 (Strongly Reciprocal)
+  source_type: open_source_hardware_repository
+  source_docs:
+    - url: https://github.com/YuzukiHD/ProjectYosemite
+      description: "Main repository"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware
+      description: "KiCad + Gerber + 3D + BOM"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Datasheets
+      description: "Vendor datasheets (V853 brief + datasheet, AXP2101 PMIC)"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/Project
+      description: "KiCad project ZIP"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/PCB
+      description: "PCB artwork ZIP"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/Gerber
+      description: "Gerber ZIP (Gerber_PCB1_2022-11-06.zip)"
+    - url: https://github.com/YuzukiHD/ProjectYosemite/tree/main/Hardware/BOM
+      description: "BOM (line-by-line parts list)"
+
+mechanical:
+  form_factor: "Raspberry Pi A size and pinouts (per README; exact mm not stated)"
+  pcb_thickness_mm: UNKNOWN (must be measured from Gerber or read from the KiCad .kicad_pcb file)
+  max_component_height_mm: UNKNOWN
+  mounting_holes: UNKNOWN_count
+  dimensions_mm:
+    width: UNKNOWN
+    height: UNKNOWN
+  source_for_mechanical: NOT_DECLARED
+  note: "Mechanical numbers are NOT in the README. They are derivable only by opening the KiCad project file inside Hardware/Project/ProProject_...zip or by measuring the Gerber files. This must be done before ProjectYosemite is adopted as a SoM."
+
+electrical:
+  soc: allwinner_v853_soc
+  pmic: AXP2101
+  ram_options:
+    - "Up to 1 GiB DDR3 (per README; capacity stated as max only)"
+  emmc_options:
+    - "Up to 128 GiB eMMC (per README; capacity stated as max only)"
+  power_input: UNKNOWN (AXP2101 typically accepts single-cell Li-ion + 5 V; specific input range not stated in README)
+  power_input_typical_for_axp2101: 2.7-5.5 V (battery + USB path), per AXP2101 datasheet
+
+video_input:
+  mipi_csi: 4-lane (per README; only 1x 4-lane documented in the README, not 2x 2-lane)
+  connector: "Raspberry Pi Camera Connector (15-pin FPC, 1 mm pitch, MIPI CSI-2)"
+  video_input_use_for_glasses: "If ProjectYosemite is used as the compute SoM, two 2-lane MIPI CSI cameras need to be brought in via a MIPI CSI mux/splitter (e.g. TC358743 / a CSI-2 2x1 mux). The SoC supports two 2-lane inputs; the SoM only exposes one 4-lane connector. Mux adds latency and power and is undesirable for a license-plate-OCR latency-sensitive path."
+
+video_output:
+  mipi_dsi: 4-lane, up to 1920 x 1200 @ 60 fps
+  video_output_use_for_glasses: "1x 4-lane MIPI DSI to the micro-OLED/waveguide engine."
+
+audio:
+  microphone: "Built-in MIC (per README; placement and part unknown)"
+  line_output: UNKNOWN
+  glasses_use_case: "Built-in MIC is too large for a glasses-wear application; we will need a separate DMIC routed to the V853 directly. The temple speakers need external I2S amps, not the SoM's line-out."
+
+wireless:
+  module: XR829 (Xradio, per README)
+  wifi: 2.4 GHz 802.11 b/g/n
+  bluetooth: BT 4.2
+  antenna: "Built-in; on-board PCB antenna (per README, location and keepout not stated)"
+
+usb:
+  notes: "Built-in USB-to-UART bridge mentioned in the README; explicit USB host/device port count not stated. Must be derived from the schematic in Hardware/Schematic/."
+
+storage:
+  tf_card: 1
+
+peripherals_verified_in_readme:
+  - SPI
+  - IIC
+  - NPU
+  - WiFi
+  - BT
+  - TF card
+  - UART-to-USB
+  - MIPI DSI
+  - MIPI CSI
+
+purchase:
+  available: false
+  notes: "ProjectYosemite is an open-source hardware design, not a commercial product. You fab the board from the published Gerbers and source your own components from the BOM. This is both a feature (no vendor lock-in) and a liability (no commercial support, no pre-tested boards, you own the DFM)."
+
+confidence:
+  overall: MEDIUM
+  sources: open_source_hardware_repository
+  gaps:
+    - "Exact PCB dimensions: must be measured from KiCad .kicad_pcb"
+    - "Mounting hole count and position: not stated in README"
+    - "Max component height: not stated in README"
+    - "Power input voltage range: not stated in README (AXP2101 PMIC implies single-cell Li-ion + 5 V, but not confirmed in the public docs)"
+    - "Operating temperature: not stated in README (consumer-grade V853 die assumed: -20 to +70 C ambient)"
+    - "Full KiCad project / schematic / step model: must be downloaded from the Hardware/ folder"
+    - "Pinout header count and pitch: not stated in README; needs KiCad extraction"
+
+constraints:
+  exact_dimensions_required: true
+  guessed_dimensions_forbidden: true
+  path_to_mechanical_drawing: "Open Hardware/Project/ProProject_高性能异构边缘AI视觉开发板+Porject+Yosemite_2022-06-30.zip, extract the .kicad_pcb file, read Edge.Cuts line segments to get outline."
+  next_action_required: "Download the KiCad project ZIP and Hardware/PCB/PCB1.zip, extract the .kicad_pcb file, and read its Edge.Cuts layer for the actual board outline in mm. Record the result here before considering ProjectYosemite further."

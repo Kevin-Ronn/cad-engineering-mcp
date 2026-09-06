@@ -1,0 +1,64 @@
+schema_version: 1
+component:
+  id: lipo_503450_950mah
+  category: li_poly_pouch_cell
+  units: mm
+  role: medium_capacity_candidate_balanced_envelope
+
+source:
+  manufacturer: generic Chinese LiPo vendors (EEMB, LiPol, GMB, PKCELL, BAK, Grepow)
+  part_number: 503450 (5.0 mm thick x 34 mm wide x 50 mm long, ~950 mAh)
+  source_type: market_survey_generic_model_code
+  source_docs:
+    - url: https://www.eemb.com/
+      description: "EEMB (example vendor for this form factor)"
+  chemistry: lithium polymer (LiPo)
+  form_factor: pouch
+  protected: NO (bare cell)
+
+mechanical:
+  dimensions_mm: { thickness: 5.0, width: 34.0, length: 50.0 }
+  weight_g: approximately 18 to 22
+  volume_cm3: 8.5
+  energy_density_wh_per_kg: approximately 165
+  energy_density_wh_per_l: approximately 414
+  source_for_mechanical: model-number convention
+
+electrical:
+  nominal_voltage_v: 3.7
+  charge_voltage_max_v: 4.2
+  discharge_cutoff_v: 3.0
+  capacity_mah: 950
+  energy_wh: 3.515
+  standard_charge_current_ma: 475 (0.5C)
+  max_charge_current_ma: 950 (1C)
+  max_continuous_discharge_ma: 950 to 1900 (1C to 2C)
+  source_for_electrical: typical class for this capacity
+
+environmental:
+  charge_temperature_c: { min: 0, max: 45 }
+  discharge_temperature_c: { min: -20, max: 60 }
+
+cycle_life:
+  cycles_to_80_percent_capacity: approximately 500
+
+connectors:
+  standard: JST PH-2 (verify per order)
+
+purchase:
+  distributor: EEMB, LiPol, GMB, PKCELL, BAK, Grepow; LCSC; Amazon; AliExpress
+  unit_price_usd: approximately 5 to 10 (single-piece); 3 to 6 in volume
+  moq: 1 to 10
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: market_survey_generic
+
+geometry_relevance:
+  temple_fit: "5.0 mm thick x 34 mm wide x 50 mm long. The 34 mm width is wider than typical glasses temples; a custom temple pod is required."
+  two_battery_config: "Two cells in parallel = 1900 mAh / 7.03 Wh. Strong total energy."
+
+constraints:
+  status: SERIOUS — capacity is right; envelope is wide. Verify with EEMB for a specific part number and exact datasheet.

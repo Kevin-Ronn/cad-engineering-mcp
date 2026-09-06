@@ -1,0 +1,46 @@
+schema_version: 1
+component:
+  id: ov7251_global_shutter_modules
+  category: mipi_csi2_camera_module
+  units: mm
+  role: too_low_resolution_candidate
+
+source:
+  manufacturer: OmniVision; modules by Arducam, GroupGets
+  part_number: OV7251 (sensor); example modules: Arducam B0165
+  sensor: OmniVision OV7251 (1/7.5", VGA 640x480, B&W global shutter)
+
+mechanical:
+  pcb_dimensions_mm: UNKNOWN
+  total_height_mm: UNKNOWN
+  ribbon_cable: typically 15-pin 1.0 mm FPC
+  source_for_mechanical: NOT_PUBLISHED
+
+optical:
+  sensor: OmniVision OV7251
+  resolution_pixels: 640 x 480 (VGA)
+  pixel_size_um: 3.0
+  sensor_format: 1/7.5"
+  output_format: RAW8/RAW10
+  shutter_type: global
+  color_mono: monochrome only
+  frame_rate_max_fps: 100
+  source_for_optical: OmniVision OV7251 datasheet
+
+electrical:
+  interface: MIPI CSI-2 (1-lane)
+  source_for_electrical: OV7251 datasheet
+
+purchase:
+  distributor: Arducam, GroupGets
+  unit_price_usd: approximately 12 to 25
+  availability: in production
+
+confidence:
+  overall: NOT_RECOMMENDED
+  gaps:
+    - "VGA resolution is far below the 1080p target"
+    - "Monochrome only"
+
+constraints:
+  status: NOT_RECOMMENDED — VGA resolution is below the glasses' OCR / scene-capture requirements

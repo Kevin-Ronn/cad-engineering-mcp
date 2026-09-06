@@ -1,0 +1,63 @@
+schema_version: 1
+component:
+  id: arducam_imx462_variants
+  category: mipi_csi2_camera_module
+  units: mm
+  role: low_light_candidate
+
+source:
+  manufacturer: Arducam; Sony (sensor)
+  part_number: Arducam IMX462 family (B0325, B0342, B0381)
+  sensor: Sony IMX462 (STARVIS, 1/2.8", 2 MP, 2.9 um pixel)
+  source_type: third_party_module_catalog
+  source_docs:
+    - url: https://docs.arducam.com/
+      description: "Arducam docs (IMX462 family)"
+
+mechanical:
+  pcb_dimensions_mm: UNKNOWN (Arducam publishes dims in per-SKU datasheets, not in the catalog; the B0325 and B0381 SKUs are described in third-party text as 'mini' / 'standard' size, ~24x25 or ~38x38)
+  total_height_mm: UNKNOWN
+  ribbon_cable: typically 15-pin 1.0 mm FPC
+  source_for_mechanical: NOT_PUBLISHED in catalog
+
+optical:
+  sensor: Sony IMX462 (STARVIS — back-illuminated, high NIR sensitivity)
+  resolution_megapixels: 2
+  effective_pixels: 1936 x 1096
+  pixel_size_um: 2.9
+  sensor_format: 1/2.8"
+  output_format: RAW10 (typically)
+  shutter_type: rolling
+  frame_rate_max_fps: 120 (1080p)
+  ir_sensitivity: extends to ~850 nm+ (STARVIS NIR)
+  focus_type: fixed focus (per Arducam convention)
+  field_of_view: depends on lens SKU
+  source_for_optical: IMX462 sensor datasheet (Sony)
+
+electrical:
+  interface: MIPI CSI-2 (2-lane)
+  source_for_electrical: IMX462 sensor datasheet
+
+environmental:
+  operating_temperature_c: UNKNOWN
+  source_for_environmental: NOT_PUBLISHED
+
+purchase:
+  distributor: Arducam, AliExpress
+  unit_price_usd: approximately 35 to 50
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: third_party_catalog + Sony sensor datasheet
+  gaps:
+    - "Exact PCB dimensions per SKU not in catalog"
+    - "Power consumption not in catalog"
+    - "HDR mode not confirmed (IMX462 supports HDR, but the Arducam module may or may not expose it)"
+
+geometry_relevance:
+  fit_assessment: "If a 'mini' 24 x 25 mm Arducam IMX462 module exists, it is comparable to the RPi Camera Module 3 in size and would face the same mechanical fit constraints."
+  ocr_suitability: "2.9 um pixel is significantly larger than IMX708 (1.4 um), giving 4x the per-pixel SNR. For low-light and OCR, this is a stronger sensor than the IMX708. However, only 2 MP total — at the standard lens FOV, license-plate OCR distance is limited to ~2-3 m. 1080p @ 120 fps is excellent for video."
+
+constraints:
+  status: SERIOUS_CANDIDATE — best low-light candidate; better than IMX708 for night-vision / IR-illuminated scenes; but lower resolution limits OCR distance. Recommend a specific Arducam SKU with documented dimensions before adoption.

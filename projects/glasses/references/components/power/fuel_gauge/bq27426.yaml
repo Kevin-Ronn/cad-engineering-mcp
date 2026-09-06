@@ -1,0 +1,44 @@
+schema_version: 1
+component:
+  id: ti_bq27426
+  category: single_cell_fuel_gauge_impedance_track
+  units: mm
+  role: alternative_fuel_gauge_candidate
+
+source:
+  manufacturer: Texas Instruments
+  part_number: BQ27426
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.ti.com/product/BQ27426
+      description: "TI BQ27426 product page and datasheet"
+
+mechanical:
+  package: WCSP (typical 1.5 x 1.5 for this family; verify per datasheet)
+  dimensions_mm: approximately 1.5 x 1.5 (verify)
+  source_for_mechanical: TI datasheet summary
+
+electrical:
+  interface: I2C
+  supply_voltage_v: { min: 2.0, typ: 3.7, max: 4.5 }
+  quiescent_current_ua: 18 (active); less than 1 (sleep; per TI Impedance Track family)
+  sense_resistor: NOT REQUIRED (Impedance Track; uses internal model)
+  accuracy_percent: 1 (typical for Impedance Track)
+  source_for_electrical: TI datasheet summary
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey
+  unit_price_usd: approximately 1.50 to 3.00 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+
+constraints:
+  status: ALTERNATIVE — Impedance Track is the most accurate Li-ion fuel-gauge technology. Slightly smaller package than MAX17048. Linux support via bq27xxx driver.

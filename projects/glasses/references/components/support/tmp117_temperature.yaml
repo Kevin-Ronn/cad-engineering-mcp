@@ -1,0 +1,49 @@
+schema_version: 1
+component:
+  id: tmp117
+  category: digital_temperature_sensor_i2c
+  units: mm
+  role: primary_temperature_sensor
+
+source:
+  manufacturer: Texas Instruments
+  part_number: TMP117
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.ti.com/product/TMP117
+      description: "TI TMP117 product page"
+
+mechanical:
+  package: 4-ball WCSP (DSBGA)
+  dimensions_mm: { length: 1.5, width: 1.5, height: 0.5 }
+  source_for_mechanical: TI datasheet
+
+electrical:
+  supply_voltage_v: { min: 1.7, typ: 3.3, max: 5.5 }
+  interface: I2C (0x48-0x4B address range)
+  current_active_uA: 3.5 (typical at 1 Hz conversion)
+  current_shutdown_uA: 0.15
+  accuracy_c: +/- 0.1 (from -20 to +50 C); +/- 0.2 (from -40 to +100 C); +/- 0.3 (from -55 to +125 C)
+  resolution_c: 0.0078125 (16-bit)
+  source_for_electrical: TI datasheet
+
+environmental:
+  operating_temperature_c: { min: -55, max: 150 }
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey; LCSC
+  unit_price_usd: 2 to 4 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Linux driver: in-tree IIO driver (tmp117); device-tree binding exists"
+
+constraints:
+  status: SERIOUS_PRIMARY — high accuracy, small, well-documented, well-supported in Linux. Excellent for battery / temple thermal monitoring.
+  glasses_use_case: "Temple thermal monitoring (one per temple) to track battery temperature and temple surface temperature. The accuracy is overkill for thermal protection (0.1 C is much better than the 5-10 C granularity needed) but the small size and low power make it a good fit. Could also be used to compensate the IMU temperature drift."
+  linux_support: "Mainline Linux IIO driver (tmp117); device-tree binding exists."

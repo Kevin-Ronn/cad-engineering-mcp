@@ -153,6 +153,67 @@ def _now_utc() -> str:
 
 
 # ---------------------------------------------------------------------------
+# Structural YAML state reader
+# ---------------------------------------------------------------------------
+
+
+def _read_structural_yaml_state(
+    glasses_root: Path,
+) -> tuple[list[str], list[str], list[str]]:
+    """Read the structural YAMLs and return (objectives, interfaces, exclusions).
+
+    Used by the aggregator to faithfully report the on-disk state of
+    ``mechanical/main-frame/structural-policy.yaml`` and
+    ``mechanical/ribs/rib-system.yaml``. Returns empty lists when the
+    files are absent or unreadable; never fabricates values.
+    """
+    import yaml as _yaml
+
+    objectives: list[str] = []
+    interfaces: list[str] = []
+    exclusions: list[str] = []
+    try:
+        policy_text = (
+            glasses_root
+            / "mechanical"
+            / "main-frame"
+            / "structural-policy.yaml"
+        ).read_text(encoding="utf-8")
+        policy_doc = _yaml.safe_load(policy_text)
+        if isinstance(policy_doc, dict):
+            design_intent = policy_doc.get("design_intent", {}) or {}
+            if isinstance(design_intent, dict):
+                raw_obj = design_intent.get("objective", [])
+                if isinstance(raw_obj, list):
+                    objectives = [
+                        str(o) for o in raw_obj if isinstance(o, str)
+                    ]
+            raw_if = policy_doc.get("load_interfaces", [])
+            if isinstance(raw_if, list):
+                interfaces = [
+                    str(i) for i in raw_if if isinstance(i, str)
+                ]
+    except (OSError, UnicodeDecodeError, _yaml.YAMLError):
+        pass
+    try:
+        rib_text = (
+            glasses_root / "mechanical" / "ribs" / "rib-system.yaml"
+        ).read_text(encoding="utf-8")
+        rib_doc = _yaml.safe_load(rib_text)
+        if isinstance(rib_doc, dict):
+            rib_gen = rib_doc.get("rib_generation", {}) or {}
+            if isinstance(rib_gen, dict):
+                raw_excl = rib_gen.get("exclusions", [])
+                if isinstance(raw_excl, list):
+                    exclusions = [
+                        str(e) for e in raw_excl if isinstance(e, str)
+                    ]
+    except (OSError, UnicodeDecodeError, _yaml.YAMLError):
+        pass
+    return objectives, interfaces, exclusions
+
+
+# ---------------------------------------------------------------------------
 # Aggregator
 # ---------------------------------------------------------------------------
 
@@ -862,31 +923,37 @@ def build_release_blocker_manifest(
                 },
             }
         else:
-            # Even when the underlying module returns PASS, the MCP
-            # tool surfaces rib_zones==0 / missing_objectives /
-            # exclusions / interfaces as INCOMPLETE. Reconstruct the
-            # same envelope so the extractor sees the full picture.
+            # Phase 7 fix: the underlying structural module returns a
+            # narrow dict ({status, interfaces, rib_zones}) and does
+            # not include ``missing_objectives``. The previous
+            # implementation fell back to listing every
+            # REQUIRED_OBJECTIVE as missing when the key was absent,
+            # which produced *fabricated* blockers even when the YAML
+            # actually contains every objective. We now read the
+            # project YAML directly so the structural envelope
+            # faithfully reflects the on-disk state.
             rib_zones = structural_data.get("rib_zones", 0)
             interfaces = structural_data.get("interfaces", [])
-            objectives_block = structural_data.get("missing_objectives", [])
+            yaml_objectives, yaml_interfaces, yaml_exclusions = (
+                _read_structural_yaml_state(glasses_root)
+            )
+            objectives_block = [
+                o
+                for o in REQUIRED_OBJECTIVES
+                if o not in yaml_objectives
+            ]
+            exclusions_present = bool(yaml_exclusions)
             structural_env = {
                 "status": "INCOMPLETE"
-                if (not rib_zones or objectives_block)
+                if (not rib_zones or objectives_block or not interfaces)
                 else "PASS",
                 "data": {
                     "rib_zones_count": rib_zones,
-                    "interfaces": interfaces,
-                    "missing_objectives": objectives_block
-                    if objectives_block
-                    else [
-                        o
-                        for o in REQUIRED_OBJECTIVES
-                        if o
-                        not in (structural_data.get("objectives") or [])
-                    ],
-                    "exclusions_present": bool(
-                        structural_data.get("exclusions_present", False)
-                    ),
+                    "interfaces": interfaces
+                    if interfaces
+                    else yaml_interfaces,
+                    "missing_objectives": objectives_block,
+                    "exclusions_present": exclusions_present,
                     "findings": structural_data.get("findings", []),
                     "tbd_fields": structural_data.get("tbd_fields", []),
                 },

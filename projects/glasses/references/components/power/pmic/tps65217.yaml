@@ -1,0 +1,53 @@
+schema_version: 1
+component:
+  id: ti_tps65217
+  category: pmic_for_application_processor
+  units: mm
+  role: alternative_pmic_candidate
+
+source:
+  manufacturer: Texas Instruments
+  part_number: TPS65217 (a PMIC originally designed for Sitara AM335x but used in many similar applications)
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.ti.com/product/TPS65217
+      description: "TI TPS65217 product page and datasheet"
+
+mechanical:
+  package: HTSSOP-28 or QFN
+  dimensions_mm: approximately 5.0 x 5.0 (verify per datasheet)
+  source_for_mechanical: TI datasheet summary
+
+electrical:
+  input_voltage_v: { min: 2.7, typ: 3.7, max: 5.5 }
+  outputs:
+    - { rail: DCDC1, voltage_v: 0.9 to 1.8, current_ma: 1500, purpose: "Core" }
+    - { rail: DCDC2, voltage_v: 0.9 to 1.8, current_ma: 1500, purpose: "Core / DDR" }
+    - { rail: DCDC3, voltage_v: 1.0 to 3.3, current_ma: 1000, purpose: "I/O / DDR" }
+    - { rail: LDO1, voltage_v: 0.9 to 3.3, current_ma: 200, purpose: "I/O / analog" }
+    - { rail: LDO2, voltage_v: 0.9 to 3.3, current_ma: 200, purpose: "RTC / analog" }
+  power_path_management: NO (single-input LDO/buck topology; charger is external)
+  interface: I2C
+  thermal_regulation: yes
+  battery_protection_features: external charger required for battery
+  source_for_electrical: TI datasheet summary
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: TI direct; Mouser; DigiKey
+  unit_price_usd: approximately 2.50 to 4.00 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Designed for Sitara AM335x, not V853 specifically; rails need to be validated against V853's AVCC / VCC-IO / VCC-DRAM requirements"
+    - "No internal power-path management; requires a separate charger IC"
+
+constraints:
+  status: ALTERNATIVE — the TPS65217 is a multi-rail PMIC that can be re-purposed, but it was not designed for the V853. The AXP2101 is the better Allwinner-ecosystem match.

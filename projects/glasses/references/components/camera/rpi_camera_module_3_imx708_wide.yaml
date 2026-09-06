@@ -1,0 +1,45 @@
+schema_version: 1
+component:
+  id: rpi_camera_module_3_imx708_wide
+  category: mipi_csi2_camera_module
+  units: mm
+  role: wide_fov_camera_candidate
+
+source:
+  manufacturer: Raspberry Pi Ltd; Sony (sensor)
+  part_number: Raspberry Pi Camera Module 3 Wide (Standard or NoIR)
+  sensor: Sony IMX708
+  source_type: manufacturer_official_brief
+  source_docs:
+    - url: https://pip-assets.raspberrypi.com/categories/786-raspberry-pi-camera-module-3/documents/RP-008151-DS-1-camera-module-3-product-brief.pdf
+      description: "Official brief"
+
+mechanical:
+  pcb_dimensions_mm: { width: 25.0, height: 24.0 }
+  total_height_mm: 12.4
+  source_for_mechanical: official brief (height differs from standard variant; PCB is the same)
+
+optical:
+  sensor: Sony IMX708
+  resolution_megapixels: 11.9
+  field_of_view_horizontal_deg: 102
+  field_of_view_diagonal_deg: approximately 120
+  ir_cut_filter: integrated in standard Wide variant; not in Wide NoIR
+  source_for_optical: official brief
+
+electrical:
+  interface: MIPI CSI-2 (2-lane)
+  source_for_electrical: official brief
+
+purchase:
+  unit_price_usd: approximately 35
+  availability: in production until at least January 2030
+
+confidence:
+  overall: HIGH
+  gaps:
+    - "Wider FOV vs standard (102 H vs 66 H) is good for scene capture, but reduces pixel density at the center of the frame — bad for license-plate OCR at distance. If OCR at distance is a top priority, the standard FOV is preferred."
+
+constraints:
+  status: SERIOUS_CANDIDATE — best for scene-capture role; not preferred for OCR
+  not_recommended_for: license-plate OCR at >5 m (lower pixel density on the plate)

@@ -1,0 +1,6861 @@
+{
+  "consolidated_report": {
+    "inspection_metadata": {
+      "working_file": "WORKING_FRAME_SOLID.FCStd",
+      "n_solids": 1,
+      "n_faces": 21882,
+      "n_edges": 32823,
+      "n_vertices": 10939,
+      "is_valid": true,
+      "volume_mm3": 6067.6991246278285,
+      "stl_conversion_tolerance_mm": 0.05,
+      "practical_uncertainty_mm": 0.1,
+      "measurement_resolution": "0.5 mm or finer at critical points"
+    },
+    "coordinate_system": {
+      "X": {
+        "physical": "front-back depth",
+        "extent": 17.73,
+        "confidence": "HIGH"
+      },
+      "Y": {
+        "physical": "lateral width",
+        "extent": 143.0,
+        "confidence": "HIGH"
+      },
+      "Z": {
+        "physical": "vertical height",
+        "extent": 42.85,
+        "confidence": "HIGH"
+      }
+    },
+    "frame_geometry": {
+      "width": 143.0,
+      "depth": 17.7,
+      "height": 42.8,
+      "bbox_x": [
+        156.8,
+        174.5
+      ],
+      "bbox_y": [
+        78.5,
+        221.5
+      ],
+      "bbox_z": [
+        -0.0,
+        42.8
+      ],
+      "volume_mm3": 6067.699,
+      "geometric_center": [
+        165.7,
+        150.0,
+        21.4
+      ]
+    },
+    "lens_openings": {
+      "left_lens": {
+        "y_min": 89.5,
+        "y_max": 139.8,
+        "width": 50.3,
+        "x_min": 156.8,
+        "x_max": 174.5,
+        "depth": 17.7
+      },
+      "right_lens": {
+        "y_min": 160.2,
+        "y_max": 210.5,
+        "width": 50.3,
+        "x_min": 156.8,
+        "x_max": 174.5,
+        "depth": 17.7
+      },
+      "nose_bridge_outer_y": [
+        143.1,
+        156.9
+      ],
+      "nose_bridge_outer_width": 13.8
+    },
+    "lens_z_extent": {
+      "z_min": 4.0,
+      "z_max_where_open": 28.0,
+      "height": 24.0
+    },
+    "lens_rims_material_thickness": {
+      "left_outer_top_min": 5.67,
+      "left_outer_top_max": 9.36,
+      "left_inner_top_min": 3.34,
+      "left_inner_top_max": 3.74,
+      "left_inner_top_median": 3.55,
+      "right_outer_top_min": 5.67,
+      "right_outer_bottom": 4.54,
+      "right_inner_top_min": 3.34,
+      "right_inner_top_max": 3.74,
+      "right_inner_top_median": 3.55,
+      "temple_left": 1.61,
+      "temple_right": 1.61
+    },
+    "nose_bridge": {
+      "y_range": [
+        149.0,
+        152.0
+      ],
+      "y_width": 3.0,
+      "z_range": [
+        28.0,
+        36.0
+      ],
+      "z_height": 8.0,
+      "x_range": [
+        169.3,
+        173.1
+      ],
+      "x_depth": 3.8,
+      "center": [
+        171.2,
+        150.5,
+        32.0
+      ],
+      "available_volume": 91.2
+    },
+    "camera_fit": {
+      "target_dimensions": [
+        8.5,
+        8.5,
+        6.5
+      ],
+      "target_volume_mm3": 469.6,
+      "available_bridge_volume_mm3": 91.0,
+      "fits_original_8_5": false,
+      "limiting_dimension": "Y (bridge Y width is only ~3mm, vs required 8.5mm)",
+      "max_Y_inscribed_mm": 3.0,
+      "max_X_inscribed_mm": 3.8,
+      "max_Z_inscribed_mm": 8.0,
+      "alternative_options": [
+        "Use a smaller camera (max inscribed Y is ~3mm; suggests compact camera <3mm in Y)",
+        "Redesign bridge to be wider (need ~9mm Y for full envelope)",
+        "Reorient: place camera with Y axis into the depth direction",
+        "Bridge must be significantly thickened in Y direction for the camera to fit"
+      ],
+      "smallest_fitting_camera_estimate": "3.0 x 3.8 x 6.5 mm maximum inscribed axis-aligned box at bridge center"
+    },
+    "led_pockets": {
+      "led_dimensions": [
+        3.4,
+        3.4,
+        1.5
+      ],
+      "minimum_rim_width_needed": 4.4,
+      "outer_rim_width_at_z20": {
+        "left": 5.1,
+        "right": 5.1,
+        "fits": true
+      },
+      "inner_rim_width_at_z20": {
+        "left": 3.3,
+        "right": 3.3,
+        "fits": false
+      },
+      "outer_rim_depth_at_z20": {
+        "left": 5.1,
+        "right": 5.1
+      },
+      "candidate_positions_per_lens": [
+        "Top-outer (Z=32-36, outer rim corner)",
+        "Bottom-outer (Z=4-10, outer rim corner)",
+        "Top-inner corner near bridge (Z=30, inner side)",
+        "Side-outer (mid-height outer rim)",
+        "Side-inner (mid-height inner rim - requires rim thickening)"
+      ]
+    },
+    "pcb_channel_feasibility": {
+      "target_width": 3.5,
+      "target_depth": 1.2,
+      "wall_thickness": 1.5,
+      "regions": {
+        "outer_rim_top": {
+          "class": "GREEN",
+          "reason": "5.1mm wide, 9.4mm deep at corners"
+        },
+        "outer_rim_mid": {
+          "class": "GREEN",
+          "reason": "5.1mm wide, 5-7mm deep"
+        },
+        "outer_rim_bottom": {
+          "class": "GREEN",
+          "reason": "4.5mm wide enough, depth 4.5mm"
+        },
+        "inner_rim_mid": {
+          "class": "RED",
+          "reason": "Only 3.3mm wide; cannot fit 3.5mm channel + walls"
+        },
+        "inner_rim_top": {
+          "class": "RED",
+          "reason": "Only 3.3-3.7mm wide; YELLOW only at very top corners"
+        },
+        "inner_rim_bottom": {
+          "class": "RED",
+          "reason": "Only 3.3-3.5mm wide"
+        },
+        "nose_bridge": {
+          "class": "RED",
+          "reason": "Y width is only ~3mm; cannot accommodate 3.5mm channel"
+        },
+        "temple_transitions": {
+          "class": "YELLOW",
+          "reason": "Material thin (~1.6mm); needs reinforcement"
+        }
+      },
+      "must_change_dimensions": [
+        "Inner rim needs ~1.0mm additional material on inner side to widen",
+        "Nose bridge needs to be widened by ~2mm or redesigned to be wider/flatter",
+        "Outer rim corners can accommodate without modification"
+      ],
+      "channel_path_alternative": "Route channel on the OUTER side of the rim only, avoiding inner side"
+    },
+    "mechanical_constraints": {
+      "tightest_dimension": "Inner rim Y width = 3.3mm (only 0.1mm margin to fit PCB channel width)",
+      "tightest_location": "Z=20-28 mid-height of inner rims of both lenses",
+      "bridge_constraint": "Bridge Y width of 3mm cannot accommodate the 3.5mm channel width",
+      "frame_front_face_x": 156.8,
+      "frame_back_face_x": 174.5,
+      "structural_floor": 1.5
+    },
+    "risks": [
+      "Bridge is too narrow (~3mm Y) for 8.5x8.5x6.5 camera. Camera redesign required.",
+      "Inner rim width (3.3mm) is just below 3.5mm channel requirement.",
+      "Front face is at X=156.8; the rim curves backward, reducing usable depth near lens openings.",
+      "Triangulated STL conversion adds \u00b10.05mm uncertainty; critical fits require \u00b10.1mm tolerance.",
+      "Wayfarer geometry has a strong taper toward the bottom (Z<10), reducing usable material at lens bottom corners."
+    ],
+    "confidence_summary": {
+      "HIGH": [
+        "frame dimensions",
+        "coordinate system",
+        "lens opening bounds (Z=20)",
+        "outer rim thickness"
+      ],
+      "MEDIUM": [
+        "inner rim exact width",
+        "bridge tight Z range"
+      ],
+      "LOW": [
+        "exact camera envelope (binary search not run due to avoid isInside patterns)"
+      ]
+    }
+  },
+  "raw_data": {
+    "1": {
+      "object_name": "WORKING_FRAME_SOLID",
+      "n_solids": 1,
+      "n_faces": 21882,
+      "n_edges": 32823,
+      "n_vertices": 10939,
+      "volume_mm3": 6067.6991246278285,
+      "bbox": {
+        "x_min": 156.8119354248047,
+        "x_max": 174.53895568847656,
+        "y_min": 78.50041198730469,
+        "y_max": 221.5,
+        "z_min": -3.469446951953614e-18,
+        "z_max": 42.846126556396484,
+        "dx": 17.727020263671875,
+        "dy": 142.9995880126953,
+        "dz": 42.846126556396484
+      },
+      "centroid": {
+        "x": 165.67544555664062,
+        "y": 150.00020599365234,
+        "z": 21.423063278198242
+      }
+    },
+    "2": {
+      "center_sections": {
+        "z_center": {
+          "axis": "Z",
+          "value": 21.423063278198242,
+          "volume": 24.941017392007414,
+          "y_min": 84.12519134077951,
+          "y_max": 215.87521061082867,
+          "z_min": 21.273063278198237,
+          "z_max": 21.57306327819825,
+          "x_min": 162.9900676997561,
+          "x_max": 172.8927118535196,
+          "n_edges": 1296,
+          "n_faces": 452,
+          "perimeter_total": 287.64684929647956
+        },
+        "x_center": {
+          "axis": "X",
+          "value": 165.67544555664062,
+          "volume": 148.72193085095898,
+          "y_min": 81.41569353194171,
+          "y_max": 218.58470635640515,
+          "z_min": 5.5658319013409,
+          "z_max": 42.22149536807457,
+          "x_min": 165.5254455566406,
+          "x_max": 165.82544555664063,
+          "n_edges": 3106,
+          "n_faces": 1381,
+          "perimeter_total": 1268.754964430437
+        },
+        "y_center": {
+          "axis": "Y",
+          "value": 150.00020599365234,
+          "volume": 8.015791368952808,
+          "y_min": 149.85020599365234,
+          "y_max": 150.15020599365235,
+          "z_min": 28.244057893954853,
+          "z_max": 36.41325847661071,
+          "x_min": 169.3542068219642,
+          "x_max": 173.15179443359375,
+          "n_edges": 432,
+          "n_faces": 194,
+          "perimeter_total": 96.79744718142057
+        }
+      },
+      "x_slices": [
+        {
+          "axis": "X",
+          "value": 156.9,
+          "volume": 14.511259714908308,
+          "y_min": 78.50041198730469,
+          "y_max": 221.5,
+          "z_min": 33.837011577353444,
+          "z_max": 39.22557694266766,
+          "x_min": 156.8119354248047,
+          "x_max": 157.15,
+          "n_edges": 1126,
+          "n_faces": 670,
+          "perimeter_total": 639.2234944493491
+        },
+        {
+          "axis": "X",
+          "value": 158,
+          "volume": 75.19349044813274,
+          "y_min": 78.5957589606716,
+          "y_max": 221.40464786447424,
+          "z_min": 29.96406364440918,
+          "z_max": 39.30398816823695,
+          "x_min": 157.75,
+          "x_max": 158.25,
+          "n_edges": 1044,
+          "n_faces": 480,
+          "perimeter_total": 380.8657682328878
+        },
+        {
+          "axis": "X",
+          "value": 160,
+          "volume": 78.83957086895941,
+          "y_min": 78.95742613842802,
+          "y_max": 221.04299253235396,
+          "z_min": 30.042381246134607,
+          "z_max": 39.4867421994767,
+          "x_min": 159.75,
+          "x_max": 160.25,
+          "n_edges": 1048,
+          "n_faces": 454,
+          "perimeter_total": 360.34780505371316
+        },
+        {
+          "axis": "X",
+          "value": 162,
+          "volume": 109.30248272607706,
+          "y_min": 79.33417225373901,
+          "y_max": 220.66624132622337,
+          "z_min": 26.387466539339485,
+          "z_max": 40.52363034041865,
+          "x_min": 161.75,
+          "x_max": 162.25000000000003,
+          "n_edges": 1542,
+          "n_faces": 704,
+          "perimeter_total": 586.1184621526978
+        },
+        {
+          "axis": "X",
+          "value": 164,
+          "volume": 197.89100150922818,
+          "y_min": 79.71035095086664,
+          "y_max": 220.29005795237657,
+          "z_min": 12.701106368020037,
+          "z_max": 41.61368666958231,
+          "x_min": 163.74999999999997,
+          "x_max": 164.25000000000003,
+          "n_edges": 1992,
+          "n_faces": 880,
+          "perimeter_total": 1032.9988115434523
+        },
+        {
+          "axis": "X",
+          "value": 166,
+          "volume": 246.5245320221343,
+          "y_min": 82.17903202369115,
+          "y_max": 217.8213799636136,
+          "z_min": 4.323916878076812,
+          "z_max": 42.35535554772603,
+          "x_min": 165.74999999999997,
+          "x_max": 166.25000000000003,
+          "n_edges": 4081,
+          "n_faces": 1996,
+          "perimeter_total": 1911.5239640512661
+        },
+        {
+          "axis": "X",
+          "value": 168,
+          "volume": 234.55473952459843,
+          "y_min": 85.16241103611266,
+          "y_max": 214.83799970938853,
+          "z_min": 0.9514585547552705,
+          "z_max": 42.753623839347604,
+          "x_min": 167.74999999999997,
+          "x_max": 168.25,
+          "n_edges": 3894,
+          "n_faces": 1876,
+          "perimeter_total": 3536.8971791430226
+        },
+        {
+          "axis": "X",
+          "value": 170,
+          "volume": 315.28239941703777,
+          "y_min": 90.80462385484402,
+          "y_max": 209.19577311498114,
+          "z_min": 0.019843534381752237,
+          "z_max": 42.846126556396484,
+          "x_min": 169.74999999999997,
+          "x_max": 170.25000000000003,
+          "n_edges": 3048,
+          "n_faces": 1372,
+          "perimeter_total": 2583.7108980125613
+        },
+        {
+          "axis": "X",
+          "value": 172,
+          "volume": 209.5072598246827,
+          "y_min": 99.21270239448509,
+          "y_max": 200.7877119056174,
+          "z_min": 0.06886288256610296,
+          "z_max": 41.28042443122489,
+          "x_min": 171.74999999999997,
+          "x_max": 172.25,
+          "n_edges": 2772,
+          "n_faces": 1396,
+          "perimeter_total": 2638.0932210983115
+        },
+        {
+          "axis": "X",
+          "value": 174,
+          "volume": 42.885977116629455,
+          "y_min": 111.00977896240515,
+          "y_max": 188.99063295310725,
+          "z_min": 0.2677166900135184,
+          "z_max": 10.057623655365784,
+          "x_min": 173.75,
+          "x_max": 174.25,
+          "n_edges": 1006,
+          "n_faces": 506,
+          "perimeter_total": 1136.6557160737607
+        }
+      ]
+    },
+    "3": {
+      "y_slices": [
+        {
+          "y": 85,
+          "vol": 39.262326179195256,
+          "x_min": 156.852171955053,
+          "x_max": 167.74254063688522,
+          "z_min": 16.743554514645226,
+          "z_max": 40.448520328349495,
+          "shells": 1
+        },
+        {
+          "y": 95,
+          "vol": 10.850169182434707,
+          "x_min": 163.57117199762723,
+          "x_max": 170.84203492101048,
+          "z_min": 3.3785065321946046,
+          "z_max": 42.021999846515435,
+          "shells": 2
+        },
+        {
+          "y": 105,
+          "vol": 5.985111733342589,
+          "x_min": 166.2656041428833,
+          "x_max": 172.88758880497647,
+          "z_min": 0.2908883412851483,
+          "z_max": 42.72832050912573,
+          "shells": 2
+        },
+        {
+          "y": 115,
+          "vol": 5.000588957997576,
+          "x_min": 167.92279054646067,
+          "x_max": 174.18217589767517,
+          "z_min": 0.08764122853326664,
+          "z_max": 42.77068922330469,
+          "shells": 2
+        },
+        {
+          "y": 125,
+          "vol": 5.530890573831634,
+          "x_min": 168.1069604884845,
+          "x_max": 174.52344029762233,
+          "z_min": 1.6486796404978907,
+          "z_max": 41.8201659823509,
+          "shells": 2
+        },
+        {
+          "y": 135,
+          "vol": 8.880055056665888,
+          "x_min": 167.69078063964844,
+          "x_max": 173.8590161167705,
+          "z_min": 7.710586899477312,
+          "z_max": 39.741684218602906,
+          "shells": 2
+        },
+        {
+          "y": 145,
+          "vol": 14.719853993255823,
+          "x_min": 166.6703932358331,
+          "x_max": 172.8630325267197,
+          "z_min": 24.0845394561078,
+          "z_max": 36.835670186521355,
+          "shells": 1
+        },
+        {
+          "y": 150,
+          "vol": 8.01579136878549,
+          "x_min": 169.35420359724029,
+          "x_max": 173.15179443359375,
+          "z_min": 28.244055692590972,
+          "z_max": 36.41325980688613,
+          "shells": 1
+        },
+        {
+          "y": 155,
+          "vol": 14.717732770763824,
+          "x_min": 166.67113351049537,
+          "x_max": 172.8630407638784,
+          "z_min": 24.08540491818596,
+          "z_max": 36.835580823583165,
+          "shells": 1
+        },
+        {
+          "y": 165,
+          "vol": 8.8802892245383,
+          "x_min": 167.69078063964844,
+          "x_max": 173.85896483226648,
+          "z_min": 7.711013509704312,
+          "z_max": 39.74157928248173,
+          "shells": 2
+        },
+        {
+          "y": 175,
+          "vol": 5.5309395726852,
+          "x_min": 168.10694005019926,
+          "x_max": 174.52343541024388,
+          "z_min": 1.6488010494761485,
+          "z_max": 41.82010162285774,
+          "shells": 2
+        },
+        {
+          "y": 185,
+          "vol": 5.000572803552828,
+          "x_min": 167.92283559686965,
+          "x_max": 174.18221524521613,
+          "z_min": 0.08765843764463761,
+          "z_max": 42.77067773732005,
+          "shells": 2
+        },
+        {
+          "y": 195,
+          "vol": 5.985036455368784,
+          "x_min": 166.26569633917734,
+          "x_max": 172.887659217598,
+          "z_min": 0.2908503822548113,
+          "z_max": 42.728339659910716,
+          "shells": 2
+        },
+        {
+          "y": 205,
+          "vol": 10.849717044481425,
+          "x_min": 163.57129892851023,
+          "x_max": 170.84213114671957,
+          "z_min": 3.3782462055229443,
+          "z_max": 42.02204165714692,
+          "shells": 2
+        },
+        {
+          "y": 215,
+          "vol": 39.26677305595592,
+          "x_min": 156.85218216900083,
+          "x_max": 167.7427874126094,
+          "z_min": 16.742206256776377,
+          "z_max": 40.44859961417174,
+          "shells": 1
+        }
+      ],
+      "y_center_shells": [
+        {
+          "idx": 0,
+          "x_min": 169.35420359724029,
+          "x_max": 173.15179443359375,
+          "z_min": 28.244055692590972,
+          "z_max": 36.41325980688613,
+          "area": 59.97788713726106
+        }
+      ]
+    },
+    "4d": {
+      "front_slice_bbox": {
+        "x_min": 156.8119354248047,
+        "x_max": 157.1619354248047,
+        "y_min": 78.50041198730469,
+        "y_max": 221.5,
+        "z_min": 33.666312335500585,
+        "z_max": 39.22722199966908
+      },
+      "y_profile": [
+        {
+          "y": 76,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 77,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 78,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 79,
+          "vol": 0.9504291919122086,
+          "shells": 1,
+          "z_min": 33.666312335500585,
+          "z_max": 39.212718514913476
+        },
+        {
+          "y": 80,
+          "vol": 1.0468171603768306,
+          "shells": 1,
+          "z_min": 33.66910154470173,
+          "z_max": 39.22722199966908
+        },
+        {
+          "y": 81,
+          "vol": 1.0387971218655239,
+          "shells": 1,
+          "z_min": 33.68703810384542,
+          "z_max": 39.22712533904151
+        },
+        {
+          "y": 82,
+          "vol": 1.0172266755514994,
+          "shells": 1,
+          "z_min": 33.703756536181224,
+          "z_max": 39.21129142937638
+        },
+        {
+          "y": 83,
+          "vol": 0.9803778276191791,
+          "shells": 1,
+          "z_min": 33.715108303360005,
+          "z_max": 39.1499215304424
+        },
+        {
+          "y": 84,
+          "vol": 0.925106683318855,
+          "shells": 1,
+          "z_min": 33.72037867727004,
+          "z_max": 39.038224631325846
+        },
+        {
+          "y": 85,
+          "vol": 0.8372464673849905,
+          "shells": 1,
+          "z_min": 33.75214169372785,
+          "z_max": 38.87830348024201
+        },
+        {
+          "y": 86,
+          "vol": 0.6876639379880317,
+          "shells": 1,
+          "z_min": 33.863107141406424,
+          "z_max": 38.66526297911133
+        },
+        {
+          "y": 87,
+          "vol": 0.2922170264169496,
+          "shells": 1,
+          "z_min": 34.17116091015303,
+          "z_max": 38.3473104104077
+        },
+        {
+          "y": 88,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 89,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 90,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 91,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 92,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 93,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 94,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 95,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 96,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 97,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 98,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 99,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 100,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 101,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 102,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 103,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 104,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 105,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 106,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 107,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 108,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 109,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 110,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 111,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 112,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 113,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 114,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 115,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 116,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 117,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 118,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 119,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 120,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 121,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 122,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 123,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 124,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 125,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 126,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 127,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 128,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 129,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 130,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 131,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 132,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 133,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 134,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 135,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 136,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 137,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 138,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 139,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 140,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 141,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 142,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 143,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 144,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 145,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 146,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 147,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 148,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 149,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 150,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 151,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 152,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 153,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 154,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 155,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 156,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 157,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 158,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 159,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 160,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 161,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 162,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 163,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 164,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 165,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 166,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 167,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 168,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 169,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 170,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 171,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 172,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 173,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 174,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 175,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 176,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 177,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 178,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 179,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 180,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 181,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 182,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 183,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 184,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 185,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 186,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 187,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 188,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 189,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 190,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 191,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 192,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 193,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 194,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 195,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 196,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 197,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 198,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 199,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 200,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 201,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 202,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 203,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 204,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 205,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 206,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 207,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 208,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 209,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 210,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 211,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 212,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 213,
+          "vol": 0.29197525190170753,
+          "shells": 1,
+          "z_min": 34.171308296391885,
+          "z_max": 38.347170447150965
+        },
+        {
+          "y": 214,
+          "vol": 0.6875811861515038,
+          "shells": 1,
+          "z_min": 33.863167630803936,
+          "z_max": 38.665163694841695
+        },
+        {
+          "y": 215,
+          "vol": 0.8372010207295334,
+          "shells": 1,
+          "z_min": 33.7521598889755,
+          "z_max": 38.87823246028396
+        },
+        {
+          "y": 216,
+          "vol": 0.9250785002813641,
+          "shells": 1,
+          "z_min": 33.720380007419315,
+          "z_max": 39.038173830277145
+        },
+        {
+          "y": 217,
+          "vol": 0.9803595638521907,
+          "shells": 1,
+          "z_min": 33.7151127202807,
+          "z_max": 39.149890264723595
+        },
+        {
+          "y": 218,
+          "vol": 1.0172145030114548,
+          "shells": 1,
+          "z_min": 33.70376408167119,
+          "z_max": 39.211277953279925
+        },
+        {
+          "y": 219,
+          "vol": 1.0387911753688048,
+          "shells": 1,
+          "z_min": 33.687045649663986,
+          "z_max": 39.22712507012912
+        },
+        {
+          "y": 220,
+          "vol": 1.0468134919308312,
+          "shells": 1,
+          "z_min": 33.66910941536474,
+          "z_max": 39.22722199966908
+        },
+        {
+          "y": 221,
+          "vol": 0.9508553506284623,
+          "shells": 1,
+          "z_min": 33.6663123355008,
+          "z_max": 39.21272511804736
+        },
+        {
+          "y": 222,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        },
+        {
+          "y": 223,
+          "vol": 0.0,
+          "shells": 0,
+          "z_min": null,
+          "z_max": null
+        }
+      ]
+    },
+    "5b": [
+      {
+        "z": 0,
+        "vol": 2.1228610899005926,
+        "shells": 2,
+        "x_min": 169.62859369742918,
+        "x_max": 172.88077138937604,
+        "y_min": 106.66403317562131,
+        "y_max": 193.3364005088608,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 106.66403317562131,
+            "y_max": 115.93207350651323,
+            "x_min": 169.62859753518947,
+            "x_max": 172.88077138937604,
+            "area": 32.886525041143024
+          },
+          {
+            "idx": 1,
+            "y_min": 184.0683328153842,
+            "y_max": 193.3364005088608,
+            "x_min": 169.62859369742918,
+            "x_max": 172.88077138937587,
+            "area": 32.886489032646246
+          }
+        ]
+      },
+      {
+        "z": 2,
+        "vol": 60.09547548423813,
+        "shells": 2,
+        "x_min": 167.29753093381086,
+        "x_max": 174.53895568847656,
+        "y_min": 97.75852369534984,
+        "y_max": 202.24188986827082,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 97.75852369534984,
+            "y_max": 126.4922121187642,
+            "x_min": 167.29753093381086,
+            "x_max": 174.53895568847656,
+            "area": 223.44861559222446
+          },
+          {
+            "idx": 1,
+            "y_min": 173.5081925522946,
+            "y_max": 202.24188986827082,
+            "x_min": 167.29753171348597,
+            "x_max": 174.53895568847656,
+            "area": 223.4486515990152
+          }
+        ]
+      },
+      {
+        "z": 4,
+        "vol": 26.475506611734335,
+        "shells": 4,
+        "x_min": 166.32282145105157,
+        "x_max": 174.42573875611063,
+        "y_min": 93.89011858199937,
+        "y_max": 206.11029916826965,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 93.89011858199937,
+            "y_max": 99.97403811449203,
+            "x_min": 166.32282145105157,
+            "x_max": 171.639182895508,
+            "area": 54.77987245918589
+          },
+          {
+            "idx": 1,
+            "y_min": 123.8056795858365,
+            "y_max": 130.56427352841195,
+            "x_min": 170.23984444275737,
+            "x_max": 174.42573875611063,
+            "area": 51.50022251851642
+          },
+          {
+            "idx": 2,
+            "y_min": 169.43613488090472,
+            "y_max": 176.1947267957823,
+            "x_min": 170.23984444275737,
+            "x_max": 174.4257387561106,
+            "area": 51.500211791003835
+          },
+          {
+            "idx": 3,
+            "y_min": 200.02636056384793,
+            "y_max": 206.11029916826965,
+            "x_min": 166.32282145105157,
+            "x_max": 171.639182895508,
+            "area": 54.77991937025047
+          }
+        ]
+      },
+      {
+        "z": 6,
+        "vol": 21.314651169873766,
+        "shells": 4,
+        "x_min": 165.63884419074614,
+        "x_max": 174.23202950156426,
+        "y_min": 91.20788527042608,
+        "y_max": 208.7925322336898,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 91.20788527042608,
+            "y_max": 96.57110359980196,
+            "x_min": 165.63884419074614,
+            "x_max": 170.81216758237207,
+            "area": 47.55034542948784
+          },
+          {
+            "idx": 1,
+            "y_min": 128.84637886116596,
+            "y_max": 133.23088212321915,
+            "x_min": 169.85641028575435,
+            "x_max": 174.23202950156426,
+            "area": 36.65737674308031
+          },
+          {
+            "idx": 2,
+            "y_min": 166.7695288976199,
+            "y_max": 171.1540373358295,
+            "x_min": 169.85641028575432,
+            "x_max": 174.23202930993656,
+            "area": 36.657380209877616
+          },
+          {
+            "idx": 3,
+            "y_min": 203.42930838750272,
+            "y_max": 208.7925322336898,
+            "x_min": 165.63884419074614,
+            "x_max": 170.81216712155918,
+            "area": 47.550375459676935
+          }
+        ]
+      },
+      {
+        "z": 8,
+        "vol": 19.364186745005433,
+        "shells": 4,
+        "x_min": 165.11489230790932,
+        "x_max": 174.0038000749385,
+        "y_min": 89.26037751232816,
+        "y_max": 210.7400321125145,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 89.26037751232816,
+            "y_max": 94.33959237836312,
+            "x_min": 165.11489230790932,
+            "x_max": 170.21484118349608,
+            "area": 44.427075432020175
+          },
+          {
+            "idx": 1,
+            "y_min": 131.68408845394194,
+            "y_max": 135.27435133397938,
+            "x_min": 169.53267793386928,
+            "x_max": 174.00380007493848,
+            "area": 31.54638809039955
+          },
+          {
+            "idx": 2,
+            "y_min": 164.72606065332525,
+            "y_max": 168.31632353336278,
+            "x_min": 169.53267793386928,
+            "x_max": 174.0038000749385,
+            "area": 31.54639717306672
+          },
+          {
+            "idx": 3,
+            "y_min": 205.6608249054336,
+            "y_max": 210.7400321125145,
+            "x_min": 165.11489230790932,
+            "x_max": 170.21484118349608,
+            "area": 44.427033966541096
+          }
+        ]
+      },
+      {
+        "z": 10,
+        "vol": 18.560009418384194,
+        "shells": 4,
+        "x_min": 164.69500177220422,
+        "x_max": 173.77385214974404,
+        "y_min": 87.83857812043321,
+        "y_max": 212.16182996376077,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 87.83857812043321,
+            "y_max": 92.76257337434068,
+            "x_min": 164.6950019775774,
+            "x_max": 169.74611475804653,
+            "area": 42.579997083419116
+          },
+          {
+            "idx": 1,
+            "y_min": 133.7400916313043,
+            "y_max": 137.00847393736458,
+            "x_min": 169.2118071105736,
+            "x_max": 173.77385214974404,
+            "area": 29.765240294463734
+          },
+          {
+            "idx": 2,
+            "y_min": 162.99192944455135,
+            "y_max": 166.2603203560004,
+            "x_min": 169.21180711057357,
+            "x_max": 173.77385197732968,
+            "area": 29.76526656948622
+          },
+          {
+            "idx": 3,
+            "y_min": 207.23784624235856,
+            "y_max": 212.16182996376077,
+            "x_min": 164.69500177220422,
+            "x_max": 169.74611475804647,
+            "area": 42.579961798772786
+          }
+        ]
+      },
+      {
+        "z": 12,
+        "vol": 18.3944336937174,
+        "shells": 4,
+        "x_min": 164.33822596668486,
+        "x_max": 173.5494365331822,
+        "y_min": 86.76548666449143,
+        "y_max": 213.2349170976737,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 86.76548666449143,
+            "y_max": 91.6484454766521,
+            "x_min": 164.3382261696766,
+            "x_max": 169.37159869021957,
+            "area": 41.91158173550684
+          },
+          {
+            "idx": 1,
+            "y_min": 135.41114672715835,
+            "y_max": 138.53829632686288,
+            "x_min": 168.8523914612436,
+            "x_max": 173.5494365331822,
+            "area": 29.408402839626195
+          },
+          {
+            "idx": 2,
+            "y_min": 161.46210693001922,
+            "y_max": 164.5892652601464,
+            "x_min": 168.8523914612436,
+            "x_max": 173.5494363205815,
+            "area": 29.40840612413924
+          },
+          {
+            "idx": 3,
+            "y_min": 208.35195567007753,
+            "y_max": 213.2349170976737,
+            "x_min": 164.33822596668486,
+            "x_max": 169.37159869021957,
+            "area": 41.91156168209432
+          }
+        ]
+      },
+      {
+        "z": 14,
+        "vol": 18.696410984109026,
+        "shells": 4,
+        "x_min": 164.0223306998992,
+        "x_max": 173.33578696120404,
+        "y_min": 85.92785592069859,
+        "y_max": 214.07254843716314,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.92785592069859,
+            "y_max": 90.84009653011782,
+            "x_min": 164.0223306998992,
+            "x_max": 169.05993299059676,
+            "area": 41.941113945285245
+          },
+          {
+            "idx": 1,
+            "y_min": 136.82772686998078,
+            "y_max": 139.912914236965,
+            "x_min": 168.37114331362756,
+            "x_max": 173.33578696120404,
+            "area": 30.24091783031231
+          },
+          {
+            "idx": 2,
+            "y_min": 160.08749775033965,
+            "y_max": 163.17268436675707,
+            "x_min": 168.37114331362756,
+            "x_max": 173.33578689361985,
+            "area": 30.240901264968986
+          },
+          {
+            "idx": 3,
+            "y_min": 209.1603142144289,
+            "y_max": 214.07254843716314,
+            "x_min": 164.0223306998992,
+            "x_max": 169.05993299059674,
+            "area": 41.941084096182514
+          }
+        ]
+      },
+      {
+        "z": 16,
+        "vol": 19.463729488121793,
+        "shells": 4,
+        "x_min": 163.73962208249907,
+        "x_max": 173.14073944612787,
+        "y_min": 85.32801376773735,
+        "y_max": 214.67239059017282,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.32801376773735,
+            "y_max": 90.24407486766128,
+            "x_min": 163.73962208249907,
+            "x_max": 168.7892858552927,
+            "area": 41.950824147462335
+          },
+          {
+            "idx": 1,
+            "y_min": 138.0335763679845,
+            "y_max": 141.10227496883175,
+            "x_min": 167.5510636830504,
+            "x_max": 173.14073944612787,
+            "area": 32.9652803413292
+          },
+          {
+            "idx": 2,
+            "y_min": 158.89813701847294,
+            "y_max": 161.96682606260686,
+            "x_min": 167.5510636830504,
+            "x_max": 173.14073944612787,
+            "area": 32.96526051091449
+          },
+          {
+            "idx": 3,
+            "y_min": 209.7563428756575,
+            "y_max": 214.67239059017282,
+            "x_min": 163.7396220824991,
+            "x_max": 168.7892858552927,
+            "area": 41.95075884891746
+          }
+        ]
+      },
+      {
+        "z": 18,
+        "vol": 21.204816912169175,
+        "shells": 4,
+        "x_min": 163.46837156445372,
+        "x_max": 172.9967296739259,
+        "y_min": 84.82187064067718,
+        "y_max": 215.17854079275108,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.82187064067718,
+            "y_max": 89.81451095963321,
+            "x_min": 163.46837156445372,
+            "x_max": 168.54750675821154,
+            "area": 42.59667703700557
+          },
+          {
+            "idx": 1,
+            "y_min": 139.02806437719573,
+            "y_max": 142.14970120978518,
+            "x_min": 166.2596978998778,
+            "x_max": 172.9967296739259,
+            "area": 38.63702400867996
+          },
+          {
+            "idx": 2,
+            "y_min": 157.8507107775195,
+            "y_max": 160.97234263270622,
+            "x_min": 166.25971244126208,
+            "x_max": 172.99672967218626,
+            "area": 38.6369933107469
+          },
+          {
+            "idx": 3,
+            "y_min": 210.18589969703874,
+            "y_max": 215.17854079275108,
+            "x_min": 163.46837156445375,
+            "x_max": 168.54750675821154,
+            "area": 42.59664124046596
+          }
+        ]
+      },
+      {
+        "z": 20,
+        "vol": 23.37271511105225,
+        "shells": 4,
+        "x_min": 163.19322365908585,
+        "x_max": 172.9223677892937,
+        "y_min": 84.3921490983119,
+        "y_max": 215.6082655953018,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.3921490983119,
+            "y_max": 89.52670542209422,
+            "x_min": 163.19322365908587,
+            "x_max": 168.3260255028638,
+            "area": 43.918072299113845
+          },
+          {
+            "idx": 1,
+            "y_min": 139.82837100376082,
+            "y_max": 143.08464583603043,
+            "x_min": 164.91391300604016,
+            "x_max": 172.9223677892937,
+            "area": 45.23260775830268
+          },
+          {
+            "idx": 2,
+            "y_min": 156.91575757385533,
+            "y_max": 160.17204098354384,
+            "x_min": 164.91391300604016,
+            "x_max": 172.92236774778593,
+            "area": 45.232630423378225
+          },
+          {
+            "idx": 3,
+            "y_min": 210.47369154389477,
+            "y_max": 215.6082655953018,
+            "x_min": 163.19322365908585,
+            "x_max": 168.32602568981684,
+            "area": 43.91804675306812
+          }
+        ]
+      },
+      {
+        "z": 22,
+        "vol": 25.534067450884425,
+        "shells": 4,
+        "x_min": 162.905699364951,
+        "x_max": 172.88515574961468,
+        "y_min": 84.01696162545349,
+        "y_max": 215.98343516030505,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.01696162545349,
+            "y_max": 89.35505605941454,
+            "x_min": 162.905699364951,
+            "x_max": 168.10499827779094,
+            "area": 45.777928987416544
+          },
+          {
+            "idx": 1,
+            "y_min": 140.49097362624903,
+            "y_max": 143.96944679420483,
+            "x_min": 164.21628449008458,
+            "x_max": 172.88515574961465,
+            "area": 51.083383790220566
+          },
+          {
+            "idx": 2,
+            "y_min": 156.0309606168044,
+            "y_max": 159.50943836105566,
+            "x_min": 164.2162844900846,
+            "x_max": 172.88515574961468,
+            "area": 51.08339104574739
+          },
+          {
+            "idx": 3,
+            "y_min": 210.64535579880646,
+            "y_max": 215.98343516030505,
+            "x_min": 162.90569936495103,
+            "x_max": 168.1049982980531,
+            "area": 45.77794397655323
+          }
+        ]
+      },
+      {
+        "z": 24,
+        "vol": 27.306821345734832,
+        "shells": 4,
+        "x_min": 162.60767089111852,
+        "x_max": 172.86401725738548,
+        "y_min": 83.69881275653273,
+        "y_max": 216.30158397198292,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.69881275653273,
+            "y_max": 89.29749952289717,
+            "x_min": 162.60767089111854,
+            "x_max": 167.8844477741956,
+            "area": 48.14397347862633
+          },
+          {
+            "idx": 1,
+            "y_min": 141.09149187931575,
+            "y_max": 144.88019939307443,
+            "x_min": 164.26309119764755,
+            "x_max": 172.86401725738548,
+            "area": 54.80003011692662
+          },
+          {
+            "idx": 2,
+            "y_min": 155.12019929250067,
+            "y_max": 158.9089201079889,
+            "x_min": 164.2630911976475,
+            "x_max": 172.86401725738548,
+            "area": 54.80002520690347
+          },
+          {
+            "idx": 3,
+            "y_min": 210.70290789862008,
+            "y_max": 216.30158397198292,
+            "x_min": 162.60767089111852,
+            "x_max": 167.8844477741956,
+            "area": 48.14394768576254
+          }
+        ]
+      },
+      {
+        "z": 26,
+        "vol": 28.44543186785367,
+        "shells": 4,
+        "x_min": 162.28984206823617,
+        "x_max": 172.86525313377877,
+        "y_min": 83.41547424158908,
+        "y_max": 216.58492903597988,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.41547424158908,
+            "y_max": 89.30595956867657,
+            "x_min": 162.28984206823617,
+            "x_max": 167.6647705945805,
+            "area": 50.697064452000255
+          },
+          {
+            "idx": 1,
+            "y_min": 141.5140376967729,
+            "y_max": 145.96482394910126,
+            "x_min": 165.07647365672025,
+            "x_max": 172.86525313377877,
+            "area": 55.99932224631131
+          },
+          {
+            "idx": 2,
+            "y_min": 154.0355764628732,
+            "y_max": 158.48636149686,
+            "x_min": 165.07647365672025,
+            "x_max": 172.86525311808407,
+            "area": 55.999350781400366
+          },
+          {
+            "idx": 3,
+            "y_min": 210.6944524186281,
+            "y_max": 216.58492903597988,
+            "x_min": 162.2898548553308,
+            "x_max": 167.66476429886214,
+            "area": 50.697022261270206
+          }
+        ]
+      },
+      {
+        "z": 28,
+        "vol": 30.196869613511772,
+        "shells": 4,
+        "x_min": 161.95285988395148,
+        "x_max": 172.9266898516821,
+        "y_min": 83.15585166815771,
+        "y_max": 216.84455591918524,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.15585166815771,
+            "y_max": 89.28839274400251,
+            "x_min": 161.95285988395148,
+            "x_max": 167.44619520133506,
+            "area": 52.66432082826522
+          },
+          {
+            "idx": 1,
+            "y_min": 141.6021505660185,
+            "y_max": 148.58033459130442,
+            "x_min": 166.49757988546293,
+            "x_max": 172.9266898516821,
+            "area": 61.565692373793944
+          },
+          {
+            "idx": 2,
+            "y_min": 151.42006970816306,
+            "y_max": 158.39826142128618,
+            "x_min": 166.49757988546293,
+            "x_max": 172.92668985168208,
+            "area": 61.56571298931559
+          },
+          {
+            "idx": 3,
+            "y_min": 210.71201161390766,
+            "y_max": 216.84455591918524,
+            "x_min": 161.95285988395148,
+            "x_max": 167.44619234119662,
+            "area": 52.66432898442505
+          }
+        ]
+      },
+      {
+        "z": 30,
+        "vol": 42.85406712390221,
+        "shells": 3,
+        "x_min": 157.44839367796894,
+        "x_max": 173.12394352599728,
+        "y_min": 78.80801027395303,
+        "y_max": 221.19240171335167,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.80801027395303,
+            "y_max": 89.43181059421279,
+            "x_min": 157.44839367796897,
+            "x_max": 167.2563051488625,
+            "area": 123.5633281350879
+          },
+          {
+            "idx": 1,
+            "y_min": 141.10935507720228,
+            "y_max": 158.8910569101024,
+            "x_min": 167.86787796998195,
+            "x_max": 173.12394352599728,
+            "area": 138.7252026298437
+          },
+          {
+            "idx": 2,
+            "y_min": 210.56860206143608,
+            "y_max": 221.19240171335167,
+            "x_min": 157.44839367796894,
+            "x_max": 167.2563051488625,
+            "area": 123.56335233679047
+          }
+        ]
+      },
+      {
+        "z": 32,
+        "vol": 70.0666698083645,
+        "shells": 3,
+        "x_min": 157.26792885270808,
+        "x_max": 172.98423685689949,
+        "y_min": 78.56750204186865,
+        "y_max": 221.43291113292295,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.56750204186865,
+            "y_max": 90.02960062276573,
+            "x_min": 157.26792885270808,
+            "x_max": 167.15858936480245,
+            "area": 174.44034504169713
+          },
+          {
+            "idx": 1,
+            "y_min": 139.7685350513574,
+            "y_max": 160.23187693594733,
+            "x_min": 168.1408255191337,
+            "x_max": 172.98423685689949,
+            "area": 155.33210557287418
+          },
+          {
+            "idx": 2,
+            "y_min": 209.97079664363295,
+            "y_max": 221.43291113292295,
+            "x_min": 157.2679288527081,
+            "x_max": 167.15859945796922,
+            "area": 174.4403869805725
+          }
+        ]
+      },
+      {
+        "z": 34,
+        "vol": 79.96663153738368,
+        "shells": 3,
+        "x_min": 157.1281156041311,
+        "x_max": 172.8445273271972,
+        "y_min": 78.54469663016492,
+        "y_max": 221.45570382823,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.54469663016492,
+            "y_max": 91.41892721336069,
+            "x_min": 157.1281156041311,
+            "x_max": 167.35632575855706,
+            "area": 192.12170036927813
+          },
+          {
+            "idx": 1,
+            "y_min": 137.4262388848558,
+            "y_max": 162.5741731024489,
+            "x_min": 168.01742720337842,
+            "x_max": 172.8445273271972,
+            "area": 191.91046636292322
+          },
+          {
+            "idx": 2,
+            "y_min": 208.58147211349552,
+            "y_max": 221.45570382823,
+            "x_min": 157.1281156041311,
+            "x_max": 167.3563276292553,
+            "area": 192.12175757730537
+          }
+        ]
+      },
+      {
+        "z": 36,
+        "vol": 95.25520912686919,
+        "shells": 3,
+        "x_min": 156.98825379987747,
+        "x_max": 172.6918430776546,
+        "y_min": 78.52215127020013,
+        "y_max": 221.47826849804355,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.52215127020013,
+            "y_max": 93.73230853737309,
+            "x_min": 156.98825379987753,
+            "x_max": 167.8019331987709,
+            "area": 219.7253960912952
+          },
+          {
+            "idx": 1,
+            "y_min": 133.9388154075184,
+            "y_max": 166.0615965797863,
+            "x_min": 167.8635556348229,
+            "x_max": 172.6918430776546,
+            "area": 247.6212922793403
+          },
+          {
+            "idx": 2,
+            "y_min": 206.26810130806982,
+            "y_max": 221.47826849804355,
+            "x_min": 156.98825379987747,
+            "x_max": 167.8019331987709,
+            "area": 219.72542108347918
+          }
+        ]
+      },
+      {
+        "z": 38,
+        "vol": 97.72147717190633,
+        "shells": 4,
+        "x_min": 156.84903899188416,
+        "x_max": 171.93373001705967,
+        "y_min": 78.50041198730469,
+        "y_max": 221.5,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.50041198730469,
+            "y_max": 98.08478766806691,
+            "x_min": 156.84903899188416,
+            "x_max": 168.5566272339609,
+            "area": 258.934350252426
+          },
+          {
+            "idx": 1,
+            "y_min": 128.24425486392596,
+            "y_max": 140.78164743253294,
+            "x_min": 167.72082383101997,
+            "x_max": 171.93373001705967,
+            "area": 99.32123984495674
+          },
+          {
+            "idx": 2,
+            "y_min": 159.21876455477184,
+            "y_max": 171.75615712337876,
+            "x_min": 167.72082383101997,
+            "x_max": 171.93373000855414,
+            "area": 99.32124604833683
+          },
+          {
+            "idx": 3,
+            "y_min": 201.91563194863224,
+            "y_max": 221.5,
+            "x_min": 156.8490508065624,
+            "x_max": 168.55662723396088,
+            "area": 258.9343231785333
+          }
+        ]
+      },
+      {
+        "z": 40,
+        "vol": 116.30612208117599,
+        "shells": 2,
+        "x_min": 161.09053506347837,
+        "x_max": 171.87339017057738,
+        "y_min": 81.97784462149863,
+        "y_max": 218.0225794497824,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 81.97784462149863,
+            "y_max": 134.44027978450202,
+            "x_min": 161.0905350634784,
+            "x_max": 171.87339017057735,
+            "area": 433.50189304422076
+          },
+          {
+            "idx": 1,
+            "y_min": 165.56011982017864,
+            "y_max": 218.0225794497824,
+            "x_min": 161.09053506347837,
+            "x_max": 171.87339017057738,
+            "area": 433.50197936841226
+          }
+        ]
+      },
+      {
+        "z": 42,
+        "vol": 56.38844472005187,
+        "shells": 2,
+        "x_min": 164.78413609921265,
+        "x_max": 171.59972716262047,
+        "y_min": 93.60987842551134,
+        "y_max": 206.39051576763828,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 93.60987842551134,
+            "y_max": 124.65986277256935,
+            "x_min": 164.78413609921265,
+            "x_max": 171.5997271626204,
+            "area": 221.4934579320587
+          },
+          {
+            "idx": 1,
+            "y_min": 175.3405478948856,
+            "y_max": 206.39051576763828,
+            "x_min": 164.78413609921265,
+            "x_max": 171.59972716262047,
+            "area": 221.49334847136458
+          }
+        ]
+      }
+    ],
+    "6b": [
+      {
+        "z": 2.0,
+        "vol": 50.11078359933993,
+        "shells": 2,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 97.8145521663564,
+            "y_max": 126.43327874052758,
+            "x_min": 167.31196281423624,
+            "x_max": 174.53895568847656,
+            "area": 219.75604069762346
+          },
+          {
+            "idx": 1,
+            "y_min": 173.56712575715946,
+            "y_max": 202.18586124250527,
+            "x_min": 167.31196361642466,
+            "x_max": 174.53895568847656,
+            "area": 219.75607867043158
+          }
+        ]
+      },
+      {
+        "z": 2.5,
+        "vol": 37.20314995170926,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 96.69398274622472,
+            "y_max": 109.2947807450963,
+            "x_min": 167.02332520572833,
+            "x_max": 173.11722771195912,
+            "area": 90.47545415041078
+          },
+          {
+            "idx": 1,
+            "y_min": 112.57744382898889,
+            "y_max": 127.61194630525972,
+            "x_min": 170.61186616804383,
+            "x_max": 174.52205809575244,
+            "area": 95.09512091392573
+          },
+          {
+            "idx": 2,
+            "y_min": 172.38846165986155,
+            "y_max": 187.42296807705276,
+            "x_min": 170.6118566031042,
+            "x_max": 174.5220580957524,
+            "area": 95.09515386922443
+          },
+          {
+            "idx": 3,
+            "y_min": 190.70563887160316,
+            "y_max": 203.30643375781625,
+            "x_min": 167.02332555765088,
+            "x_max": 173.1172320663511,
+            "area": 90.47543350566235
+          }
+        ]
+      },
+      {
+        "z": 3.0,
+        "vol": 28.888953121251507,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 95.57341332609302,
+            "y_max": 103.61167233694268,
+            "x_min": 166.7520034151787,
+            "x_max": 172.33671669504733,
+            "area": 67.89200316265125
+          },
+          {
+            "idx": 1,
+            "y_min": 118.74391946627922,
+            "y_max": 128.79061386999183,
+            "x_min": 170.4794138216017,
+            "x_max": 174.49765735990607,
+            "area": 69.8071388920828
+          },
+          {
+            "idx": 2,
+            "y_min": 171.20979756256358,
+            "y_max": 181.2564925210258,
+            "x_min": 170.47941127251815,
+            "x_max": 174.49765735990604,
+            "area": 69.80715640949744
+          },
+          {
+            "idx": 3,
+            "y_min": 196.38875242832276,
+            "y_max": 204.42700627312723,
+            "x_min": 166.7520034151787,
+            "x_max": 172.3367166950473,
+            "area": 67.89203876056149
+          }
+        ]
+      },
+      {
+        "z": 3.5,
+        "vol": 24.836517504259493,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 94.7474657560874,
+            "y_max": 101.40300223422507,
+            "x_min": 166.54264635950693,
+            "x_max": 171.9378227448686,
+            "area": 58.68334556746955
+          },
+          {
+            "idx": 1,
+            "y_min": 121.73569109871512,
+            "y_max": 129.68367531120964,
+            "x_min": 170.35873020775335,
+            "x_max": 174.46077409057372,
+            "area": 57.87565199976365
+          },
+          {
+            "idx": 2,
+            "y_min": 170.31673508586596,
+            "y_max": 178.26471739968142,
+            "x_min": 170.35873020775335,
+            "x_max": 174.46077409057372,
+            "area": 57.87565615476207
+          },
+          {
+            "idx": 3,
+            "y_min": 198.59741188058769,
+            "y_max": 205.25295701060668,
+            "x_min": 166.54264635950696,
+            "x_max": 171.9378227448686,
+            "area": 58.68338054597297
+          }
+        ]
+      },
+      {
+        "z": 4.0,
+        "vol": 22.054776029932118,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 93.93094463790834,
+            "y_max": 99.89882947661134,
+            "x_min": 166.3332893038352,
+            "x_max": 171.62346500869953,
+            "area": 53.251440670791844
+          },
+          {
+            "idx": 1,
+            "y_min": 123.89210646094752,
+            "y_max": 130.52234027997378,
+            "x_min": 170.24550566966192,
+            "x_max": 174.42389483745242,
+            "area": 49.954482129324646
+          },
+          {
+            "idx": 2,
+            "y_min": 169.4780682239981,
+            "y_max": 176.10830018333903,
+            "x_min": 170.24550566966192,
+            "x_max": 174.42389483745242,
+            "area": 49.954471610317384
+          },
+          {
+            "idx": 3,
+            "y_min": 200.10156838928268,
+            "y_max": 206.0694733512381,
+            "x_min": 166.33328930383516,
+            "x_max": 171.62346500869953,
+            "area": 53.25148967422043
+          }
+        ]
+      },
+      {
+        "z": 4.5,
+        "vol": 20.704457320328494,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 93.11442351972929,
+            "y_max": 98.92277561963219,
+            "x_min": 166.12597637691363,
+            "x_max": 171.38903485215715,
+            "area": 51.490607492949344
+          },
+          {
+            "idx": 1,
+            "y_min": 125.62064396316788,
+            "y_max": 131.36100524873788,
+            "x_min": 170.13228113157052,
+            "x_max": 174.38182553362074,
+            "area": 44.64249658825562
+          },
+          {
+            "idx": 2,
+            "y_min": 168.63940136213026,
+            "y_max": 174.37976793447314,
+            "x_min": 170.1322811315705,
+            "x_max": 174.38182543351053,
+            "area": 44.642467774546624
+          },
+          {
+            "idx": 3,
+            "y_min": 201.07763228678107,
+            "y_max": 206.88598969186944,
+            "x_min": 166.12597637691363,
+            "x_max": 171.38903485215707,
+            "area": 51.49064103040016
+          }
+        ]
+      },
+      {
+        "z": 5.0,
+        "vol": 19.381923635664112,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 92.45333329262374,
+            "y_max": 97.96729957776203,
+            "x_min": 165.96626090603903,
+            "x_max": 171.1692395235564,
+            "area": 48.74446457808226
+          },
+          {
+            "idx": 1,
+            "y_min": 126.83278786205332,
+            "y_max": 131.99259479243867,
+            "x_min": 170.03355989331064,
+            "x_max": 174.33608635685664,
+            "area": 41.16328241075439
+          },
+          {
+            "idx": 2,
+            "y_min": 168.00781408517875,
+            "y_max": 173.16762863994023,
+            "x_min": 170.0335598933106,
+            "x_max": 174.33608608543292,
+            "area": 41.163254943119384
+          },
+          {
+            "idx": 3,
+            "y_min": 202.03311150496356,
+            "y_max": 207.54708016334789,
+            "x_min": 165.96626090603903,
+            "x_max": 171.16923952355634,
+            "area": 48.744500932091555
+          }
+        ]
+      },
+      {
+        "z": 5.5,
+        "vol": 18.322612634422903,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 91.84579767203951,
+            "y_max": 97.21239322805317,
+            "x_min": 165.80654543516445,
+            "x_max": 170.97388689267677,
+            "area": 47.00584923395336
+          },
+          {
+            "idx": 1,
+            "y_min": 128.03596495719202,
+            "y_max": 132.5966373928194,
+            "x_min": 169.94714545060026,
+            "x_max": 174.28491298166333,
+            "area": 37.36872252897331
+          },
+          {
+            "idx": 2,
+            "y_min": 167.403772530272,
+            "y_max": 171.96445613788478,
+            "x_min": 169.94714545060023,
+            "x_max": 174.28491264216302,
+            "area": 37.36871882801719
+          },
+          {
+            "idx": 3,
+            "y_min": 202.78801875925151,
+            "y_max": 208.15461775863662,
+            "x_min": 165.80654543516445,
+            "x_max": 170.9738867128094,
+            "area": 47.00589169485956
+          }
+        ]
+      },
+      {
+        "z": 6.0,
+        "vol": 17.762343657412863,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 91.2382620514553,
+            "y_max": 96.53735151410453,
+            "x_min": 165.64682996428985,
+            "x_max": 170.80365603972447,
+            "area": 46.4133960916806
+          },
+          {
+            "idx": 1,
+            "y_min": 128.88873974488146,
+            "y_max": 133.2006799932001,
+            "x_min": 169.86073100788988,
+            "x_max": 174.2292461605064,
+            "area": 35.602199304662406
+          },
+          {
+            "idx": 2,
+            "y_min": 166.79973097536524,
+            "y_max": 171.11167633149577,
+            "x_min": 169.86073100788985,
+            "x_max": 174.22924597666145,
+            "area": 35.602202438238336
+          },
+          {
+            "idx": 3,
+            "y_min": 203.46306047320016,
+            "y_max": 208.7621553539254,
+            "x_min": 165.64682996428988,
+            "x_max": 170.80365556412494,
+            "area": 46.413426814687725
+          }
+        ]
+      },
+      {
+        "z": 6.5,
+        "vol": 17.18054735756013,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 90.63072643087106,
+            "y_max": 95.86230980015588,
+            "x_min": 165.49398274688494,
+            "x_max": 170.63342518677212,
+            "area": 45.621637154044976
+          },
+          {
+            "idx": 1,
+            "y_min": 129.73595741919146,
+            "y_max": 133.80162377180883,
+            "x_min": 169.7743165651795,
+            "x_max": 174.17357933934946,
+            "area": 33.79779120293137
+          },
+          {
+            "idx": 2,
+            "y_min": 166.19878821549582,
+            "y_max": 170.26445624482102,
+            "x_min": 169.7743165651795,
+            "x_max": 174.17357931115987,
+            "area": 33.797800923077695
+          },
+          {
+            "idx": 3,
+            "y_min": 204.1381021871488,
+            "y_max": 209.3696929492141,
+            "x_min": 165.4939827468849,
+            "x_max": 170.63342441544052,
+            "area": 45.62165616177431
+          }
+        ]
+      },
+      {
+        "z": 7.0,
+        "vol": 16.80169612452369,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 90.16816640452048,
+            "y_max": 95.30044056069895,
+            "x_min": 165.3696907996798,
+            "x_max": 170.47964803034432,
+            "area": 44.40307055117263
+          },
+          {
+            "idx": 1,
+            "y_min": 130.50863781850356,
+            "y_max": 134.28448526760246,
+            "x_min": 169.69365794420528,
+            "x_max": 174.11626752295996,
+            "area": 32.46565710074942
+          },
+          {
+            "idx": 2,
+            "y_min": 165.7159267197022,
+            "y_max": 169.49177416880116,
+            "x_min": 169.69365794420528,
+            "x_max": 174.11626752296,
+            "area": 32.465664583785205
+          },
+          {
+            "idx": 3,
+            "y_min": 204.69997270561976,
+            "y_max": 209.83225021078812,
+            "x_min": 165.3696907996798,
+            "x_max": 170.47964803034432,
+            "area": 44.40307572370275
+          }
+        ]
+      },
+      {
+        "z": 7.5,
+        "vol": 16.473632333588306,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 89.72534255467056,
+            "y_max": 94.80769790309083,
+            "x_min": 165.2453988524747,
+            "x_max": 170.34384964734522,
+            "area": 43.91926570882089
+          },
+          {
+            "idx": 1,
+            "y_min": 131.11143301616426,
+            "y_max": 134.7673467633961,
+            "x_min": 169.61513110989503,
+            "x_max": 174.05859190858996,
+            "area": 31.5679145922144
+          },
+          {
+            "idx": 2,
+            "y_min": 165.23306522390857,
+            "y_max": 168.88897897114046,
+            "x_min": 169.61513110989503,
+            "x_max": 174.05859190859,
+            "area": 31.56792276778909
+          },
+          {
+            "idx": 3,
+            "y_min": 205.19271742347303,
+            "y_max": 210.27507065065464,
+            "x_min": 165.2453988524747,
+            "x_max": 170.34384964734522,
+            "area": 43.919250905640574
+          }
+        ]
+      },
+      {
+        "z": 8.0,
+        "vol": 16.136802605890995,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 89.28251870482065,
+            "y_max": 94.31495524548272,
+            "x_min": 165.12110690526958,
+            "x_max": 170.20805126434612,
+            "area": 43.42502543669046
+          },
+          {
+            "idx": 1,
+            "y_min": 131.71422821382495,
+            "y_max": 135.25020825918972,
+            "x_min": 169.5366042755848,
+            "x_max": 174.00091629422,
+            "area": 30.643865306104246
+          },
+          {
+            "idx": 2,
+            "y_min": 164.75020372811497,
+            "y_max": 168.28618377347973,
+            "x_min": 169.5366042755848,
+            "x_max": 174.00091629422002,
+            "area": 30.643874417579458
+          },
+          {
+            "idx": 3,
+            "y_min": 205.6854621413263,
+            "y_max": 210.7178910905212,
+            "x_min": 165.12110690526956,
+            "x_max": 170.20805126434612,
+            "area": 43.4249841516507
+          }
+        ]
+      },
+      {
+        "z": 8.5,
+        "vol": 15.904607161436662,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 88.83969485497076,
+            "y_max": 93.8222125878746,
+            "x_min": 164.99681495806448,
+            "x_max": 170.07225288134705,
+            "area": 42.9919611887123
+          },
+          {
+            "idx": 1,
+            "y_min": 132.3170234114857,
+            "y_max": 135.73306975498335,
+            "x_min": 169.45807744127455,
+            "x_max": 173.9433025951206,
+            "area": 29.925620760944824
+          },
+          {
+            "idx": 2,
+            "y_min": 164.2673422323213,
+            "y_max": 167.683388575819,
+            "x_min": 169.45807744127455,
+            "x_max": 173.94330258097267,
+            "area": 29.92563533020412
+          },
+          {
+            "idx": 3,
+            "y_min": 206.1782068591796,
+            "y_max": 211.16071153038774,
+            "x_min": 164.99681495806442,
+            "x_max": 170.07225288134703,
+            "area": 42.99189566852232
+          }
+        ]
+      },
+      {
+        "z": 9.0,
+        "vol": 15.947177588102662,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 88.4545791645173,
+            "y_max": 93.45553545899666,
+            "x_min": 164.8929860170638,
+            "x_max": 169.95750384168986,
+            "area": 42.74225977010591
+          },
+          {
+            "idx": 1,
+            "y_min": 132.81558088237463,
+            "y_max": 136.17168801605573,
+            "x_min": 169.37844184453553,
+            "x_max": 173.8858617661794,
+            "area": 29.89097829022626
+          },
+          {
+            "idx": 2,
+            "y_min": 163.82872204177545,
+            "y_max": 167.18483110493005,
+            "x_min": 169.37844186030745,
+            "x_max": 173.88586169838186,
+            "area": 29.891000095643726
+          },
+          {
+            "idx": 3,
+            "y_min": 206.54488415770257,
+            "y_max": 211.5458258086703,
+            "x_min": 164.89298596268117,
+            "x_max": 169.95750384168988,
+            "area": 42.742203745784764
+          }
+        ]
+      },
+      {
+        "z": 9.5,
+        "vol": 15.712956159913732,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 88.15409085032994,
+            "y_max": 93.1001702873782,
+            "x_min": 164.7964084368265,
+            "x_max": 169.84909918341123,
+            "area": 42.21241208113949
+          },
+          {
+            "idx": 1,
+            "y_min": 133.28968895874883,
+            "y_max": 136.57987627035274,
+            "x_min": 169.2974121003239,
+            "x_max": 173.8284209372382,
+            "area": 29.423466695387567
+          },
+          {
+            "idx": 2,
+            "y_min": 163.42053053093443,
+            "y_max": 166.7107230285559,
+            "x_min": 169.29741215169906,
+            "x_max": 173.82842081579102,
+            "area": 29.42349024846165
+          },
+          {
+            "idx": 3,
+            "y_min": 206.900249329321,
+            "y_max": 211.84631564042175,
+            "x_min": 164.79640830878998,
+            "x_max": 169.84909918341123,
+            "area": 42.21237330368252
+          }
+        ]
+      },
+      {
+        "z": 10.0,
+        "vol": 15.466645598847625,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 87.85360253614257,
+            "y_max": 92.74480511575975,
+            "x_min": 164.69983085658924,
+            "x_max": 169.7406945251326,
+            "area": 41.66710160339
+          },
+          {
+            "idx": 1,
+            "y_min": 133.76379703512302,
+            "y_max": 136.98806452464973,
+            "x_min": 169.21590314508927,
+            "x_max": 173.770980108297,
+            "area": 28.931460617724017
+          },
+          {
+            "idx": 2,
+            "y_min": 163.0123390200934,
+            "y_max": 166.23661495218167,
+            "x_min": 169.21590314508927,
+            "x_max": 173.77097993320018,
+            "area": 28.931487338925297
+          },
+          {
+            "idx": 3,
+            "y_min": 207.25561450093946,
+            "y_max": 212.14680547217318,
+            "x_min": 164.69983065489882,
+            "x_max": 169.74069452513257,
+            "area": 41.66706681482925
+          }
+        ]
+      },
+      {
+        "z": 10.5,
+        "vol": 15.279017385800262,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 87.55311422195521,
+            "y_max": 92.38943994414129,
+            "x_min": 164.60325327635198,
+            "x_max": 169.63228986685388,
+            "area": 41.14600027105665
+          },
+          {
+            "idx": 1,
+            "y_min": 134.2379051114972,
+            "y_max": 137.39625277894672,
+            "x_min": 169.13398245477592,
+            "x_max": 173.71384591212384,
+            "area": 28.586455261198306
+          },
+          {
+            "idx": 2,
+            "y_min": 162.60414750925236,
+            "y_max": 165.7625068758075,
+            "x_min": 169.13398245477595,
+            "x_max": 173.71384569952312,
+            "area": 28.586484804299424
+          },
+          {
+            "idx": 3,
+            "y_min": 207.61097967255793,
+            "y_max": 212.44729530392465,
+            "x_min": 164.60325300100763,
+            "x_max": 169.63228986685388,
+            "area": 41.14596602684739
+          }
+        ]
+      },
+      {
+        "z": 11.0,
+        "vol": 15.384723803660428,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 87.25262590776785,
+            "y_max": 92.11782560751394,
+            "x_min": 164.5066756961147,
+            "x_max": 169.53615535901912,
+            "area": 41.227117064428434
+          },
+          {
+            "idx": 1,
+            "y_min": 134.64696570750843,
+            "y_max": 137.80444103324376,
+            "x_min": 169.0513512284904,
+            "x_max": 173.65811391926223,
+            "area": 28.800397136295803
+          },
+          {
+            "idx": 2,
+            "y_min": 162.1959559984113,
+            "y_max": 165.35344627979626,
+            "x_min": 169.05135122849038,
+            "x_max": 173.65811370666157,
+            "area": 28.80042115164274
+          },
+          {
+            "idx": 3,
+            "y_min": 207.882572355229,
+            "y_max": 212.7477851356761,
+            "x_min": 164.50667534711644,
+            "x_max": 169.53615535901912,
+            "area": 41.22708333710959
+          }
+        ]
+      },
+      {
+        "z": 11.5,
+        "vol": 15.448118078296611,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 86.98536473473705,
+            "y_max": 91.87711784809761,
+            "x_min": 164.42227285894128,
+            "x_max": 169.45176732373727,
+            "area": 41.35101047048296
+          },
+          {
+            "idx": 1,
+            "y_min": 135.038853409893,
+            "y_max": 138.16492703088662,
+            "x_min": 168.95429768349197,
+            "x_max": 173.60238192640068,
+            "area": 28.792188391980435
+          },
+          {
+            "idx": 2,
+            "y_min": 161.83547272314064,
+            "y_max": 164.96155857741172,
+            "x_min": 168.95429768349194,
+            "x_max": 173.6023817138,
+            "area": 28.792204162428064
+          },
+          {
+            "idx": 3,
+            "y_min": 208.123281747459,
+            "y_max": 213.0150388710577,
+            "x_min": 164.42227259578837,
+            "x_max": 169.45176732373727,
+            "area": 41.350979937652724
+          }
+        ]
+      },
+      {
+        "z": 12.0,
+        "vol": 15.328652245534668,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 86.77595704878884,
+            "y_max": 91.63641008868127,
+            "x_min": 164.3422283929749,
+            "x_max": 169.36737928845548,
+            "area": 41.04644027699172
+          },
+          {
+            "idx": 1,
+            "y_min": 135.4307411122776,
+            "y_max": 138.52051683657825,
+            "x_min": 168.85724413849354,
+            "x_max": 173.5466499335391,
+            "area": 28.605669800827783
+          },
+          {
+            "idx": 2,
+            "y_min": 161.47988625350123,
+            "y_max": 164.56967087502713,
+            "x_min": 168.85724413849348,
+            "x_max": 173.54664972093843,
+            "area": 28.60567327277118
+          },
+          {
+            "idx": 3,
+            "y_min": 208.36399113968903,
+            "y_max": 213.22444670593006,
+            "x_min": 164.34222818711837,
+            "x_max": 169.36737928845548,
+            "area": 41.04642017336965
+          }
+        ]
+      },
+      {
+        "z": 12.5,
+        "vol": 15.228920678385757,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 86.56654936284062,
+            "y_max": 91.39570232926495,
+            "x_min": 164.2621839270085,
+            "x_max": 169.28299125317366,
+            "area": 40.73516514845637
+          },
+          {
+            "idx": 1,
+            "y_min": 135.82262881466218,
+            "y_max": 138.8761066422699,
+            "x_min": 168.76019059349508,
+            "x_max": 173.49091794067752,
+            "area": 28.483259654191308
+          },
+          {
+            "idx": 2,
+            "y_min": 161.12429978386177,
+            "y_max": 164.17778317264253,
+            "x_min": 168.76019059349505,
+            "x_max": 173.49091772807685,
+            "area": 28.48325074108279
+          },
+          {
+            "idx": 3,
+            "y_min": 208.60470053191904,
+            "y_max": 213.43385454080243,
+            "x_min": 164.26218377844836,
+            "x_max": 169.28299125317363,
+            "area": 40.735153140298394
+          }
+        ]
+      },
+      {
+        "z": 13.0,
+        "vol": 15.258071438159417,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 86.35714167689241,
+            "y_max": 91.16132668323914,
+            "x_min": 164.1821394610421,
+            "x_max": 169.19860321789182,
+            "area": 40.507544215618786
+          },
+          {
+            "idx": 1,
+            "y_min": 136.18177983203373,
+            "y_max": 139.23169644796155,
+            "x_min": 168.65295938503093,
+            "x_max": 173.43803408665545,
+            "area": 28.78537116702836
+          },
+          {
+            "idx": 2,
+            "y_min": 160.76871331422237,
+            "y_max": 163.81863199251703,
+            "x_min": 168.65295938503093,
+            "x_max": 173.43803392728765,
+            "area": 28.785357194459916
+          },
+          {
+            "idx": 3,
+            "y_min": 208.83907793645477,
+            "y_max": 213.6432623756748,
+            "x_min": 164.18213936977835,
+            "x_max": 169.19860321789182,
+            "area": 40.50753122359502
+          }
+        ]
+      },
+      {
+        "z": 13.5,
+        "vol": 15.44662956267881,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 86.1477339909442,
+            "y_max": 90.99659327138207,
+            "x_min": 164.10209499507573,
+            "x_max": 169.12605831497353,
+            "area": 40.80239671916604
+          },
+          {
+            "idx": 1,
+            "y_min": 136.51303472328863,
+            "y_max": 139.58351181917516,
+            "x_min": 168.51548813068786,
+            "x_max": 173.38559966334702,
+            "area": 29.222954945471706
+          },
+          {
+            "idx": 2,
+            "y_min": 160.41690016812953,
+            "y_max": 163.48737679981963,
+            "x_min": 168.51548813068783,
+            "x_max": 173.38559955104776,
+            "area": 29.22293687836135
+          },
+          {
+            "idx": 3,
+            "y_min": 209.00381448926203,
+            "y_max": 213.85267021054716,
+            "x_min": 164.10209496110838,
+            "x_max": 169.1260583149735,
+            "area": 40.80237542628975
+          }
+        ]
+      },
+      {
+        "z": 14.0,
+        "vol": 15.58126625728799,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.938326304996,
+            "y_max": 90.83185985952497,
+            "x_min": 164.02586455761667,
+            "x_max": 169.05645271036641,
+            "area": 41.10383658296795
+          },
+          {
+            "idx": 1,
+            "y_min": 136.84428961454353,
+            "y_max": 139.89807473140044,
+            "x_min": 168.3780168763447,
+            "x_max": 173.3331652400386,
+            "area": 29.441632821244667
+          },
+          {
+            "idx": 2,
+            "y_min": 160.10233725590422,
+            "y_max": 163.1561216071222,
+            "x_min": 168.3780168763447,
+            "x_max": 173.33316517480785,
+            "area": 29.441616434053916
+          },
+          {
+            "idx": 3,
+            "y_min": 209.16855104206925,
+            "y_max": 214.0620780454195,
+            "x_min": 164.0258645576167,
+            "x_max": 169.05645271036636,
+            "area": 41.10380705364482
+          }
+        ]
+      },
+      {
+        "z": 14.5,
+        "vol": 15.60228296049768,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.78537865857929,
+            "y_max": 90.66712644766788,
+            "x_min": 163.95518740326665,
+            "x_max": 168.9868471057593,
+            "area": 40.99304524426446
+          },
+          {
+            "idx": 1,
+            "y_min": 137.1755445057984,
+            "y_max": 140.20252225678328,
+            "x_min": 168.22381548141473,
+            "x_max": 173.2807308167302,
+            "area": 29.670652195997043
+          },
+          {
+            "idx": 2,
+            "y_min": 159.79788973052143,
+            "y_max": 162.82486641442478,
+            "x_min": 168.22381548141473,
+            "x_max": 173.28073079856796,
+            "area": 29.67063557303074
+          },
+          {
+            "idx": 3,
+            "y_min": 209.33328759487645,
+            "y_max": 214.21502569933085,
+            "x_min": 163.95518740326668,
+            "x_max": 168.98684710575924,
+            "area": 40.992995863359944
+          }
+        ]
+      },
+      {
+        "z": 15.0,
+        "vol": 15.737963743028187,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.63542295666389,
+            "y_max": 90.5023930358108,
+            "x_min": 163.88451024891663,
+            "x_max": 168.91724150115218,
+            "area": 40.840830963318695
+          },
+          {
+            "idx": 1,
+            "y_min": 137.48875512402637,
+            "y_max": 140.5132077135815,
+            "x_min": 168.0269693859893,
+            "x_max": 173.23181481902628,
+            "area": 30.36349510403949
+          },
+          {
+            "idx": 2,
+            "y_min": 159.4872042737232,
+            "y_max": 162.51165451179705,
+            "x_min": 168.0269693859893,
+            "x_max": 173.2318148190263,
+            "area": 30.363474639800437
+          },
+          {
+            "idx": 3,
+            "y_min": 209.4980241476837,
+            "y_max": 214.36498140124627,
+            "x_min": 163.88451024891665,
+            "x_max": 168.91724150115212,
+            "area": 40.8407666167568
+          }
+        ]
+      },
+      {
+        "z": 15.5,
+        "vol": 15.95470683055662,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.4854672547485,
+            "y_max": 90.34972081402188,
+            "x_min": 163.8138330945666,
+            "x_max": 168.84763589654503,
+            "area": 40.797812437311606
+          },
+          {
+            "idx": 1,
+            "y_min": 137.76815063374846,
+            "y_max": 140.8192972550768,
+            "x_min": 167.82730436817994,
+            "x_max": 173.1851094995912,
+            "area": 31.31949243052264
+          },
+          {
+            "idx": 2,
+            "y_min": 159.18111473222788,
+            "y_max": 162.23225530708413,
+            "x_min": 167.82730436817994,
+            "x_max": 173.18510949959122,
+            "area": 31.319466564361367
+          },
+          {
+            "idx": 3,
+            "y_min": 209.65069844352166,
+            "y_max": 214.51493710316166,
+            "x_min": 163.81383309456663,
+            "x_max": 168.847635896545,
+            "area": 40.79774189948908
+          }
+        ]
+      },
+      {
+        "z": 16.0,
+        "vol": 16.219572019990466,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.33551155283311,
+            "y_max": 90.23851455469494,
+            "x_min": 163.74315594021658,
+            "x_max": 168.7862597235443,
+            "area": 41.11289817399838
+          },
+          {
+            "idx": 1,
+            "y_min": 138.0475461434706,
+            "y_max": 141.0886021788623,
+            "x_min": 167.5642180013899,
+            "x_max": 173.1384041801561,
+            "area": 32.1288252771677
+          },
+          {
+            "idx": 2,
+            "y_min": 158.91180980844237,
+            "y_max": 161.9528561023712,
+            "x_min": 167.56421800138986,
+            "x_max": 173.13840418015616,
+            "area": 32.1288054626995
+          },
+          {
+            "idx": 3,
+            "y_min": 209.7619031089278,
+            "y_max": 214.66489280507705,
+            "x_min": 163.7431559402166,
+            "x_max": 168.7862597235443,
+            "area": 41.112832691766585
+          }
+        ]
+      },
+      {
+        "z": 16.5,
+        "vol": 16.517911640711052,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.18555585091771,
+            "y_max": 90.12730829536802,
+            "x_min": 163.67247878586656,
+            "x_max": 168.7257370885765,
+            "area": 41.46354414969235
+          },
+          {
+            "idx": 1,
+            "y_min": 138.32694165319273,
+            "y_max": 141.36205797825124,
+            "x_min": 167.28745925851058,
+            "x_max": 173.091698860721,
+            "area": 33.077700852294655
+          },
+          {
+            "idx": 2,
+            "y_min": 158.63835400905342,
+            "y_max": 161.6734568976583,
+            "x_min": 167.28745925851058,
+            "x_max": 173.09169886072104,
+            "area": 33.077682752375836
+          },
+          {
+            "idx": 3,
+            "y_min": 209.87310777433393,
+            "y_max": 214.81484850699243,
+            "x_min": 163.6724787858666,
+            "x_max": 168.7257370885765,
+            "area": 41.46348732051665
+          }
+        ]
+      },
+      {
+        "z": 17.0,
+        "vol": 16.91077299034374,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 85.05269949139151,
+            "y_max": 90.01610203604109,
+            "x_min": 163.60548154124126,
+            "x_max": 168.66521445360868,
+            "area": 41.59983279997865
+          },
+          {
+            "idx": 1,
+            "y_min": 138.58094439326558,
+            "y_max": 141.63551377764017,
+            "x_min": 166.9671841733531,
+            "x_max": 173.05240591520138,
+            "area": 34.58992773361322
+          },
+          {
+            "idx": 2,
+            "y_min": 158.3648982096645,
+            "y_max": 161.41945445617236,
+            "x_min": 166.96718417335308,
+            "x_max": 173.05240591520138,
+            "area": 34.58989765116629
+          },
+          {
+            "idx": 3,
+            "y_min": 209.98431243974008,
+            "y_max": 214.94770615801224,
+            "x_min": 163.60548154124126,
+            "x_max": 168.66521445360868,
+            "area": 41.59978312256931
+          }
+        ]
+      },
+      {
+        "z": 17.5,
+        "vol": 17.293115000287283,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.94010005201866,
+            "y_max": 89.90489577671416,
+            "x_min": 163.53859862573515,
+            "x_max": 168.60469181864087,
+            "area": 41.60473274080091
+          },
+          {
+            "idx": 1,
+            "y_min": 138.81023669271693,
+            "y_max": 141.89454537042576,
+            "x_min": 166.6287117838223,
+            "x_max": 173.02344171846065,
+            "area": 36.230333861264214
+          },
+          {
+            "idx": 2,
+            "y_min": 158.10586661687893,
+            "y_max": 161.19016634157435,
+            "x_min": 166.62871698024392,
+            "x_max": 173.02344171846065,
+            "area": 36.23029830424607
+          },
+          {
+            "idx": 3,
+            "y_min": 210.09551710514623,
+            "y_max": 215.06030841886047,
+            "x_min": 163.53859862573518,
+            "x_max": 168.60469181864087,
+            "area": 41.60468984951779
+          }
+        ]
+      },
+      {
+        "z": 18.0,
+        "vol": 17.670557459128844,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.82750061264582,
+            "y_max": 89.81091339041397,
+            "x_min": 163.47171571022903,
+            "x_max": 168.54464716931463,
+            "area": 41.75726148046184
+          },
+          {
+            "idx": 1,
+            "y_min": 139.0395289921683,
+            "y_max": 142.13755093172043,
+            "x_min": 166.27726998958946,
+            "x_max": 172.99575831850055,
+            "area": 37.71610786875772
+          },
+          {
+            "idx": 2,
+            "y_min": 157.86286105558426,
+            "y_max": 160.96087822697635,
+            "x_min": 166.2772840859755,
+            "x_max": 172.99575831572903,
+            "area": 37.716077505234665
+          },
+          {
+            "idx": 3,
+            "y_min": 210.1894970951244,
+            "y_max": 215.17291067970868,
+            "x_min": 163.47171571022906,
+            "x_max": 168.54464717358604,
+            "area": 41.75722510335314
+          }
+        ]
+      },
+      {
+        "z": 18.5,
+        "vol": 18.117200844483992,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.71490117327298,
+            "y_max": 89.73896200602923,
+            "x_min": 163.40483279472292,
+            "x_max": 168.4892999119853,
+            "area": 42.125285987892866
+          },
+          {
+            "idx": 1,
+            "y_min": 139.26882129161964,
+            "y_max": 142.38055649301512,
+            "x_min": 165.91953006302222,
+            "x_max": 172.97633120999322,
+            "area": 39.262605581594215
+          },
+          {
+            "idx": 2,
+            "y_min": 157.61985549428957,
+            "y_max": 160.7315901123783,
+            "x_min": 165.91953006302222,
+            "x_max": 172.97633118658453,
+            "area": 39.26259002116039
+          },
+          {
+            "idx": 3,
+            "y_min": 210.26144505683845,
+            "y_max": 215.2855129405569,
+            "x_min": 163.40483279472295,
+            "x_max": 168.48929996250524,
+            "area": 42.12525743913564
+          }
+        ]
+      },
+      {
+        "z": 19.0,
+        "vol": 18.62299340456105,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.60230173390013,
+            "y_max": 89.66701062164448,
+            "x_min": 163.33794987921684,
+            "x_max": 168.43395265465597,
+            "area": 42.497754656796914
+          },
+          {
+            "idx": 1,
+            "y_min": 139.4623300833206,
+            "y_max": 142.62356205430982,
+            "x_min": 165.55939364212958,
+            "x_max": 172.95690410148592,
+            "area": 41.07612059218093
+          },
+          {
+            "idx": 2,
+            "y_min": 157.3768499329949,
+            "y_max": 160.53808190398408,
+            "x_min": 165.55939364212955,
+            "x_max": 172.95690405744,
+            "area": 41.076110285827696
+          },
+          {
+            "idx": 3,
+            "y_min": 210.33339301855244,
+            "y_max": 215.39811520140512,
+            "x_min": 163.33794987921686,
+            "x_max": 168.43395275142444,
+            "area": 42.49773290112757
+          }
+        ]
+      },
+      {
+        "z": 19.5,
+        "vol": 19.078929952802195,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.49063580993723,
+            "y_max": 89.59505923725973,
+            "x_min": 163.26817245460475,
+            "x_max": 168.37860539732665,
+            "area": 42.82014072676469
+          },
+          {
+            "idx": 1,
+            "y_min": 139.65004337585407,
+            "y_max": 142.8493504185538,
+            "x_min": 165.23511349812676,
+            "x_max": 172.9374769929786,
+            "area": 42.70867365508154
+          },
+          {
+            "idx": 2,
+            "y_min": 157.15105758577906,
+            "y_max": 160.35036861145065,
+            "x_min": 165.23511349812676,
+            "x_max": 172.9374769282955,
+            "area": 42.70867148139646
+          },
+          {
+            "idx": 3,
+            "y_min": 210.40534098026646,
+            "y_max": 215.50978358448842,
+            "x_min": 163.26817245460475,
+            "x_max": 168.3786055403436,
+            "area": 42.82012408296246
+          }
+        ]
+      },
+      {
+        "z": 20.0,
+        "vol": 19.47672806196888,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.39683894172262,
+            "y_max": 89.52310785287499,
+            "x_min": 163.1967926493487,
+            "x_max": 168.3232581399973,
+            "area": 43.06747138047723
+          },
+          {
+            "idx": 1,
+            "y_min": 139.83775666838753,
+            "y_max": 143.07344129234107,
+            "x_min": 164.9264648775734,
+            "x_max": 172.92173565202097,
+            "area": 44.2065866170229
+          },
+          {
+            "idx": 2,
+            "y_min": 156.9269623363279,
+            "y_max": 160.16265531891713,
+            "x_min": 164.92646487757338,
+            "x_max": 172.92173561119444,
+            "area": 44.20660858833372
+          },
+          {
+            "idx": 3,
+            "y_min": 210.47728894198045,
+            "y_max": 215.60357597573923,
+            "x_min": 163.19679264934868,
+            "x_max": 168.32325832926279,
+            "area": 43.06744526203098
+          }
+        ]
+      },
+      {
+        "z": 20.5,
+        "vol": 19.94505152181401,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.30304207350802,
+            "y_max": 89.47976598187813,
+            "x_min": 163.1254128440926,
+            "x_max": 168.26796573594106,
+            "area": 43.49375452613145
+          },
+          {
+            "idx": 1,
+            "y_min": 140.01848722719305,
+            "y_max": 143.29753216612832,
+            "x_min": 164.67542744690869,
+            "x_max": 172.9110567939598,
+            "area": 45.76269186025821
+          },
+          {
+            "idx": 2,
+            "y_min": 156.70286708687678,
+            "y_max": 159.9819247601116,
+            "x_min": 164.67542744690869,
+            "x_max": 172.91105679395983,
+            "area": 45.76274122796242
+          },
+          {
+            "idx": 3,
+            "y_min": 210.5206346102531,
+            "y_max": 215.69736836699005,
+            "x_min": 163.12541284409258,
+            "x_max": 168.26796591779956,
+            "area": 43.493733277403656
+          }
+        ]
+      },
+      {
+        "z": 21.0,
+        "vol": 20.42374920505352,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.20924520529343,
+            "y_max": 89.43698959458577,
+            "x_min": 163.05403303883654,
+            "x_max": 168.2127225297885,
+            "area": 43.95840149420905
+          },
+          {
+            "idx": 1,
+            "y_min": 140.178652108229,
+            "y_max": 143.5196450612044,
+            "x_min": 164.46354613461497,
+            "x_max": 172.90084318157548,
+            "area": 47.333302947338524
+          },
+          {
+            "idx": 2,
+            "y_min": 156.4807534947428,
+            "y_max": 159.8217598790757,
+            "x_min": 164.46354613461497,
+            "x_max": 172.90084318157548,
+            "area": 47.33336723050184
+          },
+          {
+            "idx": 3,
+            "y_min": 210.5634149375277,
+            "y_max": 215.79116075824086,
+            "x_min": 163.05403303883648,
+            "x_max": 168.21272265686855,
+            "area": 43.9583928169168
+          }
+        ]
+      },
+      {
+        "z": 21.5,
+        "vol": 20.84940427155392,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.1154483370788,
+            "y_max": 89.39421320729339,
+            "x_min": 162.98265323358044,
+            "x_max": 168.1574793236359,
+            "area": 44.42200997105213
+          },
+          {
+            "idx": 1,
+            "y_min": 140.3388169892649,
+            "y_max": 143.7390605407168,
+            "x_min": 164.3159412404958,
+            "x_max": 172.89112148556214,
+            "area": 48.69136665988908
+          },
+          {
+            "idx": 2,
+            "y_min": 156.26134233477285,
+            "y_max": 159.66159499803976,
+            "x_min": 164.31594124049582,
+            "x_max": 172.89112148556214,
+            "area": 48.691408973728095
+          },
+          {
+            "idx": 3,
+            "y_min": 210.60619526480232,
+            "y_max": 215.88495314949168,
+            "x_min": 162.9826532335804,
+            "x_max": 168.15747939593754,
+            "area": 44.42201462683355
+          }
+        ]
+      },
+      {
+        "z": 22.0,
+        "vol": 21.27841729239229,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.02165146886422,
+            "y_max": 89.35419763712972,
+            "x_min": 162.9094191199936,
+            "x_max": 168.1022361174833,
+            "area": 44.91512770336733
+          },
+          {
+            "idx": 1,
+            "y_min": 140.49898187030084,
+            "y_max": 143.95847602022923,
+            "x_min": 164.21823076243882,
+            "x_max": 172.88484176351216,
+            "area": 49.988728541487895
+          },
+          {
+            "idx": 2,
+            "y_min": 156.04193117480293,
+            "y_max": 159.50143011700385,
+            "x_min": 164.21823076243885,
+            "x_max": 172.88484176351218,
+            "area": 49.98873526847784
+          },
+          {
+            "idx": 3,
+            "y_min": 210.64621410944838,
+            "y_max": 215.9787455407425,
+            "x_min": 162.90941911999366,
+            "x_max": 168.10223613500656,
+            "area": 44.91514330190829
+          }
+        ]
+      },
+      {
+        "z": 22.5,
+        "vol": 21.69539618102423,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.94126180018483,
+            "y_max": 89.33702919143339,
+            "x_min": 162.8350240191414,
+            "x_max": 168.04706475686243,
+            "area": 45.475071486311904
+          },
+          {
+            "idx": 1,
+            "y_min": 140.6530382555215,
+            "y_max": 144.17789149974163,
+            "x_min": 164.17930531535362,
+            "x_max": 172.8785620414622,
+            "area": 51.159561246717395
+          },
+          {
+            "idx": 2,
+            "y_min": 155.82252001483297,
+            "y_max": 159.3473737317832,
+            "x_min": 164.17930531535362,
+            "x_max": 172.8785620414622,
+            "area": 51.1595597399464
+          },
+          {
+            "idx": 3,
+            "y_min": 210.6633803222866,
+            "y_max": 216.05913492833085,
+            "x_min": 162.8350240191414,
+            "x_max": 168.04706475686245,
+            "area": 45.47508051514454
+          }
+        ]
+      },
+      {
+        "z": 23.0,
+        "vol": 22.0842650301204,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.86177031046283,
+            "y_max": 89.31986074573705,
+            "x_min": 162.76062891828917,
+            "x_max": 167.99192718926284,
+            "area": 46.03254840877447
+          },
+          {
+            "idx": 1,
+            "y_min": 140.8016666025704,
+            "y_max": 144.40732862144966,
+            "x_min": 164.15591430664062,
+            "x_max": 172.87228231941222,
+            "area": 52.20944602033541
+          },
+          {
+            "idx": 2,
+            "y_min": 155.59307933737415,
+            "y_max": 159.19874538473428,
+            "x_min": 164.15591430664062,
+            "x_max": 172.87228231941225,
+            "area": 52.209442229926296
+          },
+          {
+            "idx": 3,
+            "y_min": 210.68054653512488,
+            "y_max": 216.13862641805284,
+            "x_min": 162.76062891828923,
+            "x_max": 167.9919271892629,
+            "area": 46.03254379312905
+          }
+        ]
+      },
+      {
+        "z": 23.5,
+        "vol": 22.42624997707829,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.78227882074083,
+            "y_max": 89.30269230004073,
+            "x_min": 162.68623381743694,
+            "x_max": 167.93678962166328,
+            "area": 46.59073505223373
+          },
+          {
+            "idx": 1,
+            "y_min": 140.95029494961932,
+            "y_max": 144.6379972905349,
+            "x_min": 164.2099252387637,
+            "x_max": 172.86744274572305,
+            "area": 53.04556873553162
+          },
+          {
+            "idx": 2,
+            "y_min": 155.36240614475295,
+            "y_max": 159.05011703768537,
+            "x_min": 164.20992523876367,
+            "x_max": 172.86744274572308,
+            "area": 53.04556165216426
+          },
+          {
+            "idx": 3,
+            "y_min": 210.69771274796315,
+            "y_max": 216.21811790777483,
+            "x_min": 162.686233817437,
+            "x_max": 167.9367896216633,
+            "area": 46.59071032288564
+          }
+        ]
+      },
+      {
+        "z": 24.0,
+        "vol": 22.755298727170437,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.70278733101884,
+            "y_max": 89.29749495564435,
+            "x_min": 162.6114967648651,
+            "x_max": 167.88169873355469,
+            "area": 47.25939398919036
+          },
+          {
+            "idx": 1,
+            "y_min": 141.09892329666823,
+            "y_max": 144.86866595962016,
+            "x_min": 164.26588940600988,
+            "x_max": 172.86383696852562,
+            "area": 53.69579967498851
+          },
+          {
+            "idx": 2,
+            "y_min": 155.13173295213173,
+            "y_max": 158.90148869063646,
+            "x_min": 164.26588940600985,
+            "x_max": 172.86383696852565,
+            "area": 53.695795296676856
+          },
+          {
+            "idx": 3,
+            "y_min": 210.70291234243365,
+            "y_max": 216.2976093974968,
+            "x_min": 162.61149676486508,
+            "x_max": 167.88169873355469,
+            "area": 47.25936869082114
+          }
+        ]
+      },
+      {
+        "z": 24.5,
+        "vol": 23.09199249607214,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.62657609794051,
+            "y_max": 89.2975863007003,
+            "x_min": 162.53497928993372,
+            "x_max": 167.8267179207363,
+            "area": 47.93075791520876
+          },
+          {
+            "idx": 1,
+            "y_min": 141.22124483200116,
+            "y_max": 145.1158959614349,
+            "x_min": 164.40547372581517,
+            "x_max": 172.86023119132818,
+            "area": 54.356866381433086
+          },
+          {
+            "idx": 2,
+            "y_min": 154.88450076708074,
+            "y_max": 158.7791651981862,
+            "x_min": 164.40547372581517,
+            "x_max": 172.8602311913282,
+            "area": 54.35687393503664
+          },
+          {
+            "idx": 3,
+            "y_min": 210.702823466163,
+            "y_max": 216.37382125096673,
+            "x_min": 162.53497928993366,
+            "x_max": 167.8267179207363,
+            "area": 47.9307389246582
+          }
+        ]
+      },
+      {
+        "z": 25.0,
+        "vol": 23.382826230031238,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.55736237454661,
+            "y_max": 89.29805627205441,
+            "x_min": 162.4582463724357,
+            "x_max": 167.77173710791794,
+            "area": 48.5325756442334
+          },
+          {
+            "idx": 1,
+            "y_min": 141.32049665056786,
+            "y_max": 145.3785758233638,
+            "x_min": 164.58323751340495,
+            "x_max": 172.85677603275977,
+            "area": 54.90526419451733
+          },
+          {
+            "idx": 2,
+            "y_min": 154.62182090515182,
+            "y_max": 158.67990970621122,
+            "x_min": 164.58323751340492,
+            "x_max": 172.85677603275977,
+            "area": 54.9052953509322
+          },
+          {
+            "idx": 3,
+            "y_min": 210.70235571525026,
+            "y_max": 216.44303691818416,
+            "x_min": 162.45825523373574,
+            "x_max": 167.77173710791791,
+            "area": 48.532554868495644
+          }
+        ]
+      },
+      {
+        "z": 25.5,
+        "vol": 23.56518401304987,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.48814865115268,
+            "y_max": 89.30191153869937,
+            "x_min": 162.37662717251385,
+            "x_max": 167.7168055965346,
+            "area": 49.149538182124346
+          },
+          {
+            "idx": 1,
+            "y_min": 141.41974846913456,
+            "y_max": 145.64125568529272,
+            "x_min": 164.7975088062591,
+            "x_max": 172.860263266556,
+            "area": 54.97857909567896
+          },
+          {
+            "idx": 2,
+            "y_min": 154.3591410432229,
+            "y_max": 158.58065421423623,
+            "x_min": 164.79750880625906,
+            "x_max": 172.8602632568555,
+            "area": 54.978618125898684
+          },
+          {
+            "idx": 3,
+            "y_min": 210.69850044860533,
+            "y_max": 216.51225258540157,
+            "x_min": 162.37664010297334,
+            "x_max": 167.7168043351624,
+            "area": 49.14950420592621
+          }
+        ]
+      },
+      {
+        "z": 26.0,
+        "vol": 23.70295635339745,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.41893492775878,
+            "y_max": 89.30576680534432,
+            "x_min": 162.29403656110526,
+            "x_max": 167.6620319102671,
+            "area": 49.786411197459444
+          },
+          {
+            "idx": 1,
+            "y_min": 141.51900028770123,
+            "y_max": 145.9474113799206,
+            "x_min": 165.09115601727086,
+            "x_max": 172.8650155210539,
+            "area": 54.920704968517825
+          },
+          {
+            "idx": 2,
+            "y_min": 154.05298870203282,
+            "y_max": 158.48139872226128,
+            "x_min": 165.0911560172708,
+            "x_max": 172.86501550564464,
+            "area": 54.92073255536569
+          },
+          {
+            "idx": 3,
+            "y_min": 210.69464518196034,
+            "y_max": 216.58146825261898,
+            "x_min": 162.29404960684775,
+            "x_max": 167.66202534958316,
+            "area": 49.78636884785696
+          }
+        ]
+      },
+      {
+        "z": 26.5,
+        "vol": 23.982697708277186,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.35188905437512,
+            "y_max": 89.30882263183594,
+            "x_min": 162.21014670372367,
+            "x_max": 167.60725822399962,
+            "area": 50.3728436295684
+          },
+          {
+            "idx": 1,
+            "y_min": 141.58358759232195,
+            "y_max": 146.29566276353373,
+            "x_min": 165.39103925420818,
+            "x_max": 172.8706372997578,
+            "area": 55.40571307512257
+          },
+          {
+            "idx": 2,
+            "y_min": 153.70474391884014,
+            "y_max": 158.41682439498277,
+            "x_min": 165.39103925420824,
+            "x_max": 172.8706372801988,
+            "area": 55.405735592846064
+          },
+          {
+            "idx": 3,
+            "y_min": 210.69158935546875,
+            "y_max": 216.64851530353508,
+            "x_min": 162.21015457650836,
+            "x_max": 167.6072463640039,
+            "area": 50.372802590258296
+          }
+        ]
+      },
+      {
+        "z": 27.0,
+        "vol": 24.13789421192673,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.28817443950518,
+            "y_max": 89.3022999785287,
+            "x_min": 162.12625684634213,
+            "x_max": 167.55256521645316,
+            "area": 50.84127256058037
+          },
+          {
+            "idx": 1,
+            "y_min": 141.58988012577842,
+            "y_max": 146.69146873062283,
+            "x_min": 165.7587905803715,
+            "x_max": 172.87704992410093,
+            "area": 55.59893853934051
+          },
+          {
+            "idx": 2,
+            "y_min": 153.30894325668186,
+            "y_max": 158.4105318615263,
+            "x_min": 165.75879058037154,
+            "x_max": 172.87704991390484,
+            "area": 55.59894996661639
+          },
+          {
+            "idx": 3,
+            "y_min": 210.69811009877503,
+            "y_max": 216.712229918405,
+            "x_min": 162.12625954616894,
+            "x_max": 167.55255188373278,
+            "area": 50.84123118496179
+          }
+        ]
+      },
+      {
+        "z": 27.5,
+        "vol": 24.452779451297552,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.22445982463526,
+            "y_max": 89.29307889667844,
+            "x_min": 162.04192185599217,
+            "x_max": 167.49801649075155,
+            "area": 51.266196384828845
+          },
+          {
+            "idx": 1,
+            "y_min": 141.59617265923487,
+            "y_max": 147.28200707549556,
+            "x_min": 166.1265419065348,
+            "x_max": 172.8853933547633,
+            "area": 56.69651457946028
+          },
+          {
+            "idx": 2,
+            "y_min": 152.71840491180913,
+            "y_max": 158.40423932806985,
+            "x_min": 166.12654190653484,
+            "x_max": 172.88539335476338,
+            "area": 56.69650278156978
+          },
+          {
+            "idx": 3,
+            "y_min": 210.70732848045492,
+            "y_max": 216.77594453327492,
+            "x_min": 162.04192185599217,
+            "x_max": 167.498008528586,
+            "area": 51.26617550513496
+          }
+        ]
+      },
+      {
+        "z": 28.0,
+        "vol": 25.158262804568526,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.1592451000603,
+            "y_max": 89.28774151927595,
+            "x_min": 161.95710093023914,
+            "x_max": 167.44346776504995,
+            "area": 51.72459494732198
+          },
+          {
+            "idx": 1,
+            "y_min": 141.60246519269134,
+            "y_max": 148.42090990452425,
+            "x_min": 166.5173996243176,
+            "x_max": 172.92436133029673,
+            "area": 60.09479866575327
+          },
+          {
+            "idx": 2,
+            "y_min": 151.57949215573808,
+            "y_max": 158.39794679461338,
+            "x_min": 166.5173996243176,
+            "x_max": 172.9243613302967,
+            "area": 60.09482224455244
+          },
+          {
+            "idx": 3,
+            "y_min": 210.71266283863417,
+            "y_max": 216.84116209452432,
+            "x_min": 161.95710093023914,
+            "x_max": 167.44346517343928,
+            "area": 51.72460366876752
+          }
+        ]
+      },
+      {
+        "z": 28.5,
+        "vol": 28.197272633831883,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.0913764620087,
+            "y_max": 89.30076601380699,
+            "x_min": 161.86858877479398,
+            "x_max": 167.39195027428482,
+            "area": 52.44091086660646
+          },
+          {
+            "idx": 1,
+            "y_min": 141.51068660081853,
+            "y_max": 158.48972538648619,
+            "x_min": 166.91379440141077,
+            "x_max": 173.03550532233115,
+            "area": 141.90732881961503
+          },
+          {
+            "idx": 2,
+            "y_min": 210.69963834410316,
+            "y_max": 216.90903858774237,
+            "x_min": 161.86858877479395,
+            "x_max": 167.39195027428482,
+            "area": 52.44090991669704
+          }
+        ]
+      },
+      {
+        "z": 29.0,
+        "vol": 28.36046768122665,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 83.00877014250861,
+            "y_max": 89.31379050833803,
+            "x_min": 161.77236156172967,
+            "x_max": 167.34325967759142,
+            "area": 53.4586209868585
+          },
+          {
+            "idx": 1,
+            "y_min": 141.37910249471483,
+            "y_max": 158.6213094925899,
+            "x_min": 167.27528495178228,
+            "x_max": 173.14579178685466,
+            "area": 140.67507935888767
+          },
+          {
+            "idx": 2,
+            "y_min": 210.68661384957213,
+            "y_max": 216.99165229228788,
+            "x_min": 161.77236156172964,
+            "x_max": 167.34325967759142,
+            "area": 53.45860665561052
+          }
+        ]
+      },
+      {
+        "z": 29.5,
+        "vol": 28.717498415428405,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 82.86524938746557,
+            "y_max": 89.35847628880556,
+            "x_min": 161.56507389661294,
+            "x_max": 167.29456908089801,
+            "area": 57.043057464906596
+          },
+          {
+            "idx": 1,
+            "y_min": 141.24751838861116,
+            "y_max": 158.75289359869356,
+            "x_min": 167.61345626617867,
+            "x_max": 173.1463049617961,
+            "area": 138.0724107792034
+          },
+          {
+            "idx": 2,
+            "y_min": 210.64193094599298,
+            "y_max": 217.13517066746257,
+            "x_min": 161.56508373950533,
+            "x_max": 167.29456908089801,
+            "area": 57.04303277837311
+          }
+        ]
+      },
+      {
+        "z": 30.0,
+        "vol": 35.30833121200348,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.83389154073907,
+            "y_max": 89.4283184844315,
+            "x_min": 157.45583633882777,
+            "x_max": 167.2544627273943,
+            "area": 117.1719596664268
+          },
+          {
+            "idx": 1,
+            "y_min": 141.11593428250745,
+            "y_max": 158.88447770479723,
+            "x_min": 167.87366313649852,
+            "x_max": 173.12219727435505,
+            "area": 136.50144281328915
+          },
+          {
+            "idx": 2,
+            "y_min": 210.57209391308166,
+            "y_max": 221.16652044656564,
+            "x_min": 157.45583633882774,
+            "x_max": 167.2544627273943,
+            "area": 117.17199547050589
+          }
+        ]
+      },
+      {
+        "z": 30.5,
+        "vol": 51.98435399942138,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.62260978887673,
+            "y_max": 89.49816068005744,
+            "x_min": 157.382568087921,
+            "x_max": 167.21761429802999,
+            "area": 154.17306003364016
+          },
+          {
+            "idx": 1,
+            "y_min": 140.85323143031678,
+            "y_max": 159.1471805569879,
+            "x_min": 167.98936646683066,
+            "x_max": 173.0872722415106,
+            "area": 138.75399067993948
+          },
+          {
+            "idx": 2,
+            "y_min": 210.50225688017034,
+            "y_max": 221.37779536129142,
+            "x_min": 157.38256808792102,
+            "x_max": 167.21761429802999,
+            "area": 154.17306265604117
+          }
+        ]
+      },
+      {
+        "z": 31.0,
+        "vol": 54.87079549236418,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.58670691840133,
+            "y_max": 89.64495235598422,
+            "x_min": 157.34110156738996,
+            "x_max": 167.1807658686657,
+            "area": 163.09575249451822
+          },
+          {
+            "idx": 1,
+            "y_min": 140.51639094117857,
+            "y_max": 159.4840210461261,
+            "x_min": 168.09824211626167,
+            "x_max": 173.05234489861863,
+            "area": 142.8654238768193
+          },
+          {
+            "idx": 2,
+            "y_min": 210.35546131673902,
+            "y_max": 221.41370120272074,
+            "x_min": 157.34110156738993,
+            "x_max": 167.1807658686657,
+            "area": 163.09566664191544
+          }
+        ]
+      },
+      {
+        "z": 31.5,
+        "vol": 56.800498811545204,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.57367203430722,
+            "y_max": 89.83258565685325,
+            "x_min": 157.30460893421937,
+            "x_max": 167.15232781649766,
+            "area": 168.59770612854535
+          },
+          {
+            "idx": 1,
+            "y_min": 140.17205887455935,
+            "y_max": 159.82835311274533,
+            "x_min": 168.12907518212614,
+            "x_max": 173.01741656813587,
+            "area": 147.55615763136575
+          },
+          {
+            "idx": 2,
+            "y_min": 210.16782001278486,
+            "y_max": 221.4267458107536,
+            "x_min": 157.3046089342194,
+            "x_max": 167.15232781649766,
+            "area": 168.59769384202335
+          }
+        ]
+      },
+      {
+        "z": 32.0,
+        "vol": 58.38751728248895,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.56779585103239,
+            "y_max": 90.02021895772228,
+            "x_min": 157.26967552325624,
+            "x_max": 167.1582615806949,
+            "area": 172.5831786416277
+          },
+          {
+            "idx": 1,
+            "y_min": 139.7959890311679,
+            "y_max": 160.20442295613685,
+            "x_min": 168.1420006134359,
+            "x_max": 172.98249061220528,
+            "area": 152.8302047573828
+          },
+          {
+            "idx": 2,
+            "y_min": 209.98017870883066,
+            "y_max": 221.43261754615298,
+            "x_min": 157.26967552325627,
+            "x_max": 167.15827144204826,
+            "area": 172.5832178236785
+          }
+        ]
+      },
+      {
+        "z": 32.5,
+        "vol": 60.19855161166522,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.56203247502238,
+            "y_max": 90.3065934088404,
+            "x_min": 157.2347295636573,
+            "x_max": 167.1648172628463,
+            "area": 176.46731275059653
+          },
+          {
+            "idx": 1,
+            "y_min": 139.24690943495793,
+            "y_max": 160.7535025523468,
+            "x_min": 168.11811919895698,
+            "x_max": 172.94756571832156,
+            "area": 160.81549237631774
+          },
+          {
+            "idx": 2,
+            "y_min": 209.69380139294628,
+            "y_max": 221.43837730971174,
+            "x_min": 157.2347295636573,
+            "x_max": 167.1648317604671,
+            "area": 176.46734533406988
+          }
+        ]
+      },
+      {
+        "z": 33.0,
+        "vol": 62.310215291770646,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.55632145090773,
+            "y_max": 90.63450179338814,
+            "x_min": 157.19977839629996,
+            "x_max": 167.22104857421826,
+            "area": 180.93930442492243
+          },
+          {
+            "idx": 1,
+            "y_min": 138.697829838748,
+            "y_max": 161.30258214855672,
+            "x_min": 168.0926948538375,
+            "x_max": 172.91263897033681,
+            "area": 169.6253486483526
+          },
+          {
+            "idx": 2,
+            "y_min": 209.36589382527367,
+            "y_max": 221.44408510908096,
+            "x_min": 157.19977839629996,
+            "x_max": 167.2210599554047,
+            "area": 180.9393228607339
+          }
+        ]
+      },
+      {
+        "z": 33.5,
+        "vol": 64.41535872218961,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.55062962882432,
+            "y_max": 90.96241017793588,
+            "x_min": 157.1648240156884,
+            "x_max": 167.28703744462743,
+            "area": 185.33685343446848
+          },
+          {
+            "idx": 1,
+            "y_min": 138.14875024253803,
+            "y_max": 161.8516617447667,
+            "x_min": 168.06398497964236,
+            "x_max": 172.8777098249402,
+            "area": 178.57074888744822
+          },
+          {
+            "idx": 2,
+            "y_min": 209.0379862576011,
+            "y_max": 221.44977382452197,
+            "x_min": 157.1648240156884,
+            "x_max": 167.28704418655138,
+            "area": 185.3369044704672
+          }
+        ]
+      },
+      {
+        "z": 34.0,
+        "vol": 66.63408148107452,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.5449791539106,
+            "y_max": 91.394416186722,
+            "x_min": 157.12986362372905,
+            "x_max": 167.3530263150366,
+            "area": 190.07317413191228
+          },
+          {
+            "idx": 1,
+            "y_min": 137.46484407282537,
+            "y_max": 162.53556791447932,
+            "x_min": 168.01964424034338,
+            "x_max": 172.84278093027729,
+            "area": 188.7827041138423
+          },
+          {
+            "idx": 2,
+            "y_min": 208.6059829522142,
+            "y_max": 221.45542144710106,
+            "x_min": 157.12986362372908,
+            "x_max": 167.35302841769797,
+            "area": 190.07323229626928
+          }
+        ]
+      },
+      {
+        "z": 34.5,
+        "vol": 69.44206712057616,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.53932867899688,
+            "y_max": 91.88463671949572,
+            "x_min": 157.0949032317697,
+            "x_max": 167.4450184929471,
+            "area": 196.11546453725697
+          },
+          {
+            "idx": 1,
+            "y_min": 136.69274031343423,
+            "y_max": 163.30767167387046,
+            "x_min": 167.97530350104438,
+            "x_max": 172.80785299187949,
+            "area": 201.31651601867108
+          },
+          {
+            "idx": 2,
+            "y_min": 208.11576617784075,
+            "y_max": 221.46106906968015,
+            "x_min": 157.09490323176973,
+            "x_max": 167.44501849294704,
+            "area": 196.11544825255044
+          }
+        ]
+      },
+      {
+        "z": 35.0,
+        "vol": 72.67246071240449,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.53369194331233,
+            "y_max": 92.37485725226945,
+            "x_min": 157.05993797432393,
+            "x_max": 167.5585655572112,
+            "area": 203.07585446242024
+          },
+          {
+            "idx": 1,
+            "y_min": 135.9206365540431,
+            "y_max": 164.07977543326157,
+            "x_min": 167.93795261755392,
+            "x_max": 172.77292829292435,
+            "area": 214.10099499148046
+          },
+          {
+            "idx": 2,
+            "y_min": 207.62554940346732,
+            "y_max": 221.46671033942133,
+            "x_min": 157.05993797432393,
+            "x_max": 167.55856555721118,
+            "area": 203.0757802543114
+          }
+        ]
+      },
+      {
+        "z": 35.5,
+        "vol": 75.84128073771545,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.52806285768565,
+            "y_max": 92.9937065154503,
+            "x_min": 157.0249704528378,
+            "x_max": 167.67211262147535,
+            "area": 210.0772459916625
+          },
+          {
+            "idx": 1,
+            "y_min": 135.02139949562857,
+            "y_max": 164.97901249167612,
+            "x_min": 167.90169729581527,
+            "x_max": 172.738012021291,
+            "area": 227.86838211722946
+          },
+          {
+            "idx": 2,
+            "y_min": 207.00670809195307,
+            "y_max": 221.47234807187692,
+            "x_min": 157.0249704528378,
+            "x_max": 167.67211262147532,
+            "area": 210.07725932732689
+          }
+        ]
+      },
+      {
+        "z": 36.0,
+        "vol": 79.38571110634079,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.522433772059,
+            "y_max": 93.69696168885757,
+            "x_min": 156.99000258088807,
+            "x_max": 167.79436807687324,
+            "area": 217.3767707197907
+          },
+          {
+            "idx": 1,
+            "y_min": 133.99036703076172,
+            "y_max": 166.01004495654297,
+            "x_min": 167.86537244299672,
+            "x_max": 172.6882552760292,
+            "area": 243.74473458089233
+          },
+          {
+            "idx": 2,
+            "y_min": 206.30344805663046,
+            "y_max": 221.4779858043325,
+            "x_min": 156.99000258088802,
+            "x_max": 167.7943680768733,
+            "area": 217.37679586946487
+          }
+        ]
+      },
+      {
+        "z": 36.5,
+        "vol": 77.27806188685916,
+        "shells": 3,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.51678168841549,
+            "y_max": 94.40389865916808,
+            "x_min": 156.95502696067697,
+            "x_max": 167.9545998282219,
+            "area": 223.8843459915423
+          },
+          {
+            "idx": 1,
+            "y_min": 132.9593345658949,
+            "y_max": 167.04107742140985,
+            "x_min": 167.82901989615772,
+            "x_max": 172.4032242591085,
+            "area": 235.19957402162473
+          },
+          {
+            "idx": 2,
+            "y_min": 205.59651308541777,
+            "y_max": 221.48364125521658,
+            "x_min": 156.95502696067692,
+            "x_max": 167.95459982822183,
+            "area": 223.88433017480403
+          }
+        ]
+      },
+      {
+        "z": 37.0,
+        "vol": 77.0278168870211,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.51112949706324,
+            "y_max": 95.42415500562382,
+            "x_min": 156.92005134046585,
+            "x_max": 168.117451054189,
+            "area": 232.69168772326555
+          },
+          {
+            "idx": 1,
+            "y_min": 131.60320787936107,
+            "y_max": 144.6702198672531,
+            "x_min": 167.79267087807,
+            "x_max": 171.92730252487362,
+            "area": 100.65242784618047
+          },
+          {
+            "idx": 2,
+            "y_min": 155.33018395313408,
+            "y_max": 168.39720410794365,
+            "x_min": 167.79267087807003,
+            "x_max": 171.92730250145814,
+            "area": 100.65241783343122
+          },
+          {
+            "idx": 3,
+            "y_min": 204.57624779809458,
+            "y_max": 221.48929678908294,
+            "x_min": 156.92005134046582,
+            "x_max": 168.11745105418896,
+            "area": 232.6916712669791
+          }
+        ]
+      },
+      {
+        "z": 37.5,
+        "vol": 78.60512852807366,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.50540698695312,
+            "y_max": 96.47142227845946,
+            "x_min": 156.8850571047447,
+            "x_max": 168.32288244115233,
+            "area": 243.28833347191576
+          },
+          {
+            "idx": 1,
+            "y_min": 130.19870158330096,
+            "y_max": 142.50699854205232,
+            "x_min": 167.75637430816968,
+            "x_max": 171.9301210277383,
+            "area": 96.15586078482515
+          },
+          {
+            "idx": 2,
+            "y_min": 157.49341344525246,
+            "y_max": 169.80171040400379,
+            "x_min": 167.7563743081697,
+            "x_max": 171.93012101549624,
+            "area": 96.15589890166908
+          },
+          {
+            "idx": 3,
+            "y_min": 203.52898730413253,
+            "y_max": 221.49501338122352,
+            "x_min": 156.88506447946574,
+            "x_max": 168.3228824411523,
+            "area": 243.2883247770088
+          }
+        ]
+      },
+      {
+        "z": 38.0,
+        "vol": 81.42678194534658,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.50041198730469,
+            "y_max": 97.99751936783188,
+            "x_min": 156.85063132257844,
+            "x_max": 168.54549652954148,
+            "area": 255.85787593717598
+          },
+          {
+            "idx": 1,
+            "y_min": 128.34117201812887,
+            "y_max": 140.704525559914,
+            "x_min": 167.7222211163995,
+            "x_max": 171.93354321449684,
+            "area": 96.9545429247615
+          },
+          {
+            "idx": 2,
+            "y_min": 159.29588642739077,
+            "y_max": 171.65923996917584,
+            "x_min": 167.7222211163995,
+            "x_max": 171.9335432052261,
+            "area": 96.95454865649815
+          },
+          {
+            "idx": 3,
+            "y_min": 202.00290024886726,
+            "y_max": 221.5,
+            "x_min": 156.85064387925607,
+            "x_max": 168.54549652954145,
+            "area": 255.85784638422942
+          }
+        ]
+      },
+      {
+        "z": 38.5,
+        "vol": 85.51952497608981,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.50509212973245,
+            "y_max": 99.8160556215198,
+            "x_min": 156.82073978212614,
+            "x_max": 168.85302181214084,
+            "area": 269.9061837597999
+          },
+          {
+            "idx": 1,
+            "y_min": 126.13452089403327,
+            "y_max": 139.1962091304986,
+            "x_min": 167.69443134702365,
+            "x_max": 171.93580627441406,
+            "area": 101.36691672038195
+          },
+          {
+            "idx": 2,
+            "y_min": 160.8042028568061,
+            "y_max": 173.86589109327164,
+            "x_min": 167.69443134702368,
+            "x_max": 171.93580627441406,
+            "area": 101.36689430458455
+          },
+          {
+            "idx": 3,
+            "y_min": 200.18436308344144,
+            "y_max": 221.49531985757224,
+            "x_min": 156.82074360668494,
+            "x_max": 168.85302290174832,
+            "area": 269.90618979288206
+          }
+        ]
+      },
+      {
+        "z": 39.0,
+        "vol": 89.31391519448471,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 78.54920917209641,
+            "y_max": 102.6716984119601,
+            "x_min": 156.812833212158,
+            "x_max": 169.2519473553028,
+            "area": 283.2134533755086
+          },
+          {
+            "idx": 1,
+            "y_min": 123.09577044286642,
+            "y_max": 137.68313910659506,
+            "x_min": 167.69078063964844,
+            "x_max": 171.9279665517993,
+            "area": 110.57799697317117
+          },
+          {
+            "idx": 2,
+            "y_min": 162.3172644404992,
+            "y_max": 176.90463896147014,
+            "x_min": 167.69078063964844,
+            "x_max": 171.9279665094787,
+            "area": 110.57801979578745
+          },
+          {
+            "idx": 3,
+            "y_min": 197.3287064583939,
+            "y_max": 221.4512092352136,
+            "x_min": 156.81284667537236,
+            "x_max": 169.25194865665108,
+            "area": 283.2134596294347
+          }
+        ]
+      },
+      {
+        "z": 39.5,
+        "vol": 85.42504506427852,
+        "shells": 4,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 79.65524317091025,
+            "y_max": 108.44481790163779,
+            "x_min": 159.25763544702534,
+            "x_max": 169.85843605041052,
+            "area": 270.85159848130354
+          },
+          {
+            "idx": 1,
+            "y_min": 118.16057624013771,
+            "y_max": 136.07914655248902,
+            "x_min": 167.7164162773886,
+            "x_max": 171.90660304279265,
+            "area": 129.61311980018164
+          },
+          {
+            "idx": 2,
+            "y_min": 163.92125017602663,
+            "y_max": 181.8398433765644,
+            "x_min": 167.7164162773886,
+            "x_max": 171.90660304279268,
+            "area": 129.61301186151002
+          },
+          {
+            "idx": 3,
+            "y_min": 191.55565771808998,
+            "y_max": 220.34517146108945,
+            "x_min": 159.25759223440812,
+            "x_max": 169.85843936776845,
+            "area": 270.8516249064757
+          }
+        ]
+      },
+      {
+        "z": 40.0,
+        "vol": 97.16804856807016,
+        "shells": 2,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 82.11667246937623,
+            "y_max": 134.34571364413603,
+            "x_min": 161.14158285671405,
+            "x_max": 171.87164198776736,
+            "area": 426.6151868102996
+          },
+          {
+            "idx": 1,
+            "y_min": 165.6546865758611,
+            "y_max": 217.88374784720693,
+            "x_min": 161.14158285671405,
+            "x_max": 171.8716419877674,
+            "area": 426.61528800699125
+          }
+        ]
+      },
+      {
+        "z": 40.5,
+        "vol": 87.46435578710594,
+        "shells": 2,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 84.76943683519616,
+            "y_max": 132.43889629104945,
+            "x_min": 161.9972992271749,
+            "x_max": 171.8366796413191,
+            "area": 382.29465525202295
+          },
+          {
+            "idx": 1,
+            "y_min": 167.56151569625536,
+            "y_max": 215.23096892923058,
+            "x_min": 161.9972966778019,
+            "x_max": 171.83667964131914,
+            "area": 382.2946422034387
+          }
+        ]
+      },
+      {
+        "z": 41.0,
+        "vol": 75.89467555152505,
+        "shells": 2,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 87.32645900759985,
+            "y_max": 130.19381959019904,
+            "x_min": 162.8444886685022,
+            "x_max": 171.7982606794672,
+            "area": 334.22464998954604
+          },
+          {
+            "idx": 1,
+            "y_min": 169.8065923971057,
+            "y_max": 212.6739606090994,
+            "x_min": 162.8444886685022,
+            "x_max": 171.79826067946718,
+            "area": 334.2246188185539
+          }
+        ]
+      },
+      {
+        "z": 41.5,
+        "vol": 62.92577199387382,
+        "shells": 2,
+        "shell_info": [
+          {
+            "idx": 0,
+            "y_min": 90.22765422147157,
+            "y_max": 127.58864678887083,
+            "x_min": 163.75924653856072,
+            "x_max": 171.73280739753508,
+            "area": 280.6518744601273
+          },
+          {
+            "idx": 1,
+            "y_min": 172.41175890195973,
+            "y_max": 209.7727457509039,
+            "x_min": 163.75924653856072,
+            "x_max": 171.7328073975351,
+            "area": 280.651949898007
+          }
+        ]
+      }
+    ],
+    "7b": {
+      "left_outer": {
+        "samples": 2,
+        "min": 2.28,
+        "max": 2.29,
+        "median": 2.29,
+        "values": [
+          2.29,
+          2.28
+        ]
+      },
+      "left_inner": {
+        "samples": 2,
+        "min": 3.46,
+        "max": 3.56,
+        "median": 3.56,
+        "values": [
+          3.56,
+          3.46
+        ]
+      },
+      "right_inner": {
+        "samples": 2,
+        "min": 3.46,
+        "max": 3.56,
+        "median": 3.56,
+        "values": [
+          3.56,
+          3.46
+        ]
+      },
+      "right_outer": {
+        "samples": 2,
+        "min": 2.28,
+        "max": 2.29,
+        "median": 2.29,
+        "values": [
+          2.28,
+          2.29
+        ]
+      }
+    },
+    "8": {
+      "bridge_y": [
+        {
+          "y": 145.0,
+          "vol": 14.719853993255823,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 144.85,
+              "y_max": 145.15,
+              "x_min": 166.6703932358331,
+              "x_max": 172.8630325267197,
+              "z_min": 24.0845394561078,
+              "z_max": 36.835670186521355,
+              "area": 110.961806823262
+            }
+          ]
+        },
+        {
+          "y": 145.5,
+          "vol": 12.353280643045755,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 145.35,
+              "y_max": 145.65,
+              "x_min": 167.58635353965758,
+              "x_max": 172.87537435610076,
+              "z_min": 25.07060712961785,
+              "z_max": 36.73210550747408,
+              "area": 93.68699129691716
+            }
+          ]
+        },
+        {
+          "y": 146.0,
+          "vol": 10.615183885379974,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 145.85,
+              "y_max": 146.15,
+              "x_min": 168.49726936701506,
+              "x_max": 172.8971790347413,
+              "z_min": 25.98514214945834,
+              "z_max": 36.64159297154506,
+              "area": 80.32199907340558
+            }
+          ]
+        },
+        {
+          "y": 146.5,
+          "vol": 9.437349232588844,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 146.35,
+              "y_max": 146.65,
+              "x_min": 169.08521169144495,
+              "x_max": 172.9317717727197,
+              "z_min": 26.703014387053578,
+              "z_max": 36.5706588203002,
+              "area": 71.22975489240241
+            }
+          ]
+        },
+        {
+          "y": 147.0,
+          "vol": 8.837124331452925,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 146.85,
+              "y_max": 147.15,
+              "x_min": 169.16310917556237,
+              "x_max": 172.97401137619943,
+              "z_min": 27.259226058945703,
+              "z_max": 36.51984470715066,
+              "area": 66.38347684555632
+            }
+          ]
+        },
+        {
+          "y": 147.5,
+          "vol": 8.439615391140581,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 147.35,
+              "y_max": 147.65,
+              "x_min": 169.22121236969554,
+              "x_max": 173.02041728797957,
+              "z_min": 27.682568594058967,
+              "z_max": 36.48391569131478,
+              "area": 63.26053950777343
+            }
+          ]
+        },
+        {
+          "y": 148.0,
+          "vol": 8.222168925739094,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 147.85,
+              "y_max": 148.15,
+              "x_min": 169.26714381918075,
+              "x_max": 173.06403742379058,
+              "z_min": 27.922555418545993,
+              "z_max": 36.45706636655236,
+              "area": 61.61050475017927
+            }
+          ]
+        },
+        {
+          "y": 148.5,
+          "vol": 8.09270374935249,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 148.35,
+              "y_max": 148.65,
+              "x_min": 169.30220127781712,
+              "x_max": 173.1002266119123,
+              "z_min": 28.113880344387642,
+              "z_max": 36.43733350943934,
+              "area": 60.57833489880527
+            }
+          ]
+        },
+        {
+          "y": 149.0,
+          "vol": 8.028260584858467,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 148.85,
+              "y_max": 149.15,
+              "x_min": 169.32733550924777,
+              "x_max": 173.1304312145184,
+              "z_min": 28.19228727277783,
+              "z_max": 36.42530772763861,
+              "area": 60.110874431950975
+            }
+          ]
+        },
+        {
+          "y": 149.5,
+          "vol": 8.014981440021673,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 149.35,
+              "y_max": 149.65,
+              "x_min": 169.34587755891715,
+              "x_max": 173.14335397066353,
+              "z_min": 28.238363242301542,
+              "z_max": 36.41669585053407,
+              "area": 59.976247582367215
+            }
+          ]
+        },
+        {
+          "y": 150.0,
+          "vol": 8.01579136878549,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 149.85,
+              "y_max": 150.15,
+              "x_min": 169.35420359724029,
+              "x_max": 173.15179443359375,
+              "z_min": 28.244055692590972,
+              "z_max": 36.41325980688613,
+              "area": 59.97788713726106
+            }
+          ]
+        },
+        {
+          "y": 150.5,
+          "vol": 8.014981864030451,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 150.35,
+              "y_max": 150.65,
+              "x_min": 169.34588437576272,
+              "x_max": 173.1433636883006,
+              "z_min": 28.23836788839135,
+              "z_max": 36.41669303958649,
+              "area": 59.97624745072511
+            }
+          ]
+        },
+        {
+          "y": 151.0,
+          "vol": 8.028214706261208,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 150.85,
+              "y_max": 151.15,
+              "x_min": 169.327353874977,
+              "x_max": 173.13045610234408,
+              "z_min": 28.192351267382833,
+              "z_max": 36.42529885793559,
+              "area": 60.110651319313
+            }
+          ]
+        },
+        {
+          "y": 151.5,
+          "vol": 8.092649297594757,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 151.35,
+              "y_max": 151.65,
+              "x_min": 169.30223016427294,
+              "x_max": 173.10025149973794,
+              "z_min": 28.11394323770987,
+              "z_max": 36.43731785226512,
+              "area": 60.577922890222176
+            }
+          ]
+        },
+        {
+          "y": 152.0,
+          "vol": 8.222002183296226,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 151.85,
+              "y_max": 152.15,
+              "x_min": 169.26717270563654,
+              "x_max": 173.06407336567497,
+              "z_min": 27.92273202798693,
+              "z_max": 36.45705070937813,
+              "area": 61.609279879261905
+            }
+          ]
+        },
+        {
+          "y": 152.5,
+          "vol": 8.439413862336183,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 152.35,
+              "y_max": 152.65,
+              "x_min": 169.22125098882285,
+              "x_max": 173.02045322986396,
+              "z_min": 27.68291741755896,
+              "z_max": 36.4838910358083,
+              "area": 63.258729948004074
+            }
+          ]
+        },
+        {
+          "y": 153.0,
+          "vol": 8.83670736144268,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 152.85,
+              "y_max": 153.15,
+              "x_min": 169.1631613037816,
+              "x_max": 172.97404974694336,
+              "z_min": 27.259574882445705,
+              "z_max": 36.51980858041027,
+              "area": 66.38046332684333
+            }
+          ]
+        },
+        {
+          "y": 153.5,
+          "vol": 9.436666872781428,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 153.35,
+              "y_max": 153.65,
+              "x_min": 169.08528184200478,
+              "x_max": 172.9318002762575,
+              "z_min": 26.70359976872912,
+              "z_max": 36.57060907668249,
+              "area": 71.22389439315329
+            }
+          ]
+        },
+        {
+          "y": 154.0,
+          "vol": 10.614004611130568,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 153.85,
+              "y_max": 154.15,
+              "x_min": 168.49800834365922,
+              "x_max": 172.89720753827908,
+              "z_min": 25.985713925018807,
+              "z_max": 36.641522192431545,
+              "area": 80.31315682246365
+            }
+          ]
+        },
+        {
+          "y": 154.5,
+          "vol": 12.351544589577644,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 154.35,
+              "y_max": 154.65,
+              "x_min": 167.58711616739754,
+              "x_max": 172.87538586395038,
+              "z_min": 25.071362285556873,
+              "z_max": 36.732021957301285,
+              "area": 93.67408378142986
+            }
+          ]
+        },
+        {
+          "y": 155.0,
+          "vol": 14.717732770763824,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 154.85,
+              "y_max": 155.15,
+              "x_min": 166.67113351049537,
+              "x_max": 172.8630407638784,
+              "z_min": 24.08540491818596,
+              "z_max": 36.835580823583165,
+              "area": 110.94620335468625
+            }
+          ]
+        },
+        {
+          "y": 155.5,
+          "vol": 17.603013556997052,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 155.35,
+              "y_max": 155.65000000000003,
+              "x_min": 165.80536632790822,
+              "x_max": 172.85786052625008,
+              "z_min": 23.001620551397732,
+              "z_max": 36.94539382742872,
+              "area": 131.86171342861218
+            }
+          ]
+        },
+        {
+          "y": 156.0,
+          "vol": 20.917617971579176,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 155.85,
+              "y_max": 156.15000000000003,
+              "x_min": 165.0498931520087,
+              "x_max": 172.86643970491988,
+              "z_min": 21.87872988044024,
+              "z_max": 37.059428486339094,
+              "area": 155.3555575378547
+            }
+          ]
+        },
+        {
+          "y": 156.5,
+          "vol": 24.51395208287564,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 156.34999999999997,
+              "y_max": 156.65,
+              "x_min": 164.54385571936618,
+              "x_max": 172.8792291623259,
+              "z_min": 20.742956732697966,
+              "z_max": 37.175845966535455,
+              "area": 180.190225664515
+            }
+          ]
+        },
+        {
+          "y": 157.0,
+          "vol": 27.865647685366135,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 156.85,
+              "y_max": 157.15,
+              "x_min": 164.28594501723583,
+              "x_max": 172.8957136579992,
+              "z_min": 19.627359679157912,
+              "z_max": 37.29363985996841,
+              "area": 202.87428013436977
+            }
+          ]
+        },
+        {
+          "y": 157.5,
+          "vol": 30.072546654388194,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 157.35,
+              "y_max": 157.65,
+              "x_min": 164.15591430664062,
+              "x_max": 172.92038928115792,
+              "z_min": 18.562975687573097,
+              "z_max": 37.41216355890014,
+              "area": 219.31520452794098
+            }
+          ]
+        },
+        {
+          "y": 158.0,
+          "vol": 30.16115901212192,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 157.85,
+              "y_max": 158.15,
+              "x_min": 164.22098091884652,
+              "x_max": 172.95529951319477,
+              "z_min": 17.534192647925522,
+              "z_max": 37.53737873767979,
+              "area": 223.09192105877224
+            }
+          ]
+        },
+        {
+          "y": 158.5,
+          "vol": 25.344047037064133,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 158.35,
+              "y_max": 158.65,
+              "x_min": 164.57692346790049,
+              "x_max": 172.99608842466955,
+              "z_min": 16.603705898773036,
+              "z_max": 37.67723873356169,
+              "area": 200.99032598865705
+            }
+          ]
+        },
+        {
+          "y": 159.0,
+          "vol": 21.001913986172614,
+          "shells": 2,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 158.85,
+              "y_max": 159.15,
+              "x_min": 165.23243500435774,
+              "x_max": 173.0500564012874,
+              "z_min": 15.682960815412017,
+              "z_max": 24.048212888586857,
+              "area": 101.26302846434483
+            },
+            {
+              "idx": 1,
+              "y_min": 158.85,
+              "y_max": 159.15,
+              "x_min": 167.94673811232784,
+              "x_max": 171.95489403753817,
+              "z_min": 29.99398985820499,
+              "z_max": 37.82770912698412,
+              "area": 60.83320837874108
+            }
+          ]
+        },
+        {
+          "y": 159.5,
+          "vol": 18.18193282840548,
+          "shells": 2,
+          "shell_info": [
+            {
+              "idx": 0,
+              "y_min": 159.35,
+              "y_max": 159.65,
+              "x_min": 165.9914868460375,
+              "x_max": 173.1059462015618,
+              "z_min": 14.863005557204838,
+              "z_max": 22.366164982088012,
+              "area": 84.42149216285026
+            },
+            {
+              "idx": 1,
+              "y_min": 159.35,
+              "y_max": 159.65,
+              "x_min": 167.9010838606167,
+              "x_max": 171.94392120320538,
+              "z_min": 30.928341082850455,
+              "z_max": 37.98979025358957,
+              "area": 56.278662876989486
+            }
+          ]
+        }
+      ],
+      "bridge_z": [
+        {
+          "z": 0.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 0.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 1.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 1.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 2.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 2.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 3.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 3.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 4.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 4.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 5.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 5.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 6.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 6.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 7.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 7.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 8.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 8.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 9.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 9.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 10.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 10.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 11.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 11.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 12.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 12.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 13.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 13.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 14.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 14.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 15.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 15.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 16.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 16.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 17.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 17.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 18.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 18.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 19.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 19.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 20.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 20.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 21.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 21.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 22.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 22.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 23.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 23.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 24.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 24.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 25.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 25.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 26.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 26.5,
+          "vol": 0.1571373253257339,
+          "shells": 2,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.1215758565374,
+              "x_max": 172.59505593532282,
+              "z_min": 26.349999999999994,
+              "z_max": 26.650000000000006,
+              "area": 2.050087942945006
+            },
+            {
+              "idx": 1,
+              "x_min": 169.12223323464636,
+              "x_max": 172.5940434862737,
+              "z_min": 26.349999999999994,
+              "z_max": 26.65000000000001,
+              "area": 2.0451561532235405
+            }
+          ]
+        },
+        {
+          "z": 27.0,
+          "vol": 0.8506358810235185,
+          "shells": 2,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 168.7434688677286,
+              "x_max": 172.86368793649785,
+              "z_min": 26.849999999999994,
+              "z_max": 27.15000000000001,
+              "area": 5.700895561375554
+            },
+            {
+              "idx": 1,
+              "x_min": 168.7440495589575,
+              "x_max": 172.86368793649788,
+              "z_min": 26.849999999999994,
+              "z_max": 27.15000000000001,
+              "area": 5.69693024066616
+            }
+          ]
+        },
+        {
+          "z": 27.5,
+          "vol": 1.9645305014657823,
+          "shells": 2,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 168.76632255228682,
+              "x_max": 172.88653574519833,
+              "z_min": 27.349999999999994,
+              "z_max": 27.65000000000001,
+              "area": 9.869514641523041
+            },
+            {
+              "idx": 1,
+              "x_min": 168.767061528931,
+              "x_max": 172.8865357451984,
+              "z_min": 27.349999999999994,
+              "z_max": 27.65000000000001,
+              "area": 9.865600302603518
+            }
+          ]
+        },
+        {
+          "z": 28.0,
+          "vol": 3.5705873372956036,
+          "shells": 2,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 168.86305864531369,
+              "x_max": 172.9266898516821,
+              "z_min": 27.849999999999994,
+              "z_max": 28.150000000000006,
+              "area": 16.646116085537862
+            },
+            {
+              "idx": 1,
+              "x_min": 168.86348268129714,
+              "x_max": 172.92668985168208,
+              "z_min": 27.849999999999994,
+              "z_max": 28.15000000000001,
+              "area": 16.642473124116023
+            }
+          ]
+        },
+        {
+          "z": 28.5,
+          "vol": 7.587550125529629,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.03496245202035,
+              "x_max": 173.0581762639002,
+              "z_min": 28.349999999999994,
+              "z_max": 28.650000000000006,
+              "area": 58.445740229352914
+            }
+          ]
+        },
+        {
+          "z": 29.0,
+          "vol": 8.00750130929199,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.24183800485557,
+              "x_max": 173.14701718465764,
+              "z_min": 28.849999999999994,
+              "z_max": 29.15000000000001,
+              "area": 60.370007030231534
+            }
+          ]
+        },
+        {
+          "z": 29.5,
+          "vol": 8.036586066805409,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.36383721773788,
+              "x_max": 173.14738101845788,
+              "z_min": 29.349999999999994,
+              "z_max": 29.650000000000006,
+              "area": 60.47196248491953
+            }
+          ]
+        },
+        {
+          "z": 30.0,
+          "vol": 8.033560350922945,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.38198823560154,
+              "x_max": 173.12394352599728,
+              "z_min": 29.849999999999994,
+              "z_max": 30.15000000000001,
+              "area": 60.419425629985064
+            }
+          ]
+        },
+        {
+          "z": 30.5,
+          "vol": 8.032961842689309,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.35012849928682,
+              "x_max": 173.08901849315282,
+              "z_min": 30.349999999999994,
+              "z_max": 30.65000000000001,
+              "area": 60.41149249464079
+            }
+          ]
+        },
+        {
+          "z": 31.0,
+          "vol": 8.03253941962786,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.31758834204368,
+              "x_max": 173.05409131514276,
+              "z_min": 30.849999999999994,
+              "z_max": 31.15000000000001,
+              "area": 60.40768574164029
+            }
+          ]
+        },
+        {
+          "z": 31.5,
+          "vol": 8.031971733186335,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.28581501426055,
+              "x_max": 173.01916298466003,
+              "z_min": 31.349999999999994,
+              "z_max": 31.65000000000001,
+              "area": 60.40218713973206
+            }
+          ]
+        },
+        {
+          "z": 32.0,
+          "vol": 8.031317550121225,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.25398089802894,
+              "x_max": 172.9842368568995,
+              "z_min": 31.849999999999994,
+              "z_max": 32.150000000000006,
+              "area": 60.39635805223648
+            }
+          ]
+        },
+        {
+          "z": 32.5,
+          "vol": 8.030822625835725,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.221432614117,
+              "x_max": 172.94931196301573,
+              "z_min": 32.349999999999994,
+              "z_max": 32.650000000000006,
+              "area": 60.39148531422192
+            }
+          ]
+        },
+        {
+          "z": 33.0,
+          "vol": 8.03041254692383,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.18764400432272,
+              "x_max": 172.91438542760665,
+              "z_min": 32.849999999999994,
+              "z_max": 33.150000000000006,
+              "area": 60.38858712240927
+            }
+          ]
+        },
+        {
+          "z": 33.5,
+          "vol": 8.029940047790374,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.1554733519196,
+              "x_max": 172.87945628221004,
+              "z_min": 33.349999999999994,
+              "z_max": 33.650000000000006,
+              "area": 60.38413161135147
+            }
+          ]
+        },
+        {
+          "z": 34.0,
+          "vol": 8.029324853994288,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.12329175262045,
+              "x_max": 172.84452732719717,
+              "z_min": 33.849999999999994,
+              "z_max": 34.150000000000006,
+              "area": 60.37857641720008
+            }
+          ]
+        },
+        {
+          "z": 34.5,
+          "vol": 8.028797335664468,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.09045662893774,
+              "x_max": 172.80959938879937,
+              "z_min": 34.349999999999994,
+              "z_max": 34.650000000000006,
+              "area": 60.373671003855904
+            }
+          ]
+        },
+        {
+          "z": 35.0,
+          "vol": 8.02837528352514,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.05665052962303,
+              "x_max": 172.77467410650598,
+              "z_min": 34.849999999999994,
+              "z_max": 35.150000000000006,
+              "area": 60.370649226899786
+            }
+          ]
+        },
+        {
+          "z": 35.5,
+          "vol": 8.012612210775911,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.02795818660735,
+              "x_max": 172.73975783487265,
+              "z_min": 35.349999999999994,
+              "z_max": 35.650000000000006,
+              "area": 60.249133530975136
+            }
+          ]
+        },
+        {
+          "z": 36.0,
+          "vol": 7.844667106899367,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.01549129161853,
+              "x_max": 172.69184307765457,
+              "z_min": 35.849999999999994,
+              "z_max": 36.150000000000006,
+              "area": 59.01345132389213
+            }
+          ]
+        },
+        {
+          "z": 36.5,
+          "vol": 1.6177549382457088,
+          "shells": 1,
+          "shell_info": [
+            {
+              "idx": 0,
+              "x_min": 169.06922476310913,
+              "x_max": 172.44417096255185,
+              "z_min": 36.349999999999994,
+              "z_max": 36.61661582563789,
+              "area": 38.17073182993396
+            }
+          ]
+        },
+        {
+          "z": 37.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 37.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 38.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 38.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 39.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 39.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 40.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 40.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 41.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 41.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 42.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 42.5,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 43.0,
+          "vol": 0,
+          "shells": 0
+        },
+        {
+          "z": 43.5,
+          "vol": 0,
+          "shells": 0
+        }
+      ]
+    },
+    "11": {
+      "left_outer_top": {
+        "samples": 2,
+        "min_depth": 5.67,
+        "max_depth": 9.36,
+        "median_depth": 9.36,
+        "details": [
+          {
+            "y": 85,
+            "z": 36,
+            "x_min": 156.99,
+            "x_max": 166.35,
+            "depth": 9.36
+          },
+          {
+            "y": 90,
+            "z": 36,
+            "x_min": 161.83,
+            "x_max": 167.5,
+            "depth": 5.67
+          }
+        ]
+      },
+      "left_inner_top": {
+        "samples": 4,
+        "min_depth": 3.34,
+        "max_depth": 3.74,
+        "median_depth": 3.55,
+        "details": [
+          {
+            "y": 142,
+            "z": 32,
+            "x_min": 168.25,
+            "x_max": 171.99,
+            "depth": 3.74
+          },
+          {
+            "y": 145,
+            "z": 34,
+            "x_min": 168.83,
+            "x_max": 172.38,
+            "depth": 3.55
+          },
+          {
+            "y": 146,
+            "z": 35,
+            "x_min": 169.01,
+            "x_max": 172.46,
+            "depth": 3.45
+          },
+          {
+            "y": 148,
+            "z": 36,
+            "x_min": 169.27,
+            "x_max": 172.61,
+            "depth": 3.34
+          }
+        ]
+      },
+      "right_outer_top": {
+        "samples": 1,
+        "min_depth": 5.67,
+        "max_depth": 5.67,
+        "median_depth": 5.67,
+        "details": [
+          {
+            "y": 210,
+            "z": 36,
+            "x_min": 161.83,
+            "x_max": 167.5,
+            "depth": 5.67
+          }
+        ]
+      },
+      "right_outer_bottom": {
+        "samples": 1,
+        "min_depth": 4.54,
+        "max_depth": 4.54,
+        "median_depth": 4.54,
+        "details": [
+          {
+            "y": 205,
+            "z": 6,
+            "x_min": 166.19,
+            "x_max": 170.73,
+            "depth": 4.54
+          }
+        ]
+      },
+      "right_inner_top": {
+        "samples": 4,
+        "min_depth": 3.34,
+        "max_depth": 3.74,
+        "median_depth": 3.55,
+        "details": [
+          {
+            "y": 158,
+            "z": 32,
+            "x_min": 168.25,
+            "x_max": 171.99,
+            "depth": 3.74
+          },
+          {
+            "y": 155,
+            "z": 34,
+            "x_min": 168.83,
+            "x_max": 172.38,
+            "depth": 3.55
+          },
+          {
+            "y": 154,
+            "z": 35,
+            "x_min": 169.01,
+            "x_max": 172.46,
+            "depth": 3.45
+          },
+          {
+            "y": 152,
+            "z": 36,
+            "x_min": 169.27,
+            "x_max": 172.61,
+            "depth": 3.34
+          }
+        ]
+      },
+      "nose_bridge_vertical": {
+        "samples": 4,
+        "min_depth": 3.34,
+        "max_depth": 3.41,
+        "median_depth": 3.41,
+        "details": [
+          {
+            "y": 150,
+            "z": 30,
+            "x_min": 169.72,
+            "x_max": 173.13,
+            "depth": 3.41
+          },
+          {
+            "y": 150,
+            "z": 32,
+            "x_min": 169.58,
+            "x_max": 172.99,
+            "depth": 3.41
+          },
+          {
+            "y": 150,
+            "z": 34,
+            "x_min": 169.44,
+            "x_max": 172.85,
+            "depth": 3.4
+          },
+          {
+            "y": 150,
+            "z": 36,
+            "x_min": 169.36,
+            "x_max": 172.7,
+            "depth": 3.34
+          }
+        ]
+      }
+    },
+    "15": {
+      "bridge_tight_bbox": {
+        "x_min": 164.87,
+        "x_max": 173.15,
+        "y_min": 144.5,
+        "y_max": 159.5,
+        "z_min": 25.5,
+        "z_max": 37.94,
+        "dx": 8.28,
+        "dy": 15.0,
+        "dz": 12.44,
+        "volume": 528.04
+      },
+      "max_inscribed": {
+        "sx": 0.1,
+        "sy": 0.1,
+        "sz": 0.1
+      },
+      "bridge_center": [
+        169.01,
+        152.0,
+        31.72
+      ]
+    }
+  }
+}

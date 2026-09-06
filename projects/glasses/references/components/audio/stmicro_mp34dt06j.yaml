@@ -1,0 +1,57 @@
+schema_version: 1
+component:
+  id: stmicro_mp34dt06j
+  category: mems_microphone_digital_pdm
+  units: mm
+  role: secondary_microphone_candidate
+
+source:
+  manufacturer: STMicroelectronics
+  part_number: MP34DT06J
+  source_type: manufacturer_datasheet
+  source_docs:
+    - url: https://www.st.com/resource/en/datasheet/mp34dt06j.pdf
+      description: "ST datasheet DS12347"
+
+mechanical:
+  package: LGA
+  dimensions_mm: { width: 3.1, height: 4.0, depth: 1.05 }
+  acoustic_port: top
+  source_for_mechanical: ST datasheet
+
+electrical:
+  interface: digital PDM
+  supply_voltage_v: { min: 1.6, typ: 1.8, max: 3.6 }
+  active_current_uA: 650 (typ)
+  clock_frequency_mhz: 1.024 to 3.072
+  source_for_electrical: ST datasheet
+
+acoustic:
+  sensitivity_dbfs: -26 (typ)
+  snr_db: 64 (typ, A-weighted)
+  aop_db_spl: 120 (typ)
+  frequency_response_hz: 50 to 8000 (usable)
+  directivity: omnidirectional
+  source_for_acoustic: ST datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  source_for_environmental: ST datasheet
+
+purchase:
+  distributor: Mouser; DigiKey; LCSC
+  unit_price_usd: 1.20 (LCSC) to 2.60 (DigiKey)
+  moq: 1
+  lead_time: stock
+  availability: in production
+  source_for_purchase: Mouser, DigiKey, LCSC
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet
+  gaps:
+    - "Detailed THD and flatness not in the summary"
+  notes: "Drop-in replacement for STM32 Discovery / Nucleo MEMS-mic footprints. Top-port requires a hole in the enclosure top surface; less gasket-friendly than the bottom-port MP23DB01HP."
+
+constraints:
+  status: SERIOUS_SECONDARY — same electrical / acoustic performance as the MP23DB01HP, but top-port

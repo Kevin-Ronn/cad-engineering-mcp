@@ -1,0 +1,85 @@
+schema_version: 1
+component:
+  id: digilens_designlink_v1
+  category: ar_optical_engine_with_waveguide
+  units: mm
+  role: waveguide_display_reference_candidate
+
+source:
+  manufacturer: DigiLens Inc (USA)
+  part_number: DesignLink v1.0
+  source_type: manufacturer_public_announcement_plus_distributor_listing
+  source_docs:
+    - url: https://www.digilens.com/
+      description: "DigiLens official site"
+    - url: https://www.mouser.com/c/?digilens
+      description: "Mouser listing for DigiLens (authorized distributor; pricing on request)"
+
+optical:
+  display_technology: surface relief grating (SRG) waveguide with LCoS microdisplay
+  resolution: 720p monochrome (per third-party press; 640x400 also published in some sources for the v1.0 reference)
+  diagonal_size_inch: 0.23
+  aspect_ratio: 16:9 (for 720p) or 8:5 (for 640x400)
+  fov_diagonal_deg: NOT_PUBLISHED (DigiLens has historically targeted ~30-40 deg FOV for consumer reference designs)
+  waveguide_technology: surface relief gratings (DigiLens' core IP)
+  waveguide_thickness_mm: NOT_PUBLIC (DigiLens published "thin glass" but no mm number for DesignLink v1.0)
+  waveguide_dimensions_mm: NOT_PUBLIC
+  eyebox: NOT_PUBLIC
+  eye_relief_mm: NOT_PUBLIC
+  exit_pupil: NOT_PUBLIC
+  brightness_nits: NOT_PUBLIC
+  contrast: NOT_PUBLIC
+  colors: monochrome (full-color requires separate engine)
+  transparency_transmittance: NOT_PUBLIC
+  refresh_rate_hz: NOT_PUBLIC (typical 60-120 Hz for this class)
+  distortion: NOT_PUBLIC
+  focus_distance: focuses at infinity (per DigiLens reference design goal)
+  source_for_optical: manufacturer public statements and third-party press
+
+mechanical:
+  optical_engine_dimensions_mm: NOT_PUBLIC (NDA required for STEP and mechanical drawing)
+  optical_engine_weight_g: NOT_PUBLIC
+  waveguide_dimensions_mm: NOT_PUBLIC
+  complete_module_dimensions_mm: NOT_PUBLIC
+  source_for_mechanical: DigiLens public materials only
+
+electronics:
+  interface: NOT_PUBLIC; LCoS driver interface typically RGB or LVDS; for a V853 interface, an FPGA/MIPI bridge would be required
+  mipi_dsi_lanes: NOT_PUBLIC
+  controller_driver_ic: NOT_PUBLIC
+  required_supply_voltages: NOT_PUBLIC
+  power_consumption: NOT_PUBLIC
+  connector_type: NOT_PUBLIC
+  fpc_dimensions: NOT_PUBLIC
+  fpc_length_mm: NOT_PUBLIC
+  pin_count: NOT_PUBLIC
+  source_for_electronics: NOT_PUBLIC
+
+purchase:
+  distributor: DigiLens direct; Mouser (as authorized distributor; quote-based)
+  unit_price_usd: 950 to 5000 (development kit range per third-party benchmarks; OEM module price is quote-based)
+  moq: 1 (development kit) to higher (production)
+  lead_time: NOT_PUBLIC
+  availability: production / NDA-gated
+  source_for_purchase: third-party press; Mouser listing
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_public_announcement_plus_distributor_listings
+  gaps:
+    - "Mechanical drawings are NDA-only"
+    - "Optical engine weight, dimensions, FOV, eyebox, brightness not publicly listed"
+    - "MIPI DSI compatibility not publicly committed (the LCoS driver is typically parallel RGB / LVDS; a bridge IC would be needed for the V853)"
+
+constraints:
+  status: SERIOUS_CANDIDATE for SRG-waveguide reference design
+  glasses_fit_unverified: "No public mm-level dimensions. Same blocker as Lumus DK-50: cannot confirm Wayfarer fit without NDA."
+
+geometry_relevance:
+  conceptual_fit_against_wayfarer:
+    target: monocular display in front of one eye, SRG waveguide inside lens cavity
+    optical_engine_location: must sit outside the lens cavity (front frame upper-bridge or temple-integrated pod)
+    waveguide_location: flat combiner inside the lens cavity
+    minimum_temple_requirement: engine typically ~10-20 x 10-15 x 5-8 mm; Wayfarer 1.6 mm temple cannot host
+    blocker: Wayfarer 1.6 mm temple cannot host any waveguide-class engine. Engine must be in front frame.
+    source_for_frame_comparison: projects/glasses/analysis/structure/full-mechanical-inspection.md

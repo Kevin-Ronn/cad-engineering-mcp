@@ -1,0 +1,60 @@
+schema_version: 1
+component:
+  id: ov9281_global_shutter_modules
+  category: mipi_csi2_camera_module
+  units: mm
+  role: global_shutter_low_resolution_candidate
+
+source:
+  manufacturer: OmniVision; modules by Arducam, GroupGets, OpenSourceCameras, etc.
+  part_number: OV9281 (sensor); example modules: Arducam B0169, GroupGets breakout
+  sensor: OmniVision OV9281 (1/4", 1 MP, 3 um pixel, B&W global shutter)
+  source_type: third_party_module_research
+
+mechanical:
+  pcb_dimensions_mm: UNKNOWN (multiple vendors, multiple form factors)
+  total_height_mm: UNKNOWN
+  ribbon_cable: typically 15-pin or 22-pin 1.0 mm FPC
+  source_for_mechanical: NOT_PUBLISHED for a specific qualified module
+
+optical:
+  sensor: OmniVision OV9281
+  resolution_megapixels: 1
+  active_pixels: 1280 x 800
+  pixel_size_um: 3.0
+  sensor_format: 1/4"
+  output_format: RAW8/RAW10
+  shutter_type: global
+  frame_rate_max_fps: 120
+  color_mono: monochrome only (B&W)
+  focus_type: fixed focus
+  field_of_view: depends on lens
+  source_for_optical: OmniVision OV9281 datasheet
+
+electrical:
+  interface: MIPI CSI-2 (1-lane or 2-lane)
+  source_for_electrical: OV9281 datasheet
+
+environmental:
+  operating_temperature_c: UNKNOWN
+  source_for_environmental: NOT_PUBLISHED
+
+purchase:
+  distributor: Arducam, GroupGets, AliExpress
+  unit_price_usd: approximately 15 to 35
+  availability: in production
+
+confidence:
+  overall: LOW_FOR_GLASSES_USE
+  sources: third_party_research
+  gaps:
+    - "No specific module qualified with published dimensions in this pass"
+    - "Monochrome only — not suitable for color scene capture"
+    - "1 MP resolution is too low for license-plate OCR at >1.5 m"
+
+geometry_relevance:
+  fit_assessment: "If a sub-15 mm module exists, it would be the smallest candidate. B&W-only and 1 MP are the dealbreakers for this glasses application."
+
+constraints:
+  status: NOT_RECOMMENDED — B&W and 1 MP are below the glasses spec. Global shutter is not a hard requirement (the brief lists it as a bonus, not required).
+  referenced_for: AR/VR eye-tracking applications; not appropriate for the glasses' scene-capture / OCR / object-detection use case

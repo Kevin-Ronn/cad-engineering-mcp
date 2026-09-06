@@ -1,0 +1,38 @@
+schema_version: 1
+
+component: ov5640_camera_module
+
+geometry:
+  required: true
+  accepted_formats:
+    - step
+    - stp
+    - iges
+    - igs
+    - stl
+
+required_features:
+  - overall_envelope
+  - mounting_surface
+  - lens_center
+  - lens_envelope
+  - connector_envelope
+
+placement:
+  region: center_nose_bridge
+  orientation: forward
+  optical_axis: geometry_derived
+  mounting_reference: mounting_surface
+
+analysis_dependencies:
+  - main_frame
+  - custom_pcb
+  - forward_ir_leds
+  - camera_keepout
+
+rules:
+  dimensions_must_be_geometry_derived: true
+  lens_position_must_be_geometry_derived: true
+  camera_cavity_must_not_be_guessed: true
+  pcb_mount_must_not_be_guessed: true
+  led_clearance_must_be_geometry_verified: true

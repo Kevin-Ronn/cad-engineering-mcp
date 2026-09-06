@@ -1,0 +1,53 @@
+schema_version: 1
+touch_selection:
+  id: smart_ring_touch_selection
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "The touch system is a HIGH PRIORITY feature. The crown is a capacitive surface that detects tap, double-tap, long-press, swipe, and directional movement. Open Ring uses a separate ATSAML10 capacitive-touch MCU; the recommended V1 architecture replaces this with a dedicated touch IC (smaller, lower-power) that interfaces with the nRF54L15 via I2C or GPIO."
+
+  options_considered:
+
+    - option_A:
+      name: "Dedicated capacitive touch IC (Azoteq IQS127D-class)"
+      ic_candidates:
+        - { part: "Azoteq IQS127D-00200", package: "WLCSP-1.5x1.5 mm", interface: "I2C", supply: "1.65-3.6 V", current_active_uA: 40, current_sleep_uA: 0.5, electrodes: "up to 7 (self-capacitance)", channels: 7, touch_modes: "single-touch, multi-touch (limited), swipes, gestures (built-in)", notes: "VERY small (1.5x1.5 mm WLCSP); VERY low power (40 uA active, 0.5 uA sleep); built-in gesture recognition; built-in electrode scanning. RECOMMENDED for V1." }
+        - { part: "Azoteq IQS269", package: "QFN-3x3 mm", interface: "I2C", supply: "1.65-3.6 V", current_active_uA: 60, current_sleep_uA: 1, electrodes: "up to 16", channels: 16, notes: "Larger package; more electrodes; more complex gestures; overkill for V1 (the ring's crown has ~5-7 electrodes)" }
+        - { part: "Microchip AT42QT1010", package: "SOT-23-6 (1.6 uA wait current)", interface: "single-button output (GPIO)", supply: "1.8-5.5 V", current_active_uA: 12, current_sleep_uA: 0.65, notes: "Single-button capacitive touch; NOT enough for the ring's tap / double-tap / long-press / swipe vocabulary" }
+      recommended: "Azoteq IQS127D-00200"
+      rationale: "Smallest (1.5x1.5 mm WLCSP); lowest power (40 uA active, 0.5 uA sleep); built-in gesture recognition; built-in electrode scanning; up to 7 electrodes (covers the ring's crown). This replaces Open Ring's separate ATSAML10 capacitive-touch MCU with a single small IC."
+
+    - option_B:
+      name: "nRF54L15's built-in touch (if available; verify)"
+      notes: "The nRF54L15 does NOT have built-in capacitive touch (per the nRF54L15 Product Specification v1.0). The ring needs an external touch IC. Option_A is the recommended approach."
+
+  crown_geometry:
+    electrodes: 5 to 7 (self-capacitance)
+    layout: "5-segment slider (UP / CENTER / DOWN / LEFT / RIGHT) with a center button for tap / double-tap / long-press"
+    design_notes: "The 5-segment slider detects 4-directional swipe and tap. The 7-electrode layout detects 4-directional swipe + center button + 2 secondary actions. The exact electrode geometry is determined by the crown mechanical design (mechanical/crown-layout.yaml)."
+
+  gesture_detection_chain:
+    - "1. Touch IC scans the electrodes at 100 Hz (configurable; 50 Hz is sufficient for tap / double-tap / long-press / swipe; 100 Hz is needed for the rotational gesture)."
+    - "2. Touch IC reports touch events to the nRF54L15 via I2C (event-driven interrupt on the nRF54L15's INT GPIO)."
+    - "3. The nRF54L15 combines the touch events with the IMU events (BMI270) via a simple state machine (see firmware/architecture.md)."
+    - "4. The combined state machine produces a gesture event (TAP, DOUBLE_TAP, LONG_PRESS, SWIPE_LEFT, SWIPE_RIGHT, SWIPE_UP, SWIPE_DOWN, ROTATE_CW, ROTATE_CCW) which is sent to the glasses over BLE."
+
+  power_consumption:
+    active_uA: 40 (IQS127D active; 100 Hz scan)
+    sleep_uA: 0.5 (IQS127D sleep; wake on touch)
+    average_with_typical_usage_uA: 5 (5% active duty cycle; 95% sleep)
+    energy_per_day_mWh: "0.12 (typical usage; 5 uA average at 3.3 V; 24 hours)"
+
+
+  recommended_architecture:
+    part: "Azoteq IQS127D-00200"
+    package: "WLCSP-1.5x1.5 mm"
+    interface_to_nRF54L15: "I2C (1.8 V); INT GPIO from IQS127D to nRF54L15"
+    electrode_count: 5 to 7
+    self_capacitance: true
+    notes: "Replaces Open Ring's separate ATSAML10 capacitive-touch MCU. The IQS127D is smaller, lower-power, and more integrated. The I2C interface to the nRF54L15 is the same as the Intring architecture (touch keys via GPIO + pull-ups; we upgrade to a dedicated touch IC with built-in gesture recognition)."
+
+  sources:
+    - { ref: "Azoteq IQS127D datasheet", url: "https://www.azoteq.com/products/iqs127d", note: "Verify exact dimensions, pinout, and I2C address before committing." }
+    - { ref: "Open Ring (reference)", url: "https://github.com/stawiski/open-ring", note: "Open Ring uses a separate ATSAML10 MCU; the recommended V1 replaces it with a single small IC." }
+    - { ref: "Intring (reference)", url: "https://github.com/weierruisi/Intring", note: "Intring uses 2 touch keys via GPIO with pull-ups; the recommended V1 uses a dedicated touch IC with built-in gesture recognition." }

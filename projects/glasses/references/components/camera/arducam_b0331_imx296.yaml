@@ -1,0 +1,70 @@
+schema_version: 1
+component:
+  id: arducam_b0331_imx296
+  category: mipi_csi2_camera_module
+  units: mm
+  role: global_shutter_candidate
+
+source:
+  manufacturer: Arducam (camera module); Sony (sensor)
+  part_number: Arducam B0331 (IMX296 color global shutter, Jetson Nano / Orin form factor)
+  sensor: Sony IMX296 (1/2.9", 1.6 MP, 3.45 um pixel, color global shutter)
+  source_type: third_party_module_datasheet
+  source_docs:
+    - url: https://docs.arducam.com/cameras-for-jetson-nano/low-light-cameras/b0331_imx296/
+      description: "B0331 datasheet page (dims link referenced separately)"
+
+mechanical:
+  pcb_dimensions_mm: { width: 40.0, height: 40.0 }
+  mounting_holes: 4 x with 1.0 mm pitch
+  total_height_mm: UNKNOWN
+  lens_diameter_mm: UNKNOWN
+  ribbon_cable: UNKNOWN (not in datasheet header; Arducam Jetson Nano cameras typically use a 15-pin or 22-pin FFC)
+  source_for_mechanical: B0331 datasheet header
+
+optical:
+  sensor: Sony IMX296
+  resolution_megapixels: 1.6
+  active_pixels: 1456 x 1088
+  pixel_size_um: 3.45
+  sensor_format: 1/2.9"
+  output_format: RAW10
+  shutter_type: global
+  frame_rate_max_fps: 60
+  color_mono: color
+  focus_type: manual focus
+  field_of_view: UNKNOWN (depends on lens; B0331 ships with an M12 mount per Arducam convention)
+  source_for_optical: B0331 datasheet
+
+electrical:
+  interface: MIPI CSI-2 (2-lane)
+  source_for_electrical: B0331 datasheet
+
+environmental:
+  operating_temperature_c: UNKNOWN
+  source_for_environmental: NOT_PUBLISHED
+
+purchase:
+  distributor: Arducam (arducam.com) and authorised resellers
+  unit_price_usd: approximately 60 to 80 (typical Arducam B0331 retail)
+  moq: 1
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: third_party_module_datasheet
+  gaps:
+    - "Exact total height not in datasheet header"
+    - "Lens dimensions not in datasheet header"
+    - "FPC connector model/pin count not in datasheet header"
+    - "Power consumption not in datasheet header"
+    - "Operating temperature not in datasheet header"
+    - "OCR suitability: 1.6 MP at 3.45 um is lower resolution than IMX708; license-plate OCR at >3 m is unlikely to be reliable"
+
+geometry_relevance:
+  total_envelope_mm: { width: 40.0, height: 40.0, depth: UNKNOWN }
+  fit_assessment: "The 40 x 40 mm PCB is the standard Arducam Jetson Nano form factor. This is significantly larger than the RPi CM3 form factor and the upper-outer corner of the Wayfarer rim cannot accommodate it. Would require redesigning the frame or using a smaller Arducam variant. The IMX296 sensor is a strong choice for global-shutter OCR of static plates, but the 1.6 MP resolution limits plate recognition distance."
+
+constraints:
+  status: NOT_RECOMMENDED_FOR_GLASSES — PCB too large; consider a smaller IMX296-based Arducam variant (e.g. mini) if global shutter is required
+  global_shutter_alternative: "If global shutter is mandatory, Arducam also sells smaller IMX296-based boards. Search for Arducam mini IMX296 to find a 24 x 24 mm or 25 x 24 mm variant. NOT confirmed in this research pass."

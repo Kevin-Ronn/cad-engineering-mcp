@@ -1,0 +1,72 @@
+schema_version: 1
+wifi_bt_interface_validation:
+  id: v853_wifi_bt_interface_validation
+  date: 2026-09-05
+  source: Wi-Fi/BT module reference library + V853 datasheet section 1.3.8 (UART) and 4.2 (SDIO)
+
+  conclusion:
+    v853_supports_target_module: YES_for_AW_CM276SM_AND_FN_LINK_6221; YES_FOR_MURATA_1XK
+    confidence: MEDIUM (the V853 has the peripherals; the specific module datasheet is required to confirm exact ball wiring)
+
+  wifi_sdio:
+    interface: SDIO 2.0 or SDIO 3.0
+    bus_width: 4-bit
+    voltage: "3.3 V IO (AW-CM276SM, FN-LINK 6221) or 1.8 V IO (Murata 1XK)"
+    v853_peripheral: SMHC1
+    signal_count: 7 (CLK, CMD, D0, D1, D2, D3, plus optional IRQ / wake)
+    required_pull_ups: "10 kohm on CMD and D0 per SDIO spec (verify per module datasheet)"
+    max_throughput: "SDIO 2.0 = 25 MB/s (200 Mbps); SDIO 3.0 = 104 MB/s (832 Mbps). Wi-Fi 4 1x1 SISO peak = 150 Mbps; Wi-Fi 5 1x1 SISO peak = 433 Mbps. SDIO 2.0 is sufficient for Wi-Fi 4 1x1; SDIO 3.0 is required for Wi-Fi 5 1x1."
+
+  bluetooth_uart:
+    interface: UART (HCI transport)
+    signal_count: 4 (TX, RX, RTS, CTS) or 2 (TX, RX only, no flow control)
+    voltage: "3.3 V (typical) or 1.8 V (per module)"
+    v853_peripheral: UART0
+    required_pull_ups: "typically not required for UART"
+    rts_cts_needed: "RECOMMENDED for high-throughput voice / data traffic. The brief says 'UART Bluetooth' which is ambiguous; assume 4-wire (TX, RX, RTS, CTS) for the production design. If the module does not require RTS/CTS, the SoC's RTS/CTS can be left floating or set as GPIO."
+    required_gpios:
+      - "BT_WAKE_HOST: Bluetooth wakes the SoC (interrupt from the module)"
+      - "BT_HOST_WAKE: SoC wakes the Bluetooth (GPIO output to the module)"
+    optional_gpios:
+      - "BT_REG_ON: Bluetooth regulator on (GPIO; required for the module's LPO clock and power state)"
+      - "BT_RST_N: Bluetooth reset (GPIO; active low; optional if BT_REG_ON is used)"
+
+  rts_cts_decision:
+    recommendation: "Use 4-wire UART (TX, RX, RTS, CTS) for the production design. This avoids UART FIFO overruns at high Bluetooth ACL data rates (e.g. during a phone call audio stream over HFP or A2DP). 2-wire is acceptable for low-data-rate HCI command traffic only."
+    notes: "The Linux Bluetooth subsystem (bluez) does not require RTS/CTS in software; the UART driver handles flow control in hardware. With RTS/CTS wired correctly, there are no software-side constraints."
+
+  pull_configuration:
+    uart_tx: "the SoC drives; no pull-up needed"
+    uart_rx: "the SoC receives; typically the module's TX has an internal pull-up; if not, add a 100 kohm to 3.3 V"
+    uart_rts: "the SoC receives; typically the module's RTS has an internal pull-up"
+    uart_cts: "the SoC drives; no pull-up needed"
+    sdio_cmd: "10 kohm to 3.3 V (per SDIO spec; some modules have internal pull-ups; verify per module datasheet)"
+    sdio_d0: "10 kohm to 3.3 V (per SDIO spec; same caveat)"
+
+  wake_signals:
+    bt_wake_host: "GPIO input with interrupt capability. Typically connected to a GPIO that can wake the SoC from suspend. The SoC can be configured to wake from a specific GPIO edge (rising or falling). The module asserts this line when it has data for the SoC (e.g. incoming call, BT audio data ready)."
+    bt_host_wake: "GPIO output. The SoC asserts this line to tell the module to wake from its own low-power state."
+    bt_reg_on: "GPIO output. Must be driven high to enable the module's main regulator. Typically the SoC's BT_REG_ON is held high during normal operation and pulled low during suspend."
+    bt_rst_n: "GPIO output, active low. Optional; only needed if the module has a hardware reset pin and the SoC needs to perform a hard reset of the module."
+
+  voltage_domains:
+    aw_cm276sm: 3.3 V IO (the module's SDIO and UART are 3.3 V; the SoC's SMHC1 and UART0 must be configured for 3.3 V IO mode, or a level shifter is needed)
+    fn_link_6221: 3.3 V IO (same caveat)
+    murata_1xkl: 1.8 V IO (matches the SoC's 1.8 V GPIO; no level shifter needed)
+    note: "The V853 has GPIO banks that can be configured for 1.8 V or 3.3 V (per the VCC-PA / VCC-PC / VCC-PD / VCC-PE / VCC-PG / VCC-PI power domains). The SoC's pin assignment must use a GPIO bank that is powered at the same voltage as the Wi-Fi module's IO. If a mismatch is unavoidable, a level shifter is needed on each signal."
+
+  module_datasheet_required:
+    aw_cm276sm: "AzureWave AW-CM276SM datasheet (PDF); specifies the exact SDIO / UART / GPIO / power pins and the recommended host wiring."
+    fn_link_6221: "FN-LINK 6221C-UUB datasheet (PDF); same as above."
+    murata_1xkl: "Murata Type 1XK datasheet (PDF); same as above."
+    status: "The reference library has only datasheet summaries; the full datasheet PDFs have not been retrieved in this pass. The exact pin assignments on the module side are UNKNOWN until the full datasheet is in hand."
+
+  if_documentation_insufficient:
+    fallback_decision: "use the AW-CM276SM as the primary candidate. The AzureWave module family is well-documented; the full datasheet should be retrievable from Mouser / DigiKey / AzureWave direct. The SoC-side assignment is finalized once the module datasheet is in hand."
+    mark_PROVISIONAL: "If the module datasheet cannot be obtained, mark the module choice as PROVISIONAL and use a generic 12 x 12 mm stamp module pinout (CLK, CMD, D0-D3, BT_TX, BT_RX, BT_RTS, BT_CTS, BT_WAKE_HOST, BT_HOST_WAKE, BT_REG_ON) for the schematic."
+
+  risk:
+    - "The SoC's specific ball assignments for SMHC1 and UART0 are in the V853/V853S_PINOUT.sls file (not in the PDF). Without the .sls file, the SoC-side wiring cannot be finalized."
+    - "The Wi-Fi module's exact pinout is in the module datasheet (not retrieved in this pass). Without the module datasheet, the module-side wiring cannot be finalized."
+    - "Voltage domain mismatch: AW-CM276SM and FN-LINK 6221 are 3.3 V IO; the SoC's GPIO banks are configurable for 1.8 V or 3.3 V. The SoC's VCC-PA / VCC-PC / VCC-PD / VCC-PE / VCC-PG / VCC-PI must be set to 3.3 V for these modules. Alternatively, the Murata 1XK (1.8 V IO) avoids the mismatch."
+    - "Boot interaction: the Wi-Fi module must be powered up AFTER the SoC's I/O rails are up. The AXP2101's power sequencing handles this."

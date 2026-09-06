@@ -1,0 +1,66 @@
+schema_version: 1
+component:
+  id: stmicro_mp23db01hp
+  category: mems_microphone_digital_pdm
+  units: mm
+  role: primary_microphone_candidate
+
+source:
+  manufacturer: STMicroelectronics
+  part_number: MP23DB01HP
+  source_type: manufacturer_datasheet
+  source_docs:
+    - url: https://www.st.com/resource/en/datasheet/mp23db01hp.pdf
+      description: "ST datasheet DS12493"
+
+mechanical:
+  package: LGA
+  dimensions_mm:
+    width: 3.0
+    height: 4.0
+    depth: 1.0
+  acoustic_port: bottom (RHLGA-4LGA, 3.0 x 4.0 x 1.0 mm)
+  source_for_mechanical: ST datasheet
+
+electrical:
+  interface: digital PDM (single-bit data + clock)
+  supply_voltage_v: { min: 1.6, typ: 1.8, max: 3.6 }
+  active_current_uA: 650 (typ at Vdd=1.8 V, clock 2.048 MHz)
+  standby_current_uA: UNKNOWN
+  clock_frequency_mhz: 1.024 to 3.072
+  source_for_electrical: ST datasheet
+
+acoustic:
+  sensitivity_dbfs: -26 (typ at 94 dB SPL, 1 kHz)
+  snr_db: 64 (typ, A-weighted)
+  frequency_response_hz: 50 to 8000 (usable; per datasheet band-limited)
+  flatness_db: UNKNOWN
+  thd_percent: UNKNOWN
+  aop_db_spl: 120 (typ, 10% THD)
+  directivity: omnidirectional
+  source_for_acoustic: ST datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+  storage_temperature_c: UNKNOWN
+  source_for_environmental: ST datasheet
+
+purchase:
+  distributor: ST eStore; Mouser; DigiKey; LCSC
+  unit_price_usd: 1.90 to 2.50 (single-piece retail)
+  moq: 1
+  lead_time: stock (Mouser / DigiKey)
+  availability: in production, not NRND
+  source_for_purchase: Mouser, DigiKey, LCSC listings
+
+confidence:
+  overall: HIGH
+  sources: manufacturer_datasheet
+  gaps:
+    - "Exact THD and frequency response flatness not in the summary"
+    - "Storage temperature not in the summary"
+  notes: "Pin-compatible digital upgrade from MP34DT06J. Bottom-port makes the gasket to the enclosure more flexible (no hole needed in the PCB top side for acoustic inlet)."
+
+constraints:
+  exact_dimensions_required: true
+  status: SERIOUS_PRIMARY — active, documented, PDM interface matches the V853's I2S0/I2S1 + DMIC

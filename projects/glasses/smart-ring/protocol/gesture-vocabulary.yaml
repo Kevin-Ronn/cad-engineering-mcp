@@ -1,0 +1,486 @@
+schema_version: 1
+ring_gesture_vocabulary:
+  id: smart_ring_gesture_vocabulary
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / KiCad / FreeCAD / firmware source code is created by this artifact.
+  parent_artifacts:
+    - "protocol/ring-gatt-spec.yaml"
+    - "firmware/architecture.md"
+
+  note: "Implementation-oriented gesture specification. Each gesture has a canonical ID (from ring-gatt-spec.yaml), the input sensors it consumes, the state-machine transitions that produce it, timing windows, debounce requirements, directional interpretation, confidence criteria, cancellation conditions, wear-state interaction, the resulting GATT RR01 event, and whether it is a V1 gesture or reserved. The recognition pipeline at the end is a deterministic sequence suitable for direct translation into C."
+
+  vocabulary_scope:
+    description: "This document covers exactly the 16 gesture IDs in ring-gatt-spec.yaml section gesture_vocabulary_table. No new V1 gestures are invented. 0x00-0x0F are reserved for system events; 0x10-0x7F are user gestures; 0x80-0xFF are vendor-specific and not documented here (per the GATT spec)."
+    total_gesture_ids_documented: 16
+    v1_implemented_gestures: [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11]
+    v2_or_reserved_gestures: [0x00, 0x0A, 0x20, 0x7F]
+    reserved_for_future_use: ["0x0B-0x0F system events", "0x12-0x1F user events", "0x21-0x7E user events", "0x80-0xFF vendor-specific"]
+
+  global_constants:
+    description: "These values are compile-time defaults exposed in the RR07 TLV configuration blob (see firmware/architecture.md sections 2.8 and 14.2 TBD). They are not firmware constants; they are the V1 starting values that hardware characterisation may adjust."
+    long_press_ms: { value: 600, reason: "Conservative default; matches user mental model of press and hold. Hardware characterisation on the IQS127D may adjust." }
+    double_tap_window_ms: { value: 300, reason: "Standard double-tap window across touch ICs; matches Intring convention." }
+    swipe_commit_ms: { value: 50, reason: "Touch slider sweeps finish within about 50 ms; shorter window risks rejecting fast swipes." }
+    touch_debounce_ms: { value: 50, reason: "Second-pass debounce after the IQS127D's built-in debounce; covers electrical bounce." }
+    imu_debounce_ms: { value: 20, reason: "BMI270 INT1 fires on threshold crossing; 20 ms refractory prevents double-counts." }
+    wear_off_to_on_debounce_ms: { value: 100, reason: "Touch IC touch event must persist for at least 100 ms before being interpreted as WEAR_PUT_ON." }
+    wear_on_to_off_stillness_s: { value: 30, reason: "If touch is absent for at least 5 s AND IMU is still for at least 30 s, the ring is considered taken off. Both conditions must hold (AND)." }
+    rotate_cw_ccw_window_ms: { value: 200, reason: "The IMU rotation event starts a 200 ms quiet window during which touch events are ignored." }
+    rotate_cw_ccw_threshold_dps: { value: "TBD on hardware characterisation of the BMI270 in the V1 ring form factor", reason: "Threshold in degrees-per-second on the gyro Z-axis; depends on the ring's moment of inertia and the wearer's wrist motion. Must be measured on a prototype." }
+    tap_min_electrodes_touched: { value: 1, reason: "At least one of the 5-7 electrodes must report a touch." }
+    swipe_min_electrode_span: { value: 2, reason: "A swipe must span at least 2 adjacent electrodes in the slider layout." }
+    gesture_confidence_min: { value: 32, reason: "Per ring-gatt-spec.yaml section gesture_vocabulary_table; values below this are dropped (no RR01 emit)." }
+    gesture_confidence_min_high: { value: 64, reason: "Touch-based gestures (TAP, SWIPE_*) require confidence at least 64; IMU-based gestures (ROTATE_*) require at least 32." }
+    gesture_seq_wraparound: { value: 65535, reason: "16-bit monotonic gesture_seq per firmware/architecture.md section 6.1." }
+
+  recognition_pipeline:
+    description: "Deterministic pipeline that transforms raw sensor samples into a validated, sequenced GATT RR01 notify. Suitable for direct translation into C. Eight stages, each with a bounded latency (per firmware/architecture.md section 4)."
+    stages:
+      - { stage: 1, name: "raw_sensor_samples", input: "IQS127D touch events (TOUCH_PRESS, TOUCH_RELEASE, TOUCH_MOVE) + BMI270 FIFO samples (50 Hz, 6-axis) + TMP117 conversions (1 Hz) + MAX17048 alerts", output: "per-sensor ring buffer entries with timestamp_us + sensor_id + payload (per firmware/architecture.md section 2.3 sm_sample_header_t)", runs_in: "sensor worker (priority 7) drains ring buffers populated by ISR handlers", latency_budget_ms: 10 }
+      - { stage: 2, name: "preprocessing", input: "raw IMU samples + raw touch events", output: "calibrated + filtered signals. IMU: bias-compensated 6-axis at 50 Hz. Touch: debounced electrode state vector (5-7 bits, one per electrode).", runs_in: "sensor worker", notes: "Calibration state lives in sm_cal_t (zero-rate level for gyro; static accelerometer magnitude for accel; touch baseline per electrode). Calibration is updated when the ring is at WEAR_OFF stillness for at least 30 s.", latency_budget_ms: 2 }
+      - { stage: 3, name: "feature_extraction", input: "calibrated signals", output: "feature frames. Touch: per-electrode touch-on boolean + touch-off boolean + movement delta. IMU: accel magnitude (low-pass filtered) + gyro Z magnitude + peak acceleration in the last 100 ms window + peak rotation in the last 200 ms window.", runs_in: "sensor worker", notes: "The IMU features are computed over a sliding window. The window size is gesture-class-dependent: 100 ms for MOTION, 200 ms for ROTATION.", latency_budget_ms: 1 }
+      - { stage: 4, name: "candidate_detection", input: "feature frames", output: "gesture candidates: a (gesture_class, confidence, timestamp_us) triple emitted by a per-class detector. Multiple candidates can be active simultaneously.", runs_in: "sensor worker", candidates: [ { detector: "touch_tap_detector", fires_when: "any electrode transitions 0 -> 1 and back to 0 within long_press_ms with debounce" }, { detector: "touch_long_press_detector", fires_when: "any electrode stays at 1 for at least long_press_ms" }, { detector: "touch_swipe_detector", fires_when: "electrode span at least swipe_min_electrode_span within swipe_commit_ms" }, { detector: "imu_rotation_detector", fires_when: "peak gyro Z magnitude at least rotate_cw_ccw_threshold_dps for at least 200 ms" }, { detector: "wear_state_detector", fires_when: "(touch present at least wear_off_to_on_debounce_ms) OR ((no touch for at least 5 s) AND (IMU still for at least wear_on_to_off_stillness_s))" } ], notes: "Each detector runs every worker tick. The output is a list of candidates with timestamps; the gesture FSM (stage 5) consumes them in timestamp order.", latency_budget_ms: 1 }
+      - { stage: 5, name: "gesture_fsm", input: "candidate list (timestamp-ordered)", output: "FSM state transitions per firmware/architecture.md section 5; produces a (gesture_id, confidence, sequence_candidate) tuple when GESTURE_EMIT is reached", runs_in: "sensor worker; deterministic; same input -> same output", notes: "The FSM is a static const table (per firmware/architecture.md section 11.3); all transitions are enumerated in test fixtures.", latency_budget_ms: 1 }
+      - { stage: 6, name: "validation", input: "FSM output tuple", output: "validated tuple (drop if confidence below gesture_confidence_min for the gesture class)", runs_in: "sensor worker", rules: [ { condition: "confidence below gesture_confidence_min", action: "drop the gesture; increment drop_count_gesture" }, { condition: "gesture class is touch-based AND confidence below gesture_confidence_min_high (64)", action: "drop the gesture" }, { condition: "gesture class is IMU-based AND confidence below 32", action: "drop the gesture" }, { condition: "wear state is WEAR_OFF AND gesture class is NOT WEAR_PUT_ON", action: "drop the gesture" } ], latency_budget_ms: 1 }
+      - { stage: 7, name: "event_sequencing", input: "validated tuple", output: "(gesture_id, confidence, sequence) where sequence is the post-increment value of gesture_seq (16-bit uint, monotonic per firmware/architecture.md section 6.3)", runs_in: "sensor worker; atomically increments gesture_seq", notes: "The sequence is incremented BEFORE the BLE notify is enqueued. If the notify is later dropped, the sequence gap is detectable by the central.", latency_budget_ms: 0 }
+      - { stage: 8, name: "gatt_notification", input: "(gesture_id, confidence, sequence)", output: "RR01 notify: 1-byte gesture_id + 1-byte confidence + 2-byte sequence (little-endian) per ring-gatt-spec.yaml section ring_control_service.RR01", runs_in: "BLE worker (priority 5); notifies via bt_gatt_notify()", notes: "Single in-flight notification at a time per firmware/architecture.md section 7.3; next notify queued only after ACK via RR02 or 50 ms timeout.", latency_budget_ms: 30 }
+    end_to_end_latency_target_ms: 25
+
+  gestures:
+
+    - id: 0x00
+      name: "NO_EVENT"
+      category: "system_reserved"
+      v1_implemented: false
+      required_input_sensors: []
+      recognition_prerequisites: "N/A; never sent over the air per ring-gatt-spec.yaml."
+      state_machine_states: []
+      timing_windows: { min_duration_ms: 0, max_duration_ms: 0 }
+      debounce_requirements: "N/A"
+      directional_interpretation: "N/A"
+      confidence_validation: "N/A"
+      cancellation_conditions: "N/A"
+      wear_state_interaction: "N/A"
+      output_event: "never emitted; reserved"
+      gatt_representation: "no RR01 transmission"
+      notes: "Reserved value. Per ring-gatt-spec.yaml: 'Reserved; never sent over the air.' Used as a default initialiser for ring buffer entries."
+
+    - id: 0x01
+      name: "TAP"
+      category: "touch_basic"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "at least 1 electrode reports TOUCH_PRESS"
+        - "no concurrent IMU_ROTATION candidate in the last 200 ms"
+      state_machine_states:
+        - { from: "IDLE", event: "TOUCH_PRESS", to: "TOUCH_HOLD" }
+        - { from: "TOUCH_HOLD", event: "TOUCH_RELEASE (before long_press_ms)", to: "GESTURE_CANDIDATE (TAP candidate)" }
+        - { from: "GESTURE_CANDIDATE", event: "TIMEOUT(double_tap_window_ms) WITHOUT second touch", to: "GESTURE_EMIT (TAP)" }
+        - { from: "GESTURE_EMIT", event: "(terminal)", to: "IDLE" }
+      timing_windows: { touch_min_duration_ms: 1, touch_max_duration_ms: 600, double_tap_window_ms: 300 }
+      debounce_requirements:
+        - "TOUCH_PRESS debounced by touch_debounce_ms (50 ms)"
+        - "TOUCH_RELEASE debounced by touch_debounce_ms (50 ms)"
+      directional_interpretation: "directionless; any electrode qualifies"
+      confidence_validation:
+        - { criterion: "single electrode touched (no adjacent electrodes)", confidence_max: 96, confidence_default: 80 }
+        - { criterion: "no concurrent IMU motion", confidence_max: 255, confidence_default: 200 }
+        - { criterion: "release within long_press_ms", confidence_max: 255, confidence_default: 180 }
+        - { overall: "confidence >= gesture_confidence_min_high (64) for emit" }
+      cancellation_conditions:
+        - "second TOUCH_PRESS within double_tap_window_ms -> transitions to DOUBLE_TAP, TAP cancelled"
+        - "TOUCH_MOVE detected -> transitions to SWIPE_IN_PROGRESS, TAP cancelled"
+        - "TIMEOUT(long_press_ms) -> transitions to LONG_PRESS, TAP cancelled"
+        - "IMU_MOTION above threshold during touch -> confidence reduced but not cancelled"
+      wear_state_interaction:
+        - "if wear_state == WEAR_OFF: dropped"
+        - "WEAR_PUT_ON is not emitted simultaneously; the FSM processes one gesture at a time"
+      output_event: { gesture_id: 0x01, confidence: "computed per the rules above; uint8", sequence: "next value of gesture_seq (uint16, monotonic)" }
+      gatt_representation: "4-byte RR01 notify: [0x01, confidence_lo, sequence_lo, sequence_hi] (little-endian)"
+
+    - id: 0x02
+      name: "DOUBLE_TAP"
+      category: "touch_basic"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "two distinct TOUCH_PRESS + TOUCH_RELEASE cycles within double_tap_window_ms"
+        - "both touches on the same electrode (or within 1 electrode of each other)"
+      state_machine_states:
+        - { from: "IDLE", event: "TOUCH_PRESS (first)", to: "TOUCH_HOLD" }
+        - { from: "TOUCH_HOLD", event: "TOUCH_RELEASE (first; before long_press_ms)", to: "GESTURE_CANDIDATE (TAP candidate)" }
+        - { from: "GESTURE_CANDIDATE", event: "TOUCH_PRESS (second) within double_tap_window_ms", to: "TOUCH_HOLD (DOUBLE_TAP candidate)" }
+        - { from: "TOUCH_HOLD", event: "TOUCH_RELEASE (second; before long_press_ms)", to: "GESTURE_CANDIDATE (DOUBLE_TAP candidate)" }
+        - { from: "GESTURE_CANDIDATE", event: "TIMEOUT(double_tap_window_ms) WITHOUT third touch", to: "GESTURE_EMIT (DOUBLE_TAP)" }
+        - { from: "GESTURE_EMIT", event: "(terminal)", to: "IDLE" }
+      timing_windows: { first_touch_min_duration_ms: 1, first_touch_max_duration_ms: 600, gap_between_touches_max_ms: 300, second_touch_min_duration_ms: 1, second_touch_max_duration_ms: 600 }
+      debounce_requirements:
+        - "each TOUCH_PRESS and TOUCH_RELEASE debounced by touch_debounce_ms"
+        - "the inter-touch gap is measured from the first TOUCH_RELEASE timestamp to the second TOUCH_PRESS timestamp"
+      directional_interpretation: "directionless; both touches must be on adjacent electrodes (within 1 electrode)"
+      confidence_validation:
+        - { criterion: "both touches on the same electrode", confidence_max: 255, confidence_default: 220 }
+        - { criterion: "second touch on adjacent electrode (within 1)", confidence_max: 192, confidence_default: 160 }
+        - { criterion: "inter-touch gap < 150 ms (faster)", confidence_max: 255, confidence_default: 200 }
+        - { criterion: "inter-touch gap >= 150 ms (slower)", confidence_max: 192, confidence_default: 140 }
+        - { overall: "confidence >= gesture_confidence_min_high (64) for emit" }
+      cancellation_conditions:
+        - "either touch exceeds long_press_ms -> transitions to LONG_PRESS; DOUBLE_TAP cancelled"
+        - "either touch contains TOUCH_MOVE -> DOUBLE_TAP cancelled, SWIPE candidate produced instead"
+        - "second TOUCH_PRESS does not arrive within double_tap_window_ms -> first touch emits as TAP"
+        - "third TOUCH_PRESS within double_tap_window_ms after the second -> DOUBLE_TAP cancelled; V1 does NOT produce a triple-tap"
+      wear_state_interaction:
+        - "if wear_state == WEAR_OFF: dropped"
+        - "DOUBLE_TAP implies WEAR_ON; a DOUBLE_TAP followed by a wear-off transition is normal"
+      output_event: { gesture_id: 0x02, confidence: "computed per the rules above; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x02, confidence_lo, sequence_lo, sequence_hi]"
+
+    - id: 0x03
+      name: "LONG_PRESS"
+      category: "touch_basic"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "a single TOUCH_PRESS that persists for >= long_press_ms (600 ms default)"
+      state_machine_states:
+        - { from: "IDLE", event: "TOUCH_PRESS", to: "TOUCH_HOLD" }
+        - { from: "TOUCH_HOLD", event: "TIMEOUT(long_press_ms) while still touched", to: "GESTURE_CANDIDATE (LONG_PRESS candidate)" }
+        - { from: "GESTURE_CANDIDATE", event: "TOUCH_RELEASE", to: "GESTURE_EMIT (LONG_PRESS)" }
+        - { from: "GESTURE_EMIT", event: "(terminal)", to: "IDLE" }
+      timing_windows: { touch_min_duration_ms: 600, touch_max_duration_ms: "unbounded (LONG_PRESS is absorbing; FSM stays in GESTURE_CANDIDATE until release)" }
+      debounce_requirements:
+        - "TOUCH_PRESS debounced by touch_debounce_ms; the long_press timer starts after debounce"
+        - "TOUCH_RELEASE debounced by touch_debounce_ms"
+      directional_interpretation: "directionless; LONG_PRESS does not encode a direction"
+      confidence_validation:
+        - { criterion: "touch held for >= long_press_ms", confidence_max: 255, confidence_default: 200 }
+        - { criterion: "no TOUCH_MOVE during the hold", confidence_max: 255, confidence_default: 220 }
+        - { criterion: "TOUCH_MOVE during the hold", confidence_max: 96, confidence_default: 64, note: "confidence reduced; may still emit if >= 64" }
+        - { overall: "confidence >= gesture_confidence_min_high (64) for emit" }
+      cancellation_conditions:
+        - "TOUCH_RELEASE before long_press_ms -> transitions to TAP"
+        - "TOUCH_MOVE detected during the hold -> LONG_PRESS continues but confidence is reduced"
+        - "the LONG_PRESS candidate is absorbing: once emitted, subsequent gestures in the same touch cycle are blocked"
+      wear_state_interaction:
+        - "if wear_state == WEAR_OFF: dropped"
+        - "LONG_PRESS is a strong wear-state confirmation"
+      output_event: { gesture_id: 0x03, confidence: "computed per the rules above; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x03, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "The absorbing semantics mean that a LONG_PRESS that lasts 5 seconds emits exactly one gesture on release, not multiple LONG_PRESS events at 600 ms intervals."
+
+    - id: 0x04
+      name: "SWIPE_LEFT"
+      category: "touch_directional"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "the IQS127D reports TOUCH_MOVE events with electrodes progressing from RIGHT to LEFT (TBD on crown layout)"
+        - "the swipe spans >= swipe_min_electrode_span (2) electrodes within swipe_commit_ms (50 ms)"
+      state_machine_states:
+        - { from: "IDLE", event: "TOUCH_PRESS", to: "TOUCH_HOLD" }
+        - { from: "TOUCH_HOLD", event: "TOUCH_MOVE (first move)", to: "SWIPE_IN_PROGRESS" }
+        - { from: "SWIPE_IN_PROGRESS", event: "TOUCH_MOVE (consistent RIGHT -> LEFT direction)", to: "SWIPE_IN_PROGRESS" }
+        - { from: "SWIPE_IN_PROGRESS", event: "TOUCH_RELEASE before swipe_commit_ms", to: "GESTURE_CANDIDATE (SWIPE_LEFT candidate)" }
+        - { from: "SWIPE_IN_PROGRESS", event: "TIMEOUT(swipe_commit_ms)", to: "GESTURE_CANDIDATE (SWIPE_LEFT candidate)" }
+        - { from: "GESTURE_CANDIDATE", event: "(default)", to: "GESTURE_EMIT (SWIPE_LEFT)" }
+        - { from: "GESTURE_EMIT", event: "(terminal)", to: "IDLE" }
+      timing_windows: { swipe_total_max_ms: 50, swipe_min_ms: "TBD on hardware; 5 ms lower bound" }
+      debounce_requirements:
+        - "each TOUCH_MOVE debounced by touch_debounce_ms; the IQS127D reports one move per touched electrode"
+      directional_interpretation: "right-to-left along the slider electrodes; the crown electrode numbering is fixed in the IQS127D config (TBD)"
+      confidence_validation:
+        - { criterion: "swipe spans exactly 2 electrodes", confidence_max: 192, confidence_default: 160 }
+        - { criterion: "swipe spans >= 3 electrodes", confidence_max: 255, confidence_default: 220 }
+        - { criterion: "swipe duration < 30 ms (fast)", confidence_max: 255, confidence_default: 200 }
+        - { criterion: "swipe duration >= 30 ms", confidence_max: 192, confidence_default: 140 }
+        - { criterion: "inter-electrode timing irregular (jitter)", confidence_max: 128, confidence_default: 96 }
+        - { overall: "confidence >= gesture_confidence_min_high (64) for emit" }
+      cancellation_conditions:
+        - "TOUCH_MOVE direction reverses -> SWIPE_IN_PROGRESS cancelled; if a release follows, TAP/DOUBLE_TAP may still be recognised"
+        - "TIMEOUT(long_press_ms) during the swipe -> swipe cancelled"
+        - "concurrent IMU rotation -> ROTATE_* is mutually exclusive during rotate_cw_ccw_window_ms (200 ms)"
+      wear_state_interaction:
+        - "if wear_state == WEAR_OFF: dropped"
+      output_event: { gesture_id: 0x04, confidence: "computed per the rules above; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x04, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "The crown's electrode numbering and the SWIPE_LEFT direction are mechanically linked. Until the crown-layout.yaml artifact is created, the 'right-to-left' interpretation is documented as a TBD with the reason 'depends on crown mechanical layout'."
+
+    - id: 0x05
+      name: "SWIPE_RIGHT"
+      category: "touch_directional"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "the IQS127D reports TOUCH_MOVE events with electrodes progressing from LEFT to RIGHT"
+        - "the swipe spans >= swipe_min_electrode_span (2) electrodes within swipe_commit_ms (50 ms)"
+      state_machine_states: "Same state-machine path as SWIPE_LEFT; the direction is determined by the move history."
+      timing_windows: { swipe_total_max_ms: 50, swipe_min_ms: "TBD on hardware" }
+      debounce_requirements: "Same as SWIPE_LEFT."
+      directional_interpretation: "left-to-right along the slider electrodes"
+      confidence_validation: "Same as SWIPE_LEFT."
+      cancellation_conditions: "Same as SWIPE_LEFT."
+      wear_state_interaction: "Same as SWIPE_LEFT."
+      output_event: { gesture_id: 0x05, confidence: "computed per the SWIPE_LEFT rules; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x05, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "Same TBD as SWIPE_LEFT on electrode numbering."
+
+    - id: 0x06
+      name: "SWIPE_UP"
+      category: "touch_directional"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "the IQS127D reports TOUCH_MOVE events with electrodes progressing from DOWN to UP (TBD on crown layout)"
+        - "the swipe spans >= swipe_min_electrode_span (2) electrodes within swipe_commit_ms (50 ms)"
+      state_machine_states: "Same as SWIPE_LEFT; direction = DOWN -> UP."
+      timing_windows: { swipe_total_max_ms: 50, swipe_min_ms: "TBD on hardware" }
+      debounce_requirements: "Same as SWIPE_LEFT."
+      directional_interpretation: "down-to-up along the slider electrodes"
+      confidence_validation: "Same as SWIPE_LEFT."
+      cancellation_conditions: "Same as SWIPE_LEFT."
+      wear_state_interaction: "Same as SWIPE_LEFT."
+      output_event: { gesture_id: 0x06, confidence: "computed per the SWIPE_LEFT rules; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x06, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "Same TBD as SWIPE_LEFT on electrode numbering."
+
+    - id: 0x07
+      name: "SWIPE_DOWN"
+      category: "touch_directional"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "the IQS127D reports TOUCH_MOVE events with electrodes progressing from UP to DOWN (TBD on crown layout)"
+        - "the swipe spans >= swipe_min_electrode_span (2) electrodes within swipe_commit_ms (50 ms)"
+      state_machine_states: "Same as SWIPE_LEFT; direction = UP -> DOWN."
+      timing_windows: { swipe_total_max_ms: 50, swipe_min_ms: "TBD on hardware" }
+      debounce_requirements: "Same as SWIPE_LEFT."
+      directional_interpretation: "up-to-down along the slider electrodes"
+      confidence_validation: "Same as SWIPE_LEFT."
+      cancellation_conditions: "Same as SWIPE_LEFT."
+      wear_state_interaction: "Same as SWIPE_LEFT."
+      output_event: { gesture_id: 0x07, confidence: "computed per the SWIPE_LEFT rules; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x07, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "Same TBD as SWIPE_LEFT on electrode numbering."
+
+    - id: 0x08
+      name: "ROTATE_CW"
+      category: "imu_rotational"
+      v1_implemented: true
+      required_input_sensors: ["BMI270"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "the BMI270 reports a gyro Z magnitude >= rotate_cw_ccw_threshold_dps (TBD on hardware) for >= 200 ms"
+        - "the gyro Z sign is positive (clockwise around the finger axis)"
+        - "no concurrent touch event in the rotate_cw_ccw_window_ms (200 ms) before the rotation"
+      state_machine_states:
+        - { from: "IDLE", event: "IMU_ROTATION (gyro Z positive magnitude above threshold for >= 200 ms)", to: "GESTURE_CANDIDATE (ROTATE_CW candidate)" }
+        - { from: "GESTURE_CANDIDATE", event: "TIMEOUT(rotate_cw_ccw_window_ms) WITHOUT a touch event", to: "GESTURE_EMIT (ROTATE_CW)" }
+        - { from: "GESTURE_EMIT", event: "(terminal)", to: "IDLE" }
+      timing_windows: { rotation_min_duration_ms: 200, rotation_max_duration_ms: 2000 }
+      debounce_requirements:
+        - "IMU_MOTION debounced by imu_debounce_ms (20 ms)"
+        - "the rotation feature is computed over a sliding 200 ms window; the peak gyro Z is sampled at the end of the window"
+      directional_interpretation: "gyro Z positive; the sign convention depends on the BMI270's PCB mounting orientation (TBD)"
+      confidence_validation:
+        - { criterion: "peak gyro Z >= 2x rotate_cw_ccw_threshold_dps (very strong rotation)", confidence_max: 255, confidence_default: 220 }
+        - { criterion: "peak gyro Z in [1x, 2x) threshold (strong rotation)", confidence_max: 192, confidence_default: 160 }
+        - { criterion: "peak gyro Z in [1x, 1.5x) threshold (marginal rotation)", confidence_max: 128, confidence_default: 96 }
+        - { criterion: "rotation duration > 1000 ms (slow; possibly intentional)", confidence_max: 96, confidence_default: 64 }
+        - { overall: "confidence >= 32 (IMU-based threshold) for emit" }
+      cancellation_conditions:
+        - "any touch event within rotate_cw_ccw_window_ms before the rotation -> ROTATE_* cancelled, touch gesture takes priority"
+        - "rotation duration < 200 ms -> rotation too brief to be intentional; candidate dropped"
+        - "gyro Z sign oscillates (back-and-forth motion) -> rotation not monotonic; candidate dropped"
+      wear_state_interaction:
+        - "if wear_state == WEAR_OFF: dropped"
+        - "the IMU stillness calibration is updated when WEAR_OFF stillness is detected; rotations are not recognised during calibration"
+      output_event: { gesture_id: 0x08, confidence: "computed per the rules above; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x08, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "V1 evaluates rotation accuracy; per ring-gatt-spec.yaml, ROTATE_* is mutually exclusive with touch-based gestures during the evaluation window. Hardware characterisation on a prototype is required to set rotate_cw_ccw_threshold_dps; the threshold is documented as TBD."
+
+    - id: 0x09
+      name: "ROTATE_CCW"
+      category: "imu_rotational"
+      v1_implemented: true
+      required_input_sensors: ["BMI270"]
+      recognition_prerequisites:
+        - "wear_state == WEAR_ON"
+        - "the BMI270 reports a gyro Z magnitude >= rotate_cw_ccw_threshold_dps (TBD) for >= 200 ms"
+        - "the gyro Z sign is negative (counter-clockwise)"
+        - "no concurrent touch event in the rotate_cw_ccw_window_ms"
+      state_machine_states: "Same as ROTATE_CW; direction = gyro Z negative."
+      timing_windows: { rotation_min_duration_ms: 200, rotation_max_duration_ms: 2000 }
+      debounce_requirements: "Same as ROTATE_CW."
+      directional_interpretation: "gyro Z negative"
+      confidence_validation: "Same as ROTATE_CW."
+      cancellation_conditions: "Same as ROTATE_CW."
+      wear_state_interaction: "Same as ROTATE_CW."
+      output_event: { gesture_id: 0x09, confidence: "computed per the ROTATE_CW rules; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x09, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "Same TBD as ROTATE_CW."
+
+    - id: 0x0A
+      name: "AIR_MOUSE_DELTA"
+      category: "system_reserved"
+      v1_implemented: false
+      required_input_sensors: []
+      recognition_prerequisites: "N/A; not recognised in V1."
+      state_machine_states: []
+      timing_windows: { min_duration_ms: 0, max_duration_ms: 0 }
+      debounce_requirements: "N/A"
+      directional_interpretation: "N/A"
+      confidence_validation: "N/A"
+      cancellation_conditions: "N/A"
+      wear_state_interaction: "N/A"
+      output_event: "not emitted in V1; reserved for V2"
+      gatt_representation: "no RR01 transmission in V1"
+      notes: "Per ring-gatt-spec.yaml: 'Reserved (not used in V1; Intring air-mouse is out of scope for V1).' Reserved 0x0A prevents accidental collision with V2 air-mouse gestures."
+
+    - id: 0x10
+      name: "WEAR_PUT_ON"
+      category: "wear_state"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D", "BMI270"]
+      recognition_prerequisites:
+        - "current wear_state == WEAR_OFF"
+        - "the IQS127D reports a continuous touch on at least one electrode for >= wear_off_to_on_debounce_ms (100 ms)"
+        - "the BMI270 reports motion consistent with putting a ring on a finger (acceleration peak in the last 200 ms; magnitude threshold TBD on hardware characterisation)"
+      state_machine_states:
+        - { from: "WEAR_OFF", event: "TOUCH_PRESS sustained for >= wear_off_to_on_debounce_ms AND IMU_MOTION above threshold", to: "WEAR_ON" }
+        - { from: "WEAR_ON", event: "(emit)", to: "IDLE (with wear_state = WEAR_ON)" }
+      timing_windows: { touch_min_duration_ms: 100, imu_motion_window_ms: 200 }
+      debounce_requirements:
+        - "touch event debounced by wear_off_to_on_debounce_ms"
+        - "IMU motion peak is the max accel magnitude in the last 200 ms"
+      directional_interpretation: "N/A; WEAR_PUT_ON is a state transition, not a directional gesture"
+      confidence_validation:
+        - { criterion: "touch sustained >= 200 ms", confidence_max: 255, confidence_default: 220 }
+        - { criterion: "touch sustained in [100 ms, 200 ms)", confidence_max: 192, confidence_default: 160 }
+        - { criterion: "IMU motion peak in the same window", confidence_max: 255, confidence_default: 200 }
+        - { criterion: "IMU motion peak absent", confidence_max: 96, confidence_default: 48, note: "confidence reduced; may still emit if >= 32" }
+        - { overall: "confidence >= 32 (wear-state gestures have a lower threshold) for emit" }
+      cancellation_conditions:
+        - "touch released before wear_off_to_on_debounce_ms -> WEAR_PUT_ON cancelled; ring is not considered worn"
+        - "concurrent WEAR_TAKEN_OFF within 1 s -> WEAR_PUT_ON cancelled (debounced wear transitions)"
+      wear_state_interaction: "this gesture IS the wear-state transition; emit implies wear_state = WEAR_ON"
+      output_event: { gesture_id: 0x10, confidence: "computed per the rules above; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x10, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "IMU motion threshold for WEAR_PUT_ON is TBD on hardware characterisation. The 200 ms IMU window and the 100 ms touch debounce are engineering estimates."
+
+    - id: 0x11
+      name: "WEAR_TAKEN_OFF"
+      category: "wear_state"
+      v1_implemented: true
+      required_input_sensors: ["IQS127D", "BMI270"]
+      recognition_prerequisites:
+        - "current wear_state == WEAR_ON"
+        - "no IQS127D touch event for >= 5 seconds"
+        - "BMI270 reports stillness (acceleration magnitude < threshold TBD on hardware) for >= wear_on_to_off_stillness_s (30 seconds)"
+      state_machine_states:
+        - { from: "WEAR_ON", event: "(no touch for >= 5 s) AND (IMU still for >= 30 s)", to: "WEAR_OFF" }
+        - { from: "WEAR_OFF", event: "(emit)", to: "IDLE (with wear_state = WEAR_OFF)" }
+      timing_windows: { touch_absence_min_s: 5, imu_stillness_min_s: 30 }
+      debounce_requirements:
+        - "the touch-absence timer starts on the last TOUCH_RELEASE timestamp"
+        - "the stillness timer runs on the BMI270's no-motion interrupt"
+      directional_interpretation: "N/A; state transition"
+      confidence_validation:
+        - { criterion: "touch absent for >= 60 s", confidence_max: 255, confidence_default: 230 }
+        - { criterion: "touch absent in [5 s, 60 s)", confidence_max: 192, confidence_default: 160 }
+        - { criterion: "IMU still for >= 60 s (extended)", confidence_max: 255, confidence_default: 220 }
+        - { overall: "confidence >= 32 for emit" }
+      cancellation_conditions:
+        - "any TOUCH_PRESS during the stillness window -> WEAR_TAKEN_OFF cancelled; ring is still worn"
+        - "any IMU_MOTION above the still threshold -> WEAR_TAKEN_OFF cancelled; timer reset"
+        - "concurrent WEAR_PUT_ON within 1 s of WEAR_TAKEN_OFF -> debounced; one transition wins"
+      wear_state_interaction: "this gesture IS the wear-state transition; emit implies wear_state = WEAR_OFF"
+      output_event: { gesture_id: 0x11, confidence: "computed per the rules above; uint8", sequence: "next value of gesture_seq" }
+      gatt_representation: "4-byte RR01 notify: [0x11, confidence_lo, sequence_lo, sequence_hi]"
+      notes: "The 5 s + 30 s windows are engineering estimates; they may need adjustment after hardware characterisation. The AND condition prevents accidental WEAR_TAKEN_OFF during quiet hand moments."
+
+    - id: 0x20
+      name: "BUTTON_TAP"
+      category: "system_reserved"
+      v1_implemented: false
+      required_input_sensors: []
+      recognition_prerequisites: "N/A; not recognised in V1 (the V1 has no mechanical button)."
+      state_machine_states: []
+      timing_windows: { min_duration_ms: 0, max_duration_ms: 0 }
+      debounce_requirements: "N/A"
+      directional_interpretation: "N/A"
+      confidence_validation: "N/A"
+      cancellation_conditions: "N/A"
+      wear_state_interaction: "N/A"
+      output_event: "not emitted in V1; reserved for V2"
+      gatt_representation: "no RR01 transmission in V1"
+      notes: "Per ring-gatt-spec.yaml: 'Mechanical button (V2 hardware button; not in V1).' V2 may add a single mechanical button on the inner band; the V2 FSM will add a GPIO interrupt-driven detector for it."
+
+    - id: 0x7F
+      name: "TEST_DIAGNOSTIC"
+      category: "diagnostic"
+      v1_implemented: true
+      required_input_sensors: []
+      recognition_prerequisites: "N/A; the diagnostic CLI injects a synthetic TEST_DIAGNOSTIC gesture event directly via the configuration TLV (tag 0x7F; see firmware/architecture.md section 14.2 TBD)."
+      state_machine_states: []
+      timing_windows: { min_duration_ms: 0, max_duration_ms: 0 }
+      debounce_requirements: "N/A"
+      directional_interpretation: "N/A"
+      confidence_validation:
+        - { criterion: "always 255 when injected by the diagnostic CLI", confidence_max: 255, confidence_default: 255 }
+      cancellation_conditions: "N/A"
+      wear_state_interaction: "may be emitted in either wear state; the diagnostic CLI is the only producer"
+      output_event:
+        gesture_id: 0x7F
+        confidence: 255
+        sequence: "next value of gesture_seq"
+        payload: "the first 4 bytes of the diagnostic TLV tag payload (sensor fault code; see firmware/architecture.md section 10.1)"
+      gatt_representation: "4-byte RR01 notify: [0x7F, 0xFF, sequence_lo, sequence_hi]"
+      notes: "TEST_DIAGNOSTIC is also emitted by the firmware when a sensor fault is detected (per firmware/architecture.md section 10.1). The payload describes the fault; the central logs the fault."
+
+  tie_breaking:
+    description: "When two gestures could be valid for the same touch cycle, the FSM uses these rules. They are deterministic and enforced by the static const transition table (firmware/architecture.md section 5.7)."
+    rules:
+      - { rule: "TAP vs DOUBLE_TAP", decision: "DOUBLE_TAP wins if a second touch arrives within double_tap_window_ms; otherwise TAP wins." }
+      - { rule: "TAP vs LONG_PRESS", decision: "LONG_PRESS wins if touch is held >= long_press_ms; otherwise TAP wins on release." }
+      - { rule: "TAP vs SWIPE_*", decision: "SWIPE_* wins if TOUCH_MOVE is detected; otherwise TAP wins." }
+      - { rule: "SWIPE_* vs LONG_PRESS", decision: "LONG_PRESS is absorbing; once started, it blocks subsequent SWIPE_* transitions during the same touch cycle." }
+      - { rule: "ROTATE_* vs touch-based gestures", decision: "Within rotate_cw_ccw_window_ms (200 ms), touch events are ignored if a rotation candidate is active; the rotation wins. Outside the window, the gestures are independent." }
+      - { rule: "WEAR_PUT_ON vs WEAR_TAKEN_OFF", decision: "Debounced; the first transition to fire wins; the second is suppressed for 1 s." }
+      - { rule: "Two simultaneous candidates", decision: "The one with the higher confidence wins; ties broken by lower gesture_id (older vocabulary entries take priority)." }
+
+  v1_vs_v2_summary:
+    v1_implemented: [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x7F]
+    v1_implemented_count: 12
+    v2_or_reserved: [0x00, 0x0A, 0x20]
+    v2_or_reserved_count: 3
+    total: 16
+
+  unresolved_gesture_parameters:
+    description: "These are documented as TBDs because they require hardware characterisation on a prototype. They are NOT firmware constants; they are engineering estimates that must be measured."
+    parameters:
+      - { parameter: "rotate_cw_ccw_threshold_dps", reason: "Gyro Z magnitude threshold for ROTATE_CW/ROTATE_CCW depends on the BMI270's mounting orientation in the V1 ring + the wearer's wrist motion characteristics. Must be measured on a prototype." }
+      - { parameter: "wear_put_on_imu_motion_threshold_g", reason: "IMU accel magnitude threshold for WEAR_PUT_ON depends on how the wearer puts the ring on. Must be measured on a prototype." }
+      - { parameter: "wear_taken_off_imu_stillness_threshold_g", reason: "IMU accel magnitude threshold for 'still' in WEAR_TAKEN_OFF depends on ambient hand motion (e.g. sitting at a desk). Must be measured on a prototype." }
+      - { parameter: "crown_electrode_numbering", reason: "The IQS127D's electrode-to-direction mapping (RIGHT, LEFT, UP, DOWN) depends on the mechanical crown layout. Resolved by mechanical/crown-layout.yaml (not yet created)." }
+      - { parameter: "swipe_min_ms_lower_bound", reason: "Minimum human swipe duration is not characterised; 5 ms is a starting estimate. Must be measured." }
+      - { parameter: "rotate_cw_ccw_gyro_sign_convention", reason: "The BMI270's gyro Z sign for clockwise/counter-clockwise depends on the PCB mounting orientation. Resolved by the schematic + mechanical/inner-band-layout.yaml (not yet created)." }
+      - { parameter: "imu_rotation_threshold_2x_and_1_5x_ratios", reason: "The confidence bands for ROTATE_* use ratios (2x, 1.5x) of rotate_cw_ccw_threshold_dps; these are engineering estimates." }
+
+  references:
+    - { ref: "protocol/ring-gatt-spec.yaml", url: "internal", note: "Authoritative gesture IDs and GATT representation." }
+    - { ref: "firmware/architecture.md", url: "internal", note: "State-machine + worker + drop-counter architecture." }
+    - { ref: "electrical/sensor-interface.yaml", url: "internal", note: "Sensor signal table + I2C topology." }
+    - { ref: "components/touch-selection.yaml", url: "internal", note: "IQS127D gesture-detection chain." }
+    - { ref: "components/imu-selection.yaml", url: "internal", note: "BMI270 FIFO + interrupt + ODR details." }
+    - { ref: "research/even-r1-reference.md", url: "internal", note: "Even R1 interaction-philosophy reference (gesture vocabulary inspiration; re-implemented)." }
+    - { ref: "Intring (Apache 2.0)", url: "https://github.com/weierruisi/Intring", note: "Gesture vocabulary inspiration (re-implemented under our own license)." }
+    - { ref: "Bluetooth Core Specification 5.4", url: "https://www.bluetooth.com/specifications/specs/core-specification/", note: "BLE GATT notify semantics." }
+

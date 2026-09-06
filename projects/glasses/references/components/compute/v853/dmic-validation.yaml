@@ -1,0 +1,67 @@
+schema_version: 1
+dmic_validation:
+  id: v853_dmic_microphone_validation
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, section 1.3.7.3 (DMIC) and 8.2 (DMIC); ST MP23DB01HP datasheet
+
+  conclusion:
+    single_mic_sufficient: YES
+    dual_mic_stereo_not_needed: TRUE
+    confidence: HIGH
+
+  dmic_capability:
+    ip_block_count: 1 (per V853 datasheet section 1.3.7.3)
+    max_microphones: 8 (software-selectable L/R per mic; the V853's DMIC block supports up to 8 mics on a single data line with a single clock)
+    protocol: "PDM (single-bit data + clock). Each mic is sampled at the rising edge or falling edge of PDM_CLK depending on its L/R selection."
+    clock_frequency_mhz: 1.024 to 3.072 (per datasheet)
+    sample_rate_khz: 8 to 48 (per datasheet)
+    voltage_domain: 1.8 V (per the GPIO bank config; verify)
+    decimation_filter: "the V853's DMIC block includes a decimation filter; the SoC outputs PCM audio to the audio subsystem"
+
+  mpu_microphone_choice:
+    sensor: ST MP23DB01HP
+    package: LGA
+    dimensions_mm: 3.0 x 4.0 x 1.0
+    acoustic_port: bottom
+    interface: digital PDM
+    supply_v: 1.6-3.6
+    current_active_ua: 650
+    snr_db_a: 64
+    aop_db_spl: 120
+
+  single_mic_topology:
+    v853_dmic: "DMIC0 -> 1 mic (ST MP23DB01HP) -> 1 PDM data line + 1 PDM clock line"
+    signals: ["PDM_DATA", "PDM_CLK"]
+    note: "1 mic is sufficient for the glasses (mono voice). The mic is placed in the upper-front-frame near the nose bridge, on the same side as the compute PCB's DMIC signals."
+    linux_support: "mainline ASoC; the V853 DMIC controller is supported in the sunxi ASoC tree; the MP23DB01HP is a standard PDM mic; the kernel uses the generic pcm3168a / pcm5102a / dmic-codec driver family (or a custom ASoC machine driver)."
+
+  dual_mic_stereo_topology:
+    status: NOT_NEEDED_FOR_GLASSES
+    reason: "The brief asks for 'one microphone' (the architecture section: '1× PDM MEMS microphone'). A second mic is for beamforming or noise cancellation, which the brief does not request. The V853's DMIC block supports up to 8 mics on a single data line; adding a second mic is a 2-wire change (1 data + 1 clock; the second mic is on the opposite L/R edge of the same clock). If a second mic is added later for noise cancellation, no new SoC peripherals are required."
+
+  routing:
+    pdm_data: "the V853's DMIC_DATA input; has an internal pull-down. Connect the mic's DATA pin to the V853's PDM_DATA ball."
+    pdm_clk: "the V853's PDM_CLK output; drives the mic's CLK pin."
+    acoustic_port: "the mic's bottom acoustic port must have a 1 mm acoustic path to the outside of the glasses frame. This is a mechanical design item."
+    voltage: "1.8 V (the V853's GPIO bank config and the AXP2101's LDO output)"
+
+  pull_configuration:
+    pdm_data: "the V853 has an internal pull-down on PDM_DATA. The mic's DATA pin is push-pull. No external pull-up needed."
+    pdm_clk: "the V853 drives PDM_CLK; no pull-up needed."
+    note: "Some PDM mics have an internal pull-down on DATA; the datasheet should be verified. The V853's PDM controller can typically handle the impedance."
+
+  linux_driver:
+    v853_dmic_driver: "mainline ASoC; sunxi-dmic (drivers/sound/soc/sunxi/sunxi-dmic.c). Supports 1-8 channel PDM input."
+    machine_driver: "a small custom machine driver binding the V853 DMIC to the MP23DB01HP (or generic PDM mic codec)."
+    confidence: HIGH
+
+  acoustic_path:
+    location: "upper-front-frame, near the nose bridge, opposite the compute PCB"
+    acoustic_port: "bottom port of the mic; needs a 1 mm acoustic path (hole or tube) to the outside of the frame"
+    sealing: "the mic's acoustic port must be sealed against the inside of the frame to prevent light-leak noise and air turbulence"
+    confidence: HIGH (standard PDM mic acoustic integration)
+
+  risk:
+    - "The mic's acoustic port must be mechanically sealed against the frame. This is a mechanical design item, not an electrical one."
+    - "The DMIC block's decimation filter must be configured for the chosen sample rate (8, 16, 32, or 48 kHz). The Linux driver or the ASoC machine driver handles this."
+    - "If the V853's PDM_DATA internal pull-down is too weak for the mic's drive strength, a stronger external pull-down may be needed. Verify per the MP23DB01HP datasheet."

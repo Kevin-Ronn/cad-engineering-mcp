@@ -1,0 +1,64 @@
+schema_version: 1
+component:
+  id: eemb_lp301430
+  category: li_poly_pouch_cell
+  units: mm
+  role: smaller_battery_candidate_for_tighter_temples
+
+source:
+  manufacturer: EEMB
+  part_number: LP301430 (LP = LiPo, 3.0 mm thick x 14 mm wide x 30 mm long, 100 mAh)
+  source_type: distributor_listing_plus_industry_convention
+  source_docs:
+    - url: https://www.eemb.com/
+      description: "EEMB official site"
+  chemistry: lithium polymer (LiPo)
+  form_factor: pouch
+  protected: NO (bare cell)
+
+mechanical:
+  dimensions_mm: { thickness: 3.0, width: 14.0, length: 30.0 }
+  weight_g: approximately 2.5 to 3.5
+  volume_cm3: 1.26
+  energy_density_wh_per_kg: approximately 130 (100 mAh x 3.7 V / 3 g = 0.37 Wh / 0.003 kg = ~123 Wh/kg nominal)
+  energy_density_wh_per_l: approximately 290
+  source_for_mechanical: EEMB model-number convention
+
+electrical:
+  nominal_voltage_v: 3.7
+  charge_voltage_max_v: 4.2
+  discharge_cutoff_v: 3.0
+  capacity_mah: 100
+  energy_wh: 0.37
+  standard_charge_current_ma: 50 (0.5C)
+  max_charge_current_ma: 100 (1C)
+  max_continuous_discharge_ma: 100 to 200 (1C to 2C)
+  source_for_electrical: EEMB listing
+
+environmental:
+  charge_temperature_c: { min: 0, max: 45 }
+  discharge_temperature_c: { min: -20, max: 60 }
+  source_for_environmental: typical LiPo range
+
+cycle_life:
+  cycles_to_80_percent_capacity: approximately 500
+
+connectors:
+  standard: JST PHR-2 (verify per order)
+
+purchase:
+  distributor: EEMB direct; LCSC; Amazon; AliExpress
+  unit_price_usd: approximately 2 to 4 (single-piece); 1 to 2 in volume
+  moq: 1 to 10
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: HIGH_for_dimensions; MEDIUM_for_electrical
+
+geometry_relevance:
+  temple_fit: "3.0 mm thick x 14 mm wide x 30 mm long. The smallest envelope in this candidate set. Fits the 4-6 mm temple target. 14 mm width is narrow enough to sit in a Wayfarer-temple-shaped cross-section without major redesign."
+  two_battery_config: "Two LP301430 cells in parallel = 200 mAh / 0.74 Wh. Very low total energy; only suitable for a very low-power glasses design (which the brief is NOT — the V853 with cameras, display, and Wi-Fi is not ultra-low-power)."
+
+constraints:
+  status: TOO_SMALL_FOR_GLASSES — 200 mAh total is insufficient for the V853 system power budget. Listed for completeness; not recommended.

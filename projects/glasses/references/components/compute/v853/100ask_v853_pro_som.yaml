@@ -1,0 +1,123 @@
+schema_version: 1
+component:
+  id: 100ask_v853_pro_core_lite_som
+  category: system_on_module
+  units: mm
+  role: compute_som_candidate
+
+source:
+  manufacturer: 100ask (Lingyun Technology / Baiwen Technology)
+  part_number: 100ASK-V853-Pro core board (V853 Core Lite)
+  source_type: third_party_module_article
+  source_docs:
+    - url: https://www.cnx-software.com/2023/04/20/100ask-v853-pro-allwinner-v853-board-ai-vision/
+      description: "CNX-Software announcement, 2023-04-20"
+    - url: https://forums.100ask.net/c/aw/v853/71
+      description: "100ask V853 forum (specs summarized; full data not posted)"
+    - url: https://item.taobao.com/item.htm?&id=706864521673
+      description: "Taobao product page (purchase only; not externally accessible to Claude)"
+
+mechanical:
+  dimensions_mm:
+    width: UNKNOWN
+    height: UNKNOWN
+  pcb_thickness_mm: UNKNOWN
+  max_component_height_mm: UNKNOWN
+  weight_g: UNKNOWN
+  mounting_holes: UNKNOWN
+  connectors:
+    - name: "Castellated / board-to-board carrier interface (specific connector model not published)"
+      pin_count: UNKNOWN
+  source_for_mechanical: NOT_PUBLICLY_AVAILABLE
+  note: "Only the carrier-board dimensions and the 22-pin expansion header are publicly described. The SoM-core mechanical drawing has not been located in a public, citable source."
+
+electrical:
+  soc: allwinner_v853_soc
+  ram_options:
+    - "512 MB DDR3"
+    - "1 GB DDR3"
+  emmc_options:
+    - "8 GB eMMC 5.1"
+    - "32 GB eMMC 5.1"
+  pmic: AXP2101
+  power_input: UNKNOWN_for_core_board (carrier has DC jack; SoM input typically 3.7 V LiPo or 5 V via carrier)
+
+video_input:
+  mipi_csi:
+    - "1x 2-lane"
+    - "1x 4-lane"
+  note: "Provides both configurations; the 1x 4-lane and 2x 2-lane are brought out to the carrier and then to two FPC connectors. Two independent 2-lane is the configuration needed for two cameras."
+  video_input_use_for_glasses: "Two cameras on independent 2-lane MIPI CSI."
+
+video_output:
+  mipi_dsi: "1x 4-lane MIPI DSI"
+  rgb_lcd: "1x RGB LCD interface"
+  video_output_use_for_glasses: "1x 4-lane MIPI DSI to the micro-OLED/waveguide engine."
+
+audio:
+  spdif_out: 1
+  speaker_header: 2 (one per channel)
+  note: "For the glasses: a single DMIC input feeds the internal codec, and I2S0/I2S1 to two external mono class-D amps in each temple."
+
+wireless:
+  module: XR829 (Xradio)
+  wifi: 2.4 GHz 802.11 b/g/n (Wi-Fi 4)
+  bluetooth: BT 4.2
+  interface: SDIO 2.0 (Wi-Fi) + UART (BT)
+  antenna: PCB trace antenna on the SoM
+  glasses_use_case: "Wi-Fi 4 is acceptable for the V853 use profile (local preprocessing + connectivity to phone). BT for initial pairing / fallback. The antenna is on the SoM PCB; if the SoM is fully enclosed in a metal-shielded frame, the antenna must be relocated or an external u.FL antenna added."
+
+usb:
+  on_som: "0 (USB 2.0 DRD from SoC is routed to the carrier)"
+  on_carrier:
+    - "2x USB 2.0 Type-A host"
+    - "1x USB 2.0 Type-C OTG"
+    - "1x USB Type-C (serial console)"
+
+ethernet:
+  count: 1
+  speed: 10/100M
+  connector: RJ45 on the carrier board
+  glasses_use_case: "Not used; documented for completeness."
+
+storage:
+  microsd: 1 (on carrier)
+
+expansion:
+  header: 22-pin (carrier)
+  buttons:
+    - Power
+    - Reset
+    - FEL
+    - 5x user
+
+purchase:
+  som_only_pricing_rmb:
+    - "99 RMB (~14 USD): 512 MB + 8 GB eMMC"
+    - "129 RMB (~18 USD): 512 MB + 32 GB eMMC"
+  complete_kit_pricing_rmb:
+    - "449 RMB (~65 USD): 8 GB eMMC kit"
+    - "499 RMB (~72 USD): 32 GB eMMC kit"
+  availability: "China direct (Taobao, 100ask store) as of 2023; international availability limited."
+  source_for_purchase: cnx-software_article_2023-04-20
+
+confidence:
+  overall: MEDIUM
+  sources: third-party_press_release + forum + product_page
+  gaps:
+    - "SoM (core) board dimensions: NOT public"
+    - "SoM connector pinout and pin pitch: NOT public"
+    - "Max component height on SoM: NOT public"
+    - "Operating temperature range of the SoM: NOT public (uses consumer-grade V853 die: -20 to +70 C ambient)"
+    - "Power consumption of the SoM under typical glasses load: NOT public"
+    - "Weight: NOT public"
+
+constraints:
+  exact_dimensions_required: true
+  guessed_dimensions_forbidden: true
+  current_status_for_glasses: "BLOCKED. Cannot use as-is for glasses cavity design because the SoM mechanical drawing is not publicly available. Must request the SoM STEP / 2D drawing from 100ask or re-design against a board whose mechanical documentation is public (e.g. ProjectYosemite, where the KiCad project is open)."
+
+contact_for_drawing:
+  vendor: 100ask
+  url: https://forums.100ask.net/c/aw/v853/71
+  ask_for: "100ASK-V853-Pro Core Board STEP or DXF mechanical drawing; 2D footprint with mounting hole positions and castellation pattern; 3D model; component max height."

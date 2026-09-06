@@ -1,0 +1,765 @@
+schema_version: 1
+ring_industrial_design:
+  id: smart_ring_industrial_design
+  date: 2026-09-06
+  status: READ-ONLY. No Fusion / FreeCAD / STEP / STL / PCB / manufacturing files were created by this artifact. This is the final pre-CAD industrial-design specification.
+
+  note: "Converts the validated electrical, mechanical, battery, charging, sensor, antenna, and interaction architecture into a coherent physical-design specification suitable for parametric CAD implementation. Every dimension is classified as DATASHEET, DERIVED/CALCULATED, DESIGN TARGET, ASSUMPTION, or TBD. No physical dimensions are invented. The corrected power-budget values (30 ms BLE interval, 50–60 mAh preferred battery, 22.5 mA provisional charging current, 2–3 days realistic mixed-use runtime) are carried forward from analysis/battery-life-analysis.yaml."
+
+  parent_artifacts:
+    - "mechanical/crown-layout.yaml"
+    - "mechanical/inner-band-layout.yaml"
+    - "mechanical/pogo-charger-layout.yaml"
+    - "electrical/system-architecture.yaml"
+    - "electrical/power-tree.yaml"
+    - "electrical/power-budget.yaml"
+    - "electrical/sensor-interface.yaml"
+    - "electrical/sensor-interface_part2.yaml"
+    - "electrical/ble-interface.yaml"
+    - "components/mcu-selection.yaml"
+    - "components/battery-selection.yaml"
+    - "components/charger-selection.yaml"
+    - "components/antenna-selection.yaml"
+    - "components/imu-selection.yaml"
+    - "components/touch-selection.yaml"
+    - "components/haptic-selection.yaml"
+    - "components/temperature-selection.yaml"
+    - "components/ppg-selection.yaml"
+    - "firmware/architecture.md"
+    - "protocol/gesture-vocabulary.yaml"
+    - "protocol/ring-gatt-spec.yaml"
+    - "analysis/battery-life-analysis.yaml"
+
+  classification_legend:
+    DATASHEET: "value from a manufacturer datasheet (cited)"
+    DERIVED: "value calculated from documented inputs"
+    DESIGN_TARGET: "value chosen as the engineering target; subject to prototype validation"
+    ASSUMPTION: "value used in the absence of a datasheet; flagged for verification"
+    TBD: "value not yet available; required for downstream decisions"
+
+  # =========================================================================
+  # 1. Design intent
+  # =========================================================================
+  design_intent:
+    goals:
+      - "Even R1 silhouette as INDUSTRIAL-DESIGN INSPIRATION ONLY (no geometry, PCB, firmware, or internal construction copied)"
+      - "original geometry; every dimension is parametric and derived from the project's own component + interaction constraints"
+      - "comfortable wearable ring; target ring sizes US6..US13 per research/smart-ring-landscape.md section 1 (engineering target range)"
+      - "companion controller for the V853 smart glasses (per the brief; not a standalone product)"
+      - "crown-based gesture interaction (TAP / DOUBLE_TAP / LONG_PRESS / SWIPE_* / ROTATE_* / WEAR_PUT_ON / WEAR_TAKEN_OFF per protocol/gesture-vocabulary.yaml)"
+      - "internal electronics (single-SoC architecture per firmware/architecture.md)"
+      - "curved LiPo battery in the inner band (EEMB-class; 50-60 mAh preferred if physically achievable)"
+      - "magnetic pogo charging (per mechanical/pogo-charger-layout.yaml)"
+      - "BLE 5.4 to glasses (primary connection) and phone (secondary; role-switched per protocol/ring-gatt-spec.yaml)"
+      - "haptic feedback via DRV2605L + Precision Microdrives LRA"
+      - "wear detection via IQS127D touch presence + BMI270 stillness (per protocol/gesture-vocabulary.yaml section 0x10/0x11)"
+      - "thermal comfort: NO significant heat source directly against the finger; the battery + LRA are thermal-isolated from the inner band"
+    explicit_non_goals:
+      - "do NOT copy the Even R1's proprietary geometry, internal construction, PCB layout, or firmware"
+      - "do NOT use 3-5 day battery life as a marketed target until the corrected power budget (analysis/battery-life-analysis.yaml) is re-confirmed on hardware"
+      - "do NOT include PPG in V1 (V2 only per components/ppg-selection.yaml)"
+      - "do NOT include inductive charging in V1 (magnetic pogo only per components/charger-selection.yaml section recommended_for_V1)"
+      - "do NOT include a mechanical button in V1 (the V2 BUTTON_TAP gesture 0x20 is reserved per protocol/ring-gatt-spec.yaml)"
+      - "do NOT claim full IP68 waterproofing (the V1 target is sweat-resistant per components/charger-selection.yaml section option_B)"
+
+  # =========================================================================
+  # 2. Design envelope
+  # =========================================================================
+  design_envelope:
+    description: "Conceptual ring envelope. The ring is divided into three band sections (PALM_END / MIDDLE / FINGER_END per mechanical/inner-band-layout.yaml section 1) and four physical surfaces (outer band / inner band / palm-end face / finger-end face). The crown (Y+ surface at the band MIDDLE) carries the IQS127D electrodes per mechanical/crown-layout.yaml."
+
+    ring_inner_diameter:
+      value: "TBD per industrial-design artifact (engineering target range: 16.5 mm to 22.0 mm for US6 to US13; see ring-size-range in research/smart-ring-landscape.md)"
+      unit: "mm"
+      classification: "DESIGN_TARGET (the ring-size range is documented; the exact V1 size is TBD on the industrial-design artifact)"
+    ring_inner_circumference: "TBD on industrial-design (derived from ring_inner_diameter * pi)"
+    crown_width: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET" }
+    crown_length: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET" }
+    crown_height: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (crown height is the protrusion above the band's outer surface)" }
+    band_width: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (engineering target: ~3-4 mm to fit the components; bounded by the PCB envelope)" }
+    band_thickness: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (engineering target: < 3 mm per Even R1 wedding-band class per research/smart-ring-landscape.md; the V1 stack-up is estimated at 5-7 mm per mechanical/inner-band-layout.yaml section 8)" }
+    shell_thickness: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (engineering estimate 0.3-0.5 mm per mechanical/inner-band-layout.yaml section 8)" }
+    pcb_envelope_length: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (bounded by the band's inner circumference minus the antenna zone)" }
+    pcb_envelope_width: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (bounded by the band's inner-outer thickness minus the components + shell)" }
+    pcb_envelope_height: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (engineering target 0.6-1.0 mm for a 4-layer rigid PCB per mechanical/inner-band-layout.yaml section 2)" }
+    battery_envelope_length: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (engineering estimate 35-40 mm per components/battery-selection.yaml section candidates)" }
+    battery_envelope_width: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (engineering estimate 6-8 mm per components/battery-selection.yaml section candidates)" }
+    battery_envelope_height: { value: "TBD on industrial-design", unit: "mm", classification: "DESIGN_TARGET (engineering estimate 2.5-3.5 mm per components/battery-selection.yaml section candidates)" }
+    antenna_keepout: { value: "5 mm in all directions", unit: "mm", classification: "DESIGN_TARGET (per components/antenna-selection.yaml; baseline from datasheet; not yet validated by the vendor reference design)" }
+    haptic_clearance: { value: "TBD on industrial-design", unit: "mm", classification: "TBD (the LRA minimum separation from IMU is TBD on prototype characterisation per protocol/gesture-vocabulary.yaml section unresolved_gesture_parameters)" }
+    charger_recess: { value: "TBD on industrial-design", unit: "mm", classification: "TBD (depends on the selected pogo contact geometry per mechanical/pogo-charger-layout.yaml section 8)" }
+    electrode_spacing: { value: "TBD on industrial-design", unit: "mm", classification: "TBD (depends on the IQS127D electrode design per mechanical/crown-layout.yaml section 8)" }
+
+    conceptual_surfaces:
+      outer_band: "Y = +R_outer; faces the world; carries the crown electrodes (E0..E6 per mechanical/crown-layout.yaml section 2)"
+      inner_band: "Y = -R_inner; faces the finger; carries the TMP117 + LRA per mechanical/inner-band-layout.yaml section 1"
+      palm_end_face: "Z- extreme; carries the pogo contacts (per mechanical/pogo-charger-layout.yaml section 8)"
+      finger_end_face: "Z+ extreme; the antenna is on this side per mechanical/inner-band-layout.yaml section 2 (Z_FINGER_END)"
+
+    conceptual_zones:
+      zone_crown: "Y = +R_crown; IQS127D only"
+      zone_upper_shell: "Y = +R_outer; outer shell + crown overlay"
+      zone_centre: "Y = 0; nRF54L15 + BMI270 on the PCB"
+      zone_inner: "Y = -R_inner; MAX17048 + TMP117 + DRV2605L + LRA"
+      zone_finger_end: "Z+ extreme; Johanson 2450AT18B100 antenna + 5 mm keepout"
+      zone_palm_end: "Z- extreme; MCP73831 + pogo contacts"
+
+  # =========================================================================
+  # 3. Battery packaging
+  # =========================================================================
+  battery_packaging:
+    target:
+      capacity_mah_target: "50-60 mAh preferred if physically achievable; 45 mAh is the engineering midpoint of the documented 35-60 mAh range per components/battery-selection.yaml"
+      cell_chemistry: "LiPo (curved, custom-shaped per EEMB LP-series class per components/battery-selection.yaml section recommended)"
+      nominal_voltage_v: 3.85
+      voltage_range_v: [3.0, 4.2]
+    location:
+      description: "PALM_END section (Z-) per mechanical/inner-band-layout.yaml section 2 (Z_PALM_END) and mechanical/pogo-charger-layout.yaml section 4"
+      y_position: "Y = -R_inner (the inner-band side; closest to the finger; the cell is the lowest-Y component in the band)"
+      z_position: "Z- extreme (palm end of the band)"
+      orientation: "the cell lies flat in the X-Z plane; its curved surface faces -Y (the finger)"
+    curvature:
+      description: "the cell's curved surface matches the inner ring radius; the cell is custom-shaped by the battery manufacturer (EEMB-class)"
+      min_bend_radius_mm: "TBD on EEMB-class LiPo cell datasheet; engineering assumption: the bend radius equals the inner ring radius"
+      expansion_allowance: "approximately 5 percent in thickness over cycle life per components/battery-selection.yaml section safety.swelling; the housing provides a slight compression fit (no rigid constraint)"
+    retention:
+      concept: "foam-padded cavity in the inner band; foam on the PCB side absorbs swelling; rigid plastic on the finger side prevents puncture; no mechanical fasteners"
+      foam_thickness_mm: "TBD on prototype characterisation"
+      adhesive: "TBD on industrial-design (none required for retention in V1)"
+    electrical_connection:
+      bat_plus: "BAT+ connects to the MCP73831 BAT pin and to the MAX17048 CELL+ input"
+      bat_minus: "BAT- is the PCB ground (single-point ground per electrical/power-tree.yaml)"
+      ntc: "the cell's NTC thermistor connects to the MCP73831 TS input (per components/charger-selection.yaml + electrical/sensor-interface_part2.yaml section sensor_mcp73831_charger)"
+    thermal_path:
+      primary: "battery self-heating → foam padding → inner-band plastic → ambient (NOT the finger, due to the foam's thermal resistance)"
+      secondary: "battery self-heating → MCP73831 charging path → PCB → outer shell → ambient"
+    separation_requirements:
+      antenna_keepout_mm: 5
+      haptic_min_separation_mm: "TBD on prototype characterisation per mechanical/inner-band-layout.yaml section 9"
+      temperature_sensor_separation: "the TMP117 is at Z+ (FINGER_END); the battery is at Z- (PALM_END); the Z separation is the full band length"
+      charging_contacts_separation: "the pogo contacts are at Z- PALM_END on the inner band surface; the battery is at Z- PALM_END inside the inner band; the radial separation is the foam + shell thickness"
+    battery_envelope_parameter: "battery_envelope_length, battery_envelope_width, battery_envelope_height (TBD on industrial-design artifact; see section 2)"
+    final_selection: "the final battery must be selected from an actual orderable EEMB-class cell before CAD is frozen; the cell's max charge C-rate, NTC type, PCM trip thresholds, and exact dimensions must be confirmed on the datasheet"
+
+  # =========================================================================
+  # 4. PCB architecture
+  # =========================================================================
+  pcb_architecture:
+    intended_architecture: "single rigid PCB in V1 (no flex); flex PCB deferred to V2 per mechanical/inner-band-layout.yaml section 2"
+    rationale: "the V1 components are small enough (nRF54L15 WLCSP-2.5x2.5 mm; BMI270 LGA-2.5x3.0x0.8 mm; IQS127D WLCSP-1.5x1.5 mm; TMP117 WCSP-1.5x1.5x0.5 mm; MAX17048 WLCSP-class; DRV2605L QFN-1.5x1.5 mm) to fit on a single rigid PCB that follows the band's curve"
+    pcb_shape: "TBD on industrial-design artifact; expected to be a CURVED RIGID PCB (bent to match the band's radius) OR a SEGMENTED RIGID PCB (multiple small rigid segments connected by short flex tails)"
+    pcb_curve_radius: "TBD on industrial-design; must match the inner ring radius"
+
+    conceptual_pcb_zones:
+      zone_mcu_rf:
+        location: "Z_CENTRE (Y = 0; Z = 0)"
+        components: ["nRF54L15 (Cortex-M33F; BLE 5.4 radio)"]
+        routing_concerns: ["50 ohm controlled-impedance feed line to the antenna; no other signals cross the feed line; the feed line is the only conductor inside the antenna keepout"]
+      zone_imu:
+        location: "Z_CENTRE; offset from the nRF54L15 by >= 3 mm to reduce thermal coupling"
+        components: ["BMI270 (6-axis IMU; FIFO + INT1 + INT2)"]
+        routing_concerns: ["the BMI270's PCB-normal axis (Y) must be aligned with the ring's Y axis per mechanical/crown-layout.yaml section 5"]
+      zone_touch:
+        location: "Z_CROWN (Y = +R_crown; directly below the crown surface)"
+        components: ["IQS127D (5-7 electrode capacitive touch IC)"]
+        routing_concerns: ["short capacitive-sensing traces (< 10 mm; TBD on IQS127D datasheet); traces are routed away from I2C + power"]
+      zone_power_management:
+        location: "Z_CENTRE; near the nRF54L15"
+        components: ["TPS7A02 3.3 V LDO", "TPS7A02 1.8 V LDO", "decoupling capacitors (12 total per electrical/power-tree.yaml section decoupling)"]
+        routing_concerns: ["wide traces for the high-current paths; minimum 0.5 mm trace width for 50 mA peak (LRA drive)"]
+      zone_charger:
+        location: "Z_PALM_END; near the pogo contacts"
+        components: ["MCP73831 (SOT-23-5; 1.6 x 1.6 mm)"]
+        routing_concerns: ["the high-current charging path (up to 500 mA capability, 22.5 mA default per analysis/battery-life-analysis.yaml) requires low-impedance traces"]
+      zone_battery_monitor:
+        location: "Z_INNER (Y = -R_inner); near the battery"
+        components: ["MAX17048 (WLCSP-class fuel gauge)"]
+        routing_concerns: ["I2C0 shared bus; the MAX17048 is one of 5 devices on the bus per electrical/sensor-interface.yaml section i2c_bus_topology"]
+      zone_haptic_driver:
+        location: "Z_INNER (Y = -R_inner); near the LRA"
+        components: ["DRV2605L (QFN-1.5x1.5 mm haptic driver)"]
+        routing_concerns: ["the OUT+ / OUT- traces to the LRA are a differential pair; the LRA's 50 mA peak drive requires >= 0.5 mm trace width"]
+      zone_temperature:
+        location: "Z_FINGER_END (Z+); inner band; far from heat sources"
+        components: ["TMP117 (WCSP-1.5x1.5x0.5 mm temperature sensor)"]
+        routing_concerns: ["I2C0 shared bus; the TMP117 thermal pad is connected to the PCB ground for improved thermal coupling"]
+      decoupling:
+        per_rail: ["100 nF X7R 0402 close to each rail pin", "10 uF X5R 0402 close to each IC's power pin", "1 uF X5R 0201 close to each IC's analog pin (where applicable)"]
+        total_count: 12
+        placement: "next to each IC's power pin; within 1-2 mm for high-frequency decoupling"
+
+    pcb_envelope_parameter: "pcb_envelope_length, pcb_envelope_width, pcb_envelope_height (TBD on industrial-design artifact; see section 2)"
+
+  # =========================================================================
+  # 5. Crown design
+  # =========================================================================
+  crown_design:
+    coordinate_system: "inherited from mechanical/crown-layout.yaml section 1 (right-handed; X+ rightward; Y+ outward; Z+ toward finger tip; left-hand wear default)"
+    electrode_direction: "per mechanical/crown-layout.yaml section 3: SWIPE_LEFT = right-to-left along slider electrodes; SWIPE_RIGHT = left-to-right; SWIPE_UP = back-to-front (toward finger tip); SWIPE_DOWN = front-to-back (toward wrist)"
+    swipe_direction: "see electrode_direction above"
+    rotation_convention: "per mechanical/crown-layout.yaml section 5: GYR_Z positive = CW (right-hand rule around Z+); GYR_Z negative = CCW"
+    electrode_numbering: "5 or 7 electrodes E0..E6 per mechanical/crown-layout.yaml section 2"
+
+    external_crown_interaction_surface:
+      interaction_method: "thumb-pad touch (per mechanical/crown-layout.yaml section 7); the user's thumb touches the crown surface"
+      finger_contact_area: "the thumb pad's contact area is approximately 15-20 mm in diameter (engineering assumption; TBD on prototype characterisation per mechanical/crown-layout.yaml section 7)"
+      electrode_accessibility: "the electrodes are flush or slightly recessed below the outer shell surface; the crown overlay may add a thin (0.1 mm) protective layer"
+      crown_curvature: "matches the ring's outer radius; the crown is an arc (or curved rectangle) on the top of the band"
+      tactile_boundaries: "the crown is bounded by the band's outer surface; the boundary between the crown and the band's sides should be a smooth radius to avoid sharp edges"
+      accidental_activation: "the electrodes require the IQS127D's capacitive-sensing threshold (TBD on datasheet); the threshold is set high enough that incidental contact (e.g. putting on a jacket) does NOT trigger a gesture; the wear-state manager ignores gestures when WEAR_OFF (the ring is not worn)"
+      glove_finger_interaction: "gloves reduce the capacitive-sensing signal; the IQS127D's threshold must accommodate gloves (TBD on prototype test); the V1 does NOT claim glove support"
+      sweat_moisture: "sweat is conductive; it can short the electrodes and trigger false gestures; the firmware debounces touch events and the WEAR_OFF state suppresses false positives; the IQS127D is on the outer band where sweat is minimal (the inner band is the sweat exposure surface per mechanical/pogo-charger-layout.yaml section 12)"
+
+    electrode_dimensions:
+      electrode_width: "TBD on industrial-design artifact"
+      electrode_length: "TBD on industrial-design artifact"
+      electrode_spacing: "TBD on industrial-design artifact"
+      electrode_count_decision: "5-electrode vs 7-electrode layout (TBD on prototype characterisation per components/touch-selection.yaml §crown_geometry; both configurations supported via compile-time switch)"
+
+    tactile_boundaries: "the crown edges must be smooth (no sharp corners); the transition from crown surface to band's outer surface is a continuous radius (TBD on industrial-design)"
+
+  # =========================================================================
+  # 6. Antenna packaging
+  # =========================================================================
+  antenna_packaging:
+    selected_antenna: "Johanson Technology 2450AT18B100 (SMD-2x1.25x0.85 mm; 2.4-2.5 GHz; peak gain 1.5 dBi; per components/antenna-selection.yaml section recommended)"
+    location:
+      zone: "Z_FINGER_END (Z+ extreme of the band)"
+      surface: "Y = -R_inner (the inner band; closest to the finger)"
+      rationale: "the antenna is on the finger-tip end of the band, AWAY from the body (the hand + wrist + arm act as RF absorbers per components/antenna-selection.yaml section note)"
+    rf_keepout:
+      baseline_keepout_mm: 5
+      shape: "sphere (or ellipsoid) of radius 5 mm centred on the antenna"
+      enforcement: "the PCB must have a copper cutout in all ground/power layers within the keepout; the antenna feed line is the only conductor allowed inside"
+      sufficiency: "the 5 mm baseline is documented per components/antenna-selection.yaml; the actual VSWR is NOT yet validated by the vendor reference design; if 5 mm is insufficient, the keepout must be increased (TBD on prototype RF measurement)"
+    metal_avoidance:
+      pcb_ground_plane: "cutout within the keepout"
+      battery: "battery is at Z-; the Z separation is well above 5 mm"
+      LRA: "LRA is at Z-; the Z separation is well above 5 mm"
+      metal_enclosure: "the enclosure is plastic (no metal; per mechanical/inner-band-layout.yaml section 4)"
+      magnet: "the magnet (charging magnet) is at Z-; the Z separation is well above 5 mm; the magnet's static field does NOT affect 2.4 GHz RF (the magnet's field is DC)"
+    battery_interaction: "the battery's metal foil layers are conductive; the battery is at Z- (well outside the antenna keepout)"
+    pcb_interaction: "the PCB's ground plane has a cutout within the keepout; the antenna feed line is the only conductor inside"
+    crown_shell_interaction: "the crown is at Y = +R_crown (opposite the antenna at Y = -R_inner); the Y separation is well above 5 mm"
+    finger_proximity: "the finger is between the antenna and the outer band; this is the standard placement for ring-form-factor wearables and is unavoidable; the Johanson chip antenna has ceramic-body immunity to body detuning per components/antenna-selection.yaml"
+    charging_magnet_interaction: "the charging magnet is at Z- (palm end); the antenna is at Z+ (finger end); the Z separation is well above 5 mm; the magnet's static field does NOT affect the antenna"
+    rf_validation_status: "NOT validated; the V1 antenna placement is a starting point and must be validated with a prototype (per the brief: 'do not claim RF validation where none exists')"
+
+  # =========================================================================
+  # 7. Haptic packaging
+  # =========================================================================
+  haptic_packaging:
+    selected_actuator: "Precision Microdrives 308-101 (8 mm LRA; 175 Hz resonance; per components/haptic-selection.yaml section recommended)"
+    actuator_zone:
+      location: "Z_PALM_END (Z-); inner band surface (Y = -R_inner)"
+      orientation: "the LRA's mass axis is perpendicular to the finger; the LRA vibrates along the finger's radial direction (Y axis)"
+      mass_contact: "the LRA's mass touches the finger through the inner-band plastic + foam padding"
+    mechanical_coupling_path:
+      path: "LRA vibration → LRA mass → LRA flex PCB → inner-band cavity foam → inner-band plastic → finger skin → user"
+      loss_mechanisms:
+        - "foam padding absorbs some vibration (minimised by stiff foam; TBD on prototype)"
+        - "inner-band plastic absorbs some vibration (minimised by thin, stiff plastic; TBD on prototype)"
+        - "contact between LRA flex PCB and finger is the primary loss (minimised by direct contact)"
+    vibration_transfer:
+      target_amplitude: "TBD on prototype characterisation; engineering target: perceptible to the wearer without being uncomfortable"
+    isolation_from_imu:
+      strategy: "the LRA is at Z- (palm end); the BMI270 is at Z=0 (centre); the Z separation must be > 10 mm to attenuate the 175 Hz vibration by >= 20 dB (engineering assumption; TBD on prototype)"
+      decoupling: "the LRA's flex PCB is mechanically decoupled from the main PCB by a foam gap; the vibration does not couple directly into the main PCB"
+      frequency_separation: "the BMI270's ODR is 50 Hz with a low-pass filter; the LRA's 175 Hz resonance is above the filter cutoff; the firmware may further notch-filter the 175 Hz component (TBD on prototype)"
+    lra_minimum_separation_from_imu:
+      value: "TBD on prototype characterisation"
+      status: "this is the key TBD for the haptic/IMU interaction per mechanical/inner-band-layout.yaml section 9 + protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters"
+    isolation_from_temperature_sensor:
+      separation: "the TMP117 is at Z+ (finger end); the LRA is at Z- (palm end); the Z separation is the full band length; the LRA's brief thermal pulse is averaged out by the TMP117's 1 Hz conversion"
+    isolation_from_antenna:
+      separation: "the antenna is at Z+ (finger end); the LRA is at Z- (palm end); the Z separation is well above 5 mm; the LRA's 175 Hz vibration does NOT radiate significant RF at 2.4 GHz"
+    retention_strategy:
+      concept: "the LRA's flex PCB is held in place by the foam-padded inner-band cavity; the enclosure's compression fit provides the mechanical preload; no mechanical fasteners in V1"
+
+  # =========================================================================
+  # 8. Temperature sensor
+  # =========================================================================
+  temperature_sensor:
+    selected_sensor: "TI TMP117 (WCSP-1.5x1.5x0.5 mm; per components/temperature-selection.yaml section recommended)"
+    placement:
+      zone: "Z_FINGER_END (Z+); inner band (Y = -R_inner)"
+      rationale: "the TMP117 measures the FINGER temperature, not the PCB or battery temperature; placement on the inner band at the finger-tip end minimises thermal coupling to heat-producing components (per components/temperature-selection.yaml section placement)"
+      avoid_placement_near:
+        - "nRF54L15 (Z = 0 centre; the Z separation is well above the keepout threshold; the BLE TX heat is brief)"
+        - "regulators (LDOs are at Z = 0 centre; the heat dissipation is small; the Z separation is sufficient)"
+        - "DRV2605L (at Z = -R_inner PALM_END; the Z separation is the full band length)"
+        - "LRA (at Z = -R_inner PALM_END; the Z separation is the full band length)"
+        - "charging contacts (at Z = -R_inner PALM_END; the charging heat is brief and the Z separation is sufficient)"
+    thermal_coupling_path: "finger skin → inner-band plastic → PCB copper (with thermal pad connection per the TMP117 datasheet TBD) → TMP117 die"
+    thermal_resistance: "TBD on prototype characterisation (the inner-band plastic + PCB thickness determines the thermal resistance; not invented here)"
+    isolation_strategy: "the TMP117 is in its own zone at Z_FINGER_END; the only thermal connection to the rest of the band is via the PCB copper; the thermal pad connection is to the PCB ground (TBD on datasheet)"
+    skin_interface:
+      description: "the TMP117 is the closest component to the finger-facing surface; thermal coupling is via the inner-band plastic + PCB; the reading is a delayed + attenuated version of the true finger temperature"
+      thermal_time_constant_s: "TBD on prototype characterisation; engineering estimate: 5-30 seconds for the thermal mass of the inner band + PCB"
+    thermal_lag: "the TMP117's reading lags the true finger temperature by approximately 5-30 seconds; the firmware must account for this lag when using the temperature for any user-facing function (none in V1)"
+    calibration: "factory-calibrated per TI; no in-field calibration is required for V1 (per electrical/sensor-interface_part2.yaml section sensor_tmp117.calibration_procedure)"
+
+  # =========================================================================
+  # 9. Touch / electrode packaging
+  # =========================================================================
+  touch_electrode_packaging:
+    selected_ic: "Azoteq IQS127D-00200 (WLCSP-1.5x1.5 mm; up to 7 electrodes; per components/touch-selection.yaml section recommended)"
+    electrode_placement:
+      zones: "5 or 7 electrodes E0..E6 on the crown surface (Y = +R_crown) per mechanical/crown-layout.yaml section 2"
+      routing: "each electrode is electrically connected to one of the IQS127D's channel pins via PCB traces (or a flex tail) per mechanical/crown-layout.yaml section 6"
+      electrode_spacing: "TBD on industrial-design artifact; determined by electrode dimensions + crown size"
+    grounding:
+      electrode_ground_pour: "the crown area of the PCB has a copper cutout in all ground/power layers; only the electrode traces + IQS127D's mounting pads are present (per mechanical/pogo-charger-layout.yaml section 9)"
+      pcb_ground_under_crown: "cutout; prevents baseline capacitance shift"
+    pcb_ground_interaction: "the cutout under the crown ensures the IQS127D's capacitive-sensing is not perturbed by ground/power copper; the cutout is a baseline requirement"
+    battery_interaction: "the battery is at Z- PALM_END (well outside the crown at Z = 0 MIDDLE / Z+ FINGER_END); no interaction"
+    antenna_interaction: "the antenna is at Z+ FINGER_END on the inner band; the crown is at Z = 0 MIDDLE on the outer band; no interaction (the Y separation is well above 5 mm)"
+    shell_material: "TBD on industrial-design; engineering assumption: plastic (polycarbonate or ABS) over the crown; the capacitive-sensing signal passes through the plastic; the plastic thickness must be <= the IQS127D's sensing range (TBD on datasheet)"
+    finger_contact: "the thumb pad touches the crown; the capacitive-sensing signal couples through the plastic to the IQS127D's electrodes"
+    moisture: "sweat + skin oils can affect the electrode baseline capacitance; the IQS127D's baseline calibration compensates for this; the firmware debounces the touch events"
+    accidental_activation: "the WEAR_OFF state suppresses touch gestures when the ring is not worn; the IQS127D's touch threshold is set to ignore incidental contact (TBD on datasheet + prototype test)"
+
+  # =========================================================================
+  # 10. Charging interface
+  # =========================================================================
+  charging_interface:
+    architecture: "2-contact magnetic pogo (V+ + GND) per mechanical/pogo-charger-layout.yaml"
+    ring_charging_location: "Z_PALM_END (Z-); inner band surface (Y = -R_inner) per mechanical/pogo-charger-layout.yaml section 8"
+    contacts:
+      POGO_V_plus:
+        location: "one of the two pogo contact positions on the inner band at Z_PALM_END; the exact position is TBD on industrial-design"
+        function: "5 V supply from the cradle; connects to the MCP73831 VIN pin"
+        current_rating_ma: 500
+        trace_impedance: "low-impedance; >= 0.5 mm trace width"
+      POGO_GND:
+        location: "the other pogo contact position; the exact position is TBD on industrial-design"
+        function: "ground return from the cradle; connects to the PCB ground"
+        current_rating_ma: 500
+        trace_impedance: "low-impedance; >= 0.5 mm trace width"
+    magnetic_alignment:
+      concept: "magnets in the ring + matching magnets in the cradle; the magnet arrangement is option_a (two magnets) or option_b (single bipolar magnet); TBD on prototype characterisation"
+      prevention_of_incorrect_mating: "magnetic polarity + mechanical key (peg + notch); the mechanical key is TBD on industrial-design"
+      alignment_force_g: "approximately 50-200 g of holding force (engineering estimate; TBD on magnet selection)"
+    mechanical_key:
+      concept: "a peg on the cradle that mates with a notch on the ring's inner band; the key is TBD on industrial-design"
+    contact_access:
+      shell_opening_recess: "the inner-band shell has a small recessed pocket that exposes the pogo contacts; the pocket is sealed by a silicone gasket when the ring is not on the cradle per mechanical/pogo-charger-layout.yaml section 8"
+      gasket_material: "silicone; Shore A hardness TBD"
+      through_hole_vs_recessed_pocket: "TBD on prototype characterisation (recessed pocket preferred for sealing; through-hole simpler)"
+    cradle_mating_surface:
+      concept: "the cradle has a curved surface that matches the ring's outer radius; the magnet attraction draws the ring into the correct position; the pogo pins compress slightly"
+      cradle_is_external: "the cradle is NOT part of the V1 ring scope; it is a separate mechanical/industrial-design project per mechanical/pogo-charger-layout.yaml section 5"
+    unresolved_dimensions: "all pogo contact dimensions, magnet dimensions, shell recess dimensions, gasket dimensions, mechanical key dimensions are TBD on industrial-design"
+
+  # =========================================================================
+  # 11. Thermal architecture
+  # =========================================================================
+  thermal_architecture:
+    heat_sources:
+      - { source: "nRF54L15 BLE TX", dissipation_w: "approximately 0.031 W peak at 0 dBm TX (3.85 V * 8 mA; brief; engineering estimate per analysis/battery-life-analysis.yaml section 11)" }
+      - { source: "nRF54L15 CPU active", dissipation_w: "negligible; engineering estimate" }
+      - { source: "TPS7A02 3.3 V LDO", dissipation_w: "approximately 0.0017 W at typical BLE load (3.85 - 3.3) * 0.003; engineering estimate)" }
+      - { source: "TPS7A02 1.8 V LDO", dissipation_w: "approximately 0.00015 W at typical sensor load (1.5 * 0.0001; engineering estimate)" }
+      - { source: "MCP73831 at 22.5 mA charge", dissipation_w: "approximately 0.025 W (5 - 3.85) * 0.022; engineering estimate)" }
+      - { source: "DRV2605L + LRA peak pulse", dissipation_w: "approximately 0.15 W peak (3.0 * 0.050); the pulse is brief (100 ms) so AVERAGE dissipation is small" }
+      - { source: "Battery self-heating at 22.5 mA charge", dissipation_w: "approximately 0.00024 W (0.022^2 * 0.5; engineering estimate with TBD internal resistance)" }
+      - { source: "Battery self-heating at 500 mA charge (UNSAFE)", dissipation_w: "approximately 0.125 W; this scenario is NOT recommended per analysis/battery-life-analysis.yaml section 10" }
+
+    conceptual_thermal_paths:
+      path_1:
+        description: "electronics → PCB → outer shell → ambient/finger"
+        components_in_path: ["nRF54L15", "BMI270", "IQS127D", "TMP117", "MAX17048", "DRV2605L", "decoupling capacitors", "LDOs"]
+        heat_dissipation_method: "conduction through the PCB + shell to the ambient; small convection from the outer surface"
+      path_2:
+        description: "battery → retention material → shell/ambient"
+        components_in_path: ["battery", "foam padding", "inner-band plastic", "ambient"]
+        heat_dissipation_method: "conduction through the foam + plastic to the ambient; the foam provides thermal isolation from the finger"
+      path_3:
+        description: "MCP73831 → PCB → shell/ambient (during charging only)"
+        components_in_path: ["MCP73831", "PCB copper", "outer shell", "ambient"]
+        heat_dissipation_method: "conduction; at 22.5 mA charge the dissipation is ~0.025 W which is negligible"
+
+    finger_contact_avoidance:
+      rule: "no significant heat source directly against the finger"
+      analysis:
+        - { source: "nRF54L15", distance_from_finger: "Z = 0 (centre); Y = 0 (PCB centre plane); the distance from the inner band is approximately half the band thickness; thermal resistance TBD" }
+        - { source: "DRV2605L", distance_from_finger: "the LRA is in direct contact with the finger; the LRA's pulse is brief (100 ms) and the AVERAGE thermal dissipation is small; the firmware limits haptic frequency" }
+        - { source: "Battery", distance_from_finger: "the battery is at the inner band but isolated by foam padding; the thermal resistance from the battery to the finger is high (TBD on prototype)" }
+        - { source: "MCP73831 (during charging)", distance_from_finger: "the MCP73831 is at Z- PALM_END; the distance from the finger is significant; the dissipation is negligible at 22.5 mA" }
+
+    thermal_resistances: "TBD on prototype characterisation; the thermal resistance values are NOT invented here"
+
+  # =========================================================================
+  # 12. Ergonomics
+  # =========================================================================
+  ergonomics:
+    finger_facing_surface:
+      description: "the inner band (Y = -R_inner) is the finger-facing surface; it carries the TMP117 + LRA; it must be smooth and biocompatible"
+      smoothness: "TBD on industrial-design; engineering target: smooth, no sharp edges, no pressure points"
+      biocompatibility: "TBD on industrial-design; engineering target: medical-grade silicone or biocompatible plastic; final biocompatibility claim requires certification"
+      moisture_management: "the inner band is exposed to sweat; the V1 is sweat-resistant (not full IP68); the inner-band surface should be wipeable"
+    crown_contact_surface:
+      description: "the crown (Y = +R_crown) is the touch-sensitive surface; it carries the IQS127D electrodes"
+      tactile_feel: "TBD on industrial-design; engineering target: smooth, slightly textured for grip, distinguishable from the rest of the band"
+      ergonomics: "the crown is the top of the ring when worn naturally with the palm facing the body; the user's thumb reaches the crown by rotating the wrist"
+    pressure_points: "no hard pressure points against the finger; the inner band must distribute pressure uniformly"
+    edges: "the band's edges (inner-outer boundary + palm-end + finger-end faces) must be smooth radii; no sharp edges"
+    curvature:
+      inner_curvature: "matches the user's finger radius; varies with ring size (US6..US13)"
+      outer_curvature: "matches the inner curvature plus the band thickness; engineering target: smooth continuous curve"
+    weight_distribution:
+      total_weight_g: "TBD on industrial-design (engineering estimate: 5-10 g for a 45 mAh curved LiPo + 4-layer PCB + plastic enclosure)"
+      center_of_mass: "approximately at the band's geometric centre; the battery is at Z- PALM_END so the COM is slightly toward the palm; this is the natural orientation for a ring"
+    comfort_zones:
+      finger_contact_zone: "the inner band's full circumference is the comfort zone; the LRA's mass is the only localised feature"
+      avoid_zones: "no localised features on the inner band; the LRA's mass is intentionally placed where the finger pad naturally rests"
+    sensor_contact: "the TMP117 must maintain thermal contact with the finger; the inner-band plastic + PCB must be thin enough for adequate thermal coupling (TBD on thermal resistance)"
+    charging_orientation: "the ring is placed on the cradle with the inner band down (palm end mating with the cradle); the magnetic alignment self-orients the ring"
+    ergonomic_cad_parameters:
+      ring_inner_diameter: "TBD (US6..US13 engineering target range)"
+      band_thickness: "TBD (engineering target < 3 mm; V1 stack-up estimated 5-7 mm per mechanical/inner-band-layout.yaml section 8)"
+      band_width: "TBD"
+      inner_band_radius: "TBD on industrial-design"
+      outer_band_radius: "TBD on industrial-design"
+      crown_radius: "TBD on industrial-design"
+      inner_band_surface_roughness: "TBD on industrial-design"
+      pressure_point_count: "0 (no localised pressure points)"
+      edge_radius_minimum_mm: "TBD on industrial-design"
+    prototype_validation_required: "the comfort claims are engineering targets; final comfort must be validated on a prototype (per mechanical/crown-layout.yaml section 7 + mechanical/pogo-charger-layout.yaml section 12)"
+
+  # =========================================================================
+  # 13. Assembly architecture
+  # =========================================================================
+  assembly_architecture:
+    description: "Conceptual assembly sequence. The actual manufacturing process is determined by the manufacturing engineering artifact (not yet created); this section defines the conceptual sequence and retention strategy."
+
+    assembly_sequence:
+      - { step: 1, name: "PCB assembly", description: "the rigid PCB is populated with all SMD components (nRF54L15, BMI270, IQS127D, TMP117, MAX17048, DRV2605L, LDOs, decoupling caps, STATUS LED) using standard SMT reflow" }
+      - { step: 2, name: "LRA assembly", description: "the LRA is mounted on a small flex PCB; the flex PCB tail is soldered to the main PCB at the OUT+ and OUT- pads" }
+      - { step: 3, name: "Antenna assembly", description: "the Johanson chip antenna is soldered to the main PCB at the Z_FINGER_END zone; the antenna feed line is the only conductor inside the keepout" }
+      - { step: 4, name: "Battery assembly", description: "the curved LiPo cell is placed in the Z- cavity of the inner band; the cell's BAT+, BAT-, and NTC wires are connected to the main PCB" }
+      - { step: 5, name: "Pogo assembly", description: "the magnetic pogo contacts are mounted on the inner band at Z-; the pogo wires are routed to the MCP73831's VIN and GND" }
+      - { step: 6, name: "Inner band assembly", description: "the foam padding is placed over the battery + LRA; the inner-band plastic shell is placed over the foam; the assembly is enclosed" }
+      - { step: 7, name: "Outer band assembly", description: "the outer-band plastic shell is placed over the PCB; the crown electrodes are aligned with the IQS127D's channel pads" }
+      - { step: 8, name: "Final enclosure", description: "the outer + inner shells are joined (glue or ultrasonic welding; TBD on manufacturing engineering artifact)" }
+
+    adhesive_locations: "TBD on industrial-design (the V1 does not select specific adhesives; the assembly concept uses foam compression + shell compression for retention)"
+
+    mechanical_retention:
+      pcb: "held in place by the enclosure's compression fit; no screws in V1"
+      battery: "held by the foam padding + inner-band shell pressure; no rigid constraint to allow swelling"
+      LRA: "held by the foam padding + inner-band shell pressure (direct finger contact)"
+      antenna: "soldered to the PCB; no mechanical retention"
+      pogo_contacts: "held in the shell recess; the silicone gasket provides the seal; TBD on industrial-design"
+
+    battery_retention: "foam-padded cavity in the inner band; the cell is NOT rigidly constrained; the foam absorbs the cell's ~5% thickness expansion over cycle life per components/battery-selection.yaml section safety.swelling"
+
+    shell_joining: "glue or ultrasonic welding; TBD on manufacturing engineering artifact; the V1 does NOT select a specific joining method"
+
+    access_serviceability:
+      v1_serviceable_components: "NONE; the V1 ring enclosure is glued or ultrasonically welded; replacing any component requires breaking the enclosure"
+      v2_serviceability: "TBD on manufacturing engineering artifact; V2 may use a serviceable enclosure (e.g. screwed back) for battery replacement"
+
+    manufacturing_sequence: "PCB SMT → LRA flex → antenna → battery → pogo → inner band → outer band → final enclosure; the sequence is a CONCEPTUAL ordering; the actual sequence is determined by the manufacturing engineering artifact"
+
+  # =========================================================================
+  # 14. Material strategy
+  # =========================================================================
+  material_strategy:
+    candidate_material_categories:
+      outer_shell: "plastic (polycarbonate or ABS); engineering estimate; final selection TBD on industrial-design + biocompatibility testing"
+      inner_shell: "plastic + foam padding; engineering estimate; foam material TBD (silicone or polyurethane foam)"
+      crown: "thin plastic overlay (polycarbonate or ABS); the capacitive-sensing signal must pass through the overlay; the overlay thickness must be <= the IQS127D's sensing range (TBD on datasheet)"
+      electrode_surface: "conductive pads (copper with gold plating for corrosion resistance; per mechanical/pogo-charger-layout.yaml section 12)"
+      battery_retention: "silicone or polyurethane foam; engineering estimate; material TBD on industrial-design"
+      charging_contact_region: "gold-plated contacts (TBD on the selected pogo contact); silicone gasket for sealing per mechanical/pogo-charger-layout.yaml section 8"
+
+    material_classification:
+      outer_shell: "MATERIAL TBD (engineering target: polycarbonate or ABS)"
+      inner_shell: "MATERIAL TBD (engineering target: polycarbonate or ABS)"
+      crown_overlay: "MATERIAL TBD (must be capacitive-sensing-compatible; thickness TBD)"
+      battery_retention_foam: "MATERIAL TBD (engineering target: silicone or polyurethane foam)"
+      charging_contact_gasket: "MATERIAL TBD (engineering target: silicone)"
+      electrode_plating: "DESIGN TARGET: gold (corrosion resistance)"
+
+    biocompatibility: "TBD on industrial-design + certification; the V1 does NOT claim biocompatibility"
+    ip_rating: "TBD on industrial-design + testing; the V1 target is sweat-resistant (per components/charger-selection.yaml section option_B); the V1 does NOT claim full IP68"
+    durability: "TBD on prototype testing; the V1 does NOT claim a specific cycle life, drop rating, or temperature range"
+    material_selection_constraints:
+      - "the outer shell must be transparent to 2.4 GHz RF (no metallic coating that would shield the antenna)"
+      - "the inner shell + foam must be thermally insulating (the battery + LRA heat should NOT reach the finger)"
+      - "the crown overlay must be capacitive-sensing-compatible (thickness <= IQS127D sensing range; TBD on datasheet)"
+      - "the charging contact region must be gold-plated for corrosion resistance (sweat + skin oils are corrosive)"
+      - "all materials in contact with the skin must be biocompatible (TBD on certification)"
+
+  # =========================================================================
+  # 15. Electromagnetic / sensor interference matrix
+  # =========================================================================
+  em_sensor_interference_matrix:
+    description: "Comprehensive interaction matrix. Every potential interference is analysed for risk, mitigation, verification method, and current status."
+    interactions:
+      - { pair: "battery ↔ antenna", risk: "the battery's metal foil layers are conductive; they can detune the antenna or absorb RF energy", mitigation: "battery at Z-; antenna at Z+; the Z separation is well above 5 mm", verification: "VSWR measurement on a prototype with the actual battery in place", status: "YELLOW (mitigation by spatial separation; VSWR not yet validated)" }
+      - { pair: "battery ↔ BMI270", risk: "the battery's magnetic fields (if any) and its vibration coupling are negligible for the BMI270; the battery's thermal coupling can bias the BMI270's temperature reading (V2 only; V1 does not use BMI270 for temperature)", mitigation: "the BMI270 is not used for temperature; the TMP117 is the dedicated temperature sensor", verification: "prototype characterisation", status: "GREEN (no expected interaction in V1)" }
+      - { pair: "battery ↔ touch", risk: "the battery is far from the touch electrodes (Z- vs Z = 0 / Z+); no direct coupling", mitigation: "spatial separation", verification: "prototype touch sensitivity test", status: "GREEN" }
+      - { pair: "battery ↔ haptic", risk: "the battery's vibration coupling into the haptic mount is negligible", mitigation: "spatial separation (battery at Z-; LRA at Z- in the same section but separate cavity)", verification: "prototype characterisation", status: "GREEN" }
+      - { pair: "magnet ↔ BMI270", risk: "the BMI270 is a 6-axis IMU (no magnetometer); the static magnetic field does NOT affect accelerometer or gyroscope readings", mitigation: "none required (no magnetometer)", verification: "datasheet confirmation (BMI270 is 6-axis; no magnetometer)", status: "GREEN" }
+      - { pair: "magnet ↔ antenna", risk: "the antenna is NOT sensitive to DC magnetic fields; the antenna's VSWR is determined by nearby conductive structures, not by static magnetic fields", mitigation: "spatial separation (magnet at Z-; antenna at Z+)", verification: "VSWR measurement with and without magnet in place", status: "YELLOW (mitigation by spatial separation; VSWR not yet validated with magnet in place)" }
+      - { pair: "magnet ↔ touch", risk: "capacitive sensors are NOT sensitive to DC magnetic fields; the magnet does NOT affect the IQS127D's electrode capacitance", mitigation: "none required", verification: "prototype touch sensitivity test", status: "GREEN" }
+      - { pair: "magnet ↔ battery", risk: "the LiPo chemistry is NOT sensitive to DC magnetic fields; no expected interaction", mitigation: "none required", verification: "cell datasheet confirmation", status: "GREEN (assumed; verify with cell datasheet)" }
+      - { pair: "LRA ↔ BMI270", risk: "the LRA's 175 Hz vibration couples into the BMI270 IMU as a false acceleration signal", mitigation: "spatial separation (>= 10 mm); mechanical decoupling (foam gap); frequency separation (BMI270 low-pass filter)", verification: "prototype vibration characterisation; measure the BMI270 signal with and without the LRA active", status: "YELLOW (mitigation strategies defined; effectiveness TBD on prototype)" }
+      - { pair: "LRA ↔ TMP117", risk: "the LRA's drive current creates a brief thermal pulse that may reach the TMP117", mitigation: "spatial separation (Z- vs Z+); the thermal pulse is < 100 ms and is averaged out by the TMP117's 1 Hz conversion", verification: "prototype thermal characterisation", status: "GREEN (mitigation by spatial separation + averaging)" }
+      - { pair: "LRA ↔ antenna", risk: "the LRA's 175 Hz vibration does NOT radiate significant RF at 2.4 GHz", mitigation: "spatial separation", verification: "VSWR measurement during haptic pulse", status: "GREEN (assumed; no expected interaction)" }
+      - { pair: "touch ↔ ground", risk: "the IQS127D's capacitive-sensing electrodes are sensitive to ground/power copper; nearby copper can shift the baseline capacitance", mitigation: "the crown area of the PCB has a copper cutout in all ground/power layers", verification: "prototype touch sensitivity test", status: "GREEN (mitigation by cutout)" }
+      - { pair: "touch ↔ RF", risk: "the IQS127D's traces + the antenna feed line are on different PCB layers; the Y separation is well above 5 mm", mitigation: "spatial separation + PCB layer separation", verification: "prototype touch sensitivity during BLE TX", status: "GREEN" }
+      - { pair: "charger ↔ RF", risk: "the pogo contacts carry 5 V DC; the antenna feed line is a 50 ohm controlled-impedance line; the pogo contacts do NOT radiate RF", mitigation: "the pogo traces are routed AWAY from the antenna feed line + the antenna keepout", verification: "VSWR measurement during charging", status: "YELLOW (mitigation by routing; VSWR not yet validated during charging)" }
+      - { pair: "charger ↔ touch", risk: "the pogo contacts are at Z-; the crown electrodes are at Z = 0 MIDDLE; the Z separation is the band length", mitigation: "spatial separation", verification: "prototype touch sensitivity during charging", status: "GREEN" }
+
+  # =========================================================================
+  # 16. Manufacturing strategy
+  # =========================================================================
+  manufacturing_strategy:
+    prototype_strategy:
+      purpose: "validate the geometry, ergonomics, and RF performance before committing to tooling"
+      methods:
+        - { method: "3D printing", variants: ["SLA (resin; high accuracy)", "FDM (lower accuracy; faster iteration)"], recommendation: "SLA for the first prototype (best surface finish + dimensional accuracy); FDM for early concept iterations" }
+        - { method: "PCB fabrication", recommendation: "standard 4-layer rigid PCB from a low-volume PCB fabricator (e.g. JLCPCB, OSHPark)" }
+        - { method: "assembly", recommendation: "manual assembly for the first prototype (hand-solder components); pick-and-place for subsequent prototypes" }
+        - { method: "testing", recommendation: "validate dimensional fit, touch sensitivity, BLE range, haptic perception, thermal comfort, wear detection" }
+
+    production_strategy:
+      purpose: "the eventual manufacturing process for the production ring"
+      methods:
+        - { method: "injection-molded shell", recommendation: "the outer + inner shells are injection-molded plastic; the mold is designed once the prototype geometry is validated" }
+        - { method: "PCB insertion", recommendation: "the PCB is inserted into the inner shell before the outer shell is welded/glued" }
+        - { method: "battery insertion", recommendation: "the battery is placed in the inner-band cavity with foam padding; the foam provides the compression fit" }
+        - { method: "shell joining", recommendation: "ultrasonic welding or adhesive bonding (TBD on manufacturing engineering artifact)" }
+        - { method: "electrode manufacturing", recommendation: "the crown electrodes are PCB copper traces with a thin protective overlay; the overlay is applied during PCB fabrication" }
+        - { method: "pogo contact installation", recommendation: "the pogo contacts are press-fit into the inner-band shell recess; the silicone gasket is installed in the recess before the outer shell is joined" }
+        - { method: "antenna clearance", recommendation: "the antenna clearance is verified during PCB design review; the PCB layout enforces the 5 mm keepout" }
+        - { method: "testing", recommendation: "100% RF test (VSWR measurement); sample BLE range test; sample drop test; sample thermal cycle test" }
+
+    prototype_vs_production_distinction:
+      description: "the prototype strategy is iterative + low-volume + manual; the production strategy is high-volume + automated + injection-molded. The two are CLEARLY DIFFERENT; the industrial-design artifact must support both."
+
+  # =========================================================================
+  # 17. CAD parameter master list
+  # =========================================================================
+  cad_parameter_master_list:
+    description: "Centralized CAD parameter table. Every parameter is the input to a future parametric CAD model. Unknown values are TBD."
+    parameters:
+      - { name: "ring_inner_diameter", meaning: "inner band diameter at Y = -R_inner", value: "TBD (engineering target range: 16.5-22.0 mm for US6-US13)", unit: "mm", source: "research/smart-ring-landscape.md section 1", status: "DESIGN_TARGET" }
+      - { name: "ring_inner_circumference", meaning: "inner band circumference", value: "TBD (derived: ring_inner_diameter * pi)", unit: "mm", source: "derived", status: "DERIVED" }
+      - { name: "band_thickness", meaning: "radial thickness of the ring band (Y dimension)", value: "TBD (engineering target < 3 mm; V1 stack-up estimated 5-7 mm per mechanical/inner-band-layout.yaml section 8)", unit: "mm", source: "mechanical/inner-band-layout.yaml section 8", status: "DESIGN_TARGET" }
+      - { name: "band_width", meaning: "axial length of the band (Z dimension)", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "crown_length", meaning: "axial length of the crown (Z dimension at Y = +R_crown)", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "crown_width", meaning: "circumferential length of the crown (X dimension at Y = +R_crown)", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "crown_height", meaning: "protrusion of the crown above the band's outer surface", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "pcb_length", meaning: "axial length of the PCB", value: "TBD", unit: "mm", source: "mechanical/inner-band-layout.yaml section 2", status: "DESIGN_TARGET" }
+      - { name: "pcb_width", meaning: "circumferential width of the PCB", value: "TBD", unit: "mm", source: "mechanical/inner-band-layout.yaml section 2", status: "DESIGN_TARGET" }
+      - { name: "pcb_height", meaning: "thickness of the PCB", value: "TBD (engineering target 0.6-1.0 mm for 4-layer rigid PCB)", unit: "mm", source: "mechanical/inner-band-layout.yaml section 2", status: "DESIGN_TARGET" }
+      - { name: "battery_length", meaning: "axial length of the curved LiPo cell", value: "TBD (engineering estimate 35-40 mm)", unit: "mm", source: "components/battery-selection.yaml section candidates", status: "DESIGN_TARGET" }
+      - { name: "battery_width", meaning: "circumferential width of the cell", value: "TBD (engineering estimate 6-8 mm)", unit: "mm", source: "components/battery-selection.yaml section candidates", status: "DESIGN_TARGET" }
+      - { name: "battery_height", meaning: "radial thickness of the cell", value: "TBD (engineering estimate 2.5-3.5 mm)", unit: "mm", source: "components/battery-selection.yaml section candidates", status: "DESIGN_TARGET" }
+      - { name: "battery_radius", meaning: "inner radius of the cell's curvature", value: "TBD (must match the ring_inner_diameter)", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "antenna_keepout", meaning: "sphere radius around the antenna with no conductive structures", value: "5 mm", unit: "mm", source: "components/antenna-selection.yaml", status: "DESIGN_TARGET (baseline; not validated by vendor reference design)" }
+      - { name: "antenna_zone_length", meaning: "axial length of the Z_FINGER_END zone", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "haptic_zone_length", meaning: "axial length of the LRA + DRV2605L zone", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "haptic_imu_clearance", meaning: "minimum Z separation between LRA (Z-) and BMI270 (Z = 0)", value: "TBD on prototype characterisation", unit: "mm", source: "protocol/gesture-vocabulary.yaml §unresolved_gesture_parameters", status: "TBD" }
+      - { name: "temperature_sensor_skin_offset", meaning: "radial distance from the TMP117 die to the finger skin", value: "TBD on prototype characterisation", unit: "mm", source: "industrial-design artifact", status: "TBD" }
+      - { name: "electrode_spacing", meaning: "centre-to-centre distance between adjacent crown electrodes", value: "TBD", unit: "mm", source: "mechanical/crown-layout.yaml section 8", status: "TBD" }
+      - { name: "electrode_width", meaning: "width of a single crown electrode", value: "TBD", unit: "mm", source: "mechanical/crown-layout.yaml section 8", status: "TBD" }
+      - { name: "pogo_spacing", meaning: "centre-to-centre distance between the two pogo contacts", value: "TBD", unit: "mm", source: "mechanical/pogo-charger-layout.yaml section 13", status: "TBD" }
+      - { name: "pogo_diameter", meaning: "diameter of a single pogo contact pin", value: "TBD", unit: "mm", source: "mechanical/pogo-charger-layout.yaml section 13", status: "TBD" }
+      - { name: "magnet_diameter", meaning: "diameter of a single charging magnet", value: "TBD", unit: "mm", source: "mechanical/pogo-charger-layout.yaml section 13", status: "TBD" }
+      - { name: "magnet_height", meaning: "thickness of a single charging magnet", value: "TBD", unit: "mm", source: "mechanical/pogo-charger-layout.yaml section 13", status: "TBD" }
+      - { name: "charger_recess", meaning: "shell recess that holds the pogo contacts", value: "TBD", unit: "mm", source: "mechanical/pogo-charger-layout.yaml section 13", status: "TBD" }
+      - { name: "shell_thickness", meaning: "general shell wall thickness", value: "TBD (engineering estimate 0.3-0.5 mm)", unit: "mm", source: "mechanical/inner-band-layout.yaml section 8", status: "DESIGN_TARGET" }
+      - { name: "inner_shell_thickness", meaning: "inner-band shell wall thickness", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+      - { name: "outer_shell_thickness", meaning: "outer-band shell wall thickness", value: "TBD", unit: "mm", source: "industrial-design artifact", status: "DESIGN_TARGET" }
+
+  # =========================================================================
+  # 18. Remaining TBD register
+  # =========================================================================
+  remaining_tbds:
+    description: "Consolidated TBD register, deduplicated from crown-layout.yaml, inner-band-layout.yaml, pogo-charger-layout.yaml, battery-life-analysis.yaml, and component-selection files. Each TBD is classified."
+
+    blocking_cad_tbds:
+      description: "TBDs that BLOCK CAD. The CAD model cannot be parameterised without these values."
+      tbds:
+        - { tbd: "ring_inner_diameter (exact V1 ring size)", source: "this artifact section 2", blocking_reason: "the inner ring radius is the basis for all radial dimensions; the ring size is a marketing decision; engineering target range 16.5-22.0 mm documented" }
+        - { tbd: "band_thickness (V1 final)", source: "this artifact section 2", blocking_reason: "the band thickness determines whether all components fit; the V1 stack-up is estimated at 5-7 mm; the Even R1 target is < 3 mm; the V1 may require a thicker band" }
+        - { tbd: "band_width (V1 final)", source: "this artifact section 2", blocking_reason: "determines the Z range for all zones; bounded by the ring's inner circumference" }
+        - { tbd: "pcb_length + pcb_width + pcb_height", source: "this artifact section 2", blocking_reason: "the PCB must fit inside the band with the components + the antenna zone + the battery zone" }
+        - { tbd: "battery_length + battery_width + battery_height + battery_radius", source: "this artifact section 3", blocking_reason: "the actual V1 cell is TBD on the EEMB-class manufacturer datasheet; the engineering estimate is documented" }
+        - { tbd: "crown_length + crown_width + crown_height", source: "this artifact section 2", blocking_reason: "the crown is the user-facing surface; the dimensions determine the gesture vocabulary's physical usability" }
+        - { tbd: "electrode_spacing + electrode_width", source: "this artifact section 5", blocking_reason: "the IQS127D's electrode dimensions determine the gesture vocabulary's physical usability" }
+
+    non_blocking_cad_tbds:
+      description: "TBDs that do NOT block CAD. CAD can proceed with engineering targets; these TBDs are validated by prototype measurement."
+      tbds:
+        - { tbd: "shell_thickness + inner_shell_thickness + outer_shell_thickness", source: "this artifact section 2", non_blocking_reason: "engineering estimates documented; CAD can proceed; prototype measurement validates" }
+        - { tbd: "antenna_zone_length + haptic_zone_length", source: "this artifact section 2", non_blocking_reason: "engineering estimates documented; CAD can proceed; prototype measurement validates" }
+        - { tbd: "charger_recess", source: "this artifact section 2", non_blocking_reason: "depends on the pogo contact selection; CAD can proceed with an envelope" }
+        - { tbd: "pogo_spacing + pogo_diameter", source: "this artifact section 2", non_blocking_reason: "depends on the selected pogo contact; CAD can proceed with envelopes" }
+        - { tbd: "magnet_diameter + magnet_height", source: "this artifact section 2", non_blocking_reason: "depends on the selected magnet; CAD can proceed with envelopes" }
+        - { tbd: "haptic_imu_clearance", source: "this artifact section 7", non_blocking_reason: "prototype vibration characterisation required; CAD can proceed with engineering target" }
+
+    datasheet_tbds:
+      description: "TBDs that require specific datasheet confirmation. These are not engineering assumptions; they are real uncertainties."
+      tbds:
+        - { tbd: "nRF54L15 per-event currents (CPU active, BLE RX, BLE TX, flash write, event duration)", source: "nRF54L15 PS v1.0", blocking_reason: "every per-event current in the BLE average current model is a TBD placeholder" }
+        - { tbd: "EEMB-class LiPo cell max charge C-rate", source: "EEMB-class cell datasheet", blocking_reason: "the 22.5 mA default is the safe conservative choice; a higher rate requires cell-datasheet confirmation" }
+        - { tbd: "EEMB-class cell PCM trip thresholds (overcharge V, overdischarge V, overcurrent A, short-circuit A)", source: "EEMB-class cell datasheet", blocking_reason: "over-discharge + over-current + short-circuit protection depends on these" }
+        - { tbd: "EEMB-class cell NTC type + B constant", source: "EEMB-class cell datasheet", blocking_reason: "the MCP73831's NTC thresholds depend on the NTC type" }
+        - { tbd: "EEMB-class cell internal resistance", source: "EEMB-class cell datasheet", blocking_reason: "the thermal analysis + charging efficiency depend on this" }
+        - { tbd: "MCP73831 RPROG formula + STAT pin encodings + NTC thresholds + thermal threshold + termination current", source: "MCP73831 datasheet", blocking_reason: "the charging current setting + RR04 mapping + thermal protection depend on these" }
+        - { tbd: "IQS127D electrode-to-channel mapping + scan-rate-to-current relationship + INT polarity", source: "Azoteq IQS127D datasheet", blocking_reason: "the gesture vocabulary's electrode mapping + the touch IC's power depend on these" }
+        - { tbd: "BMI270 register addresses + INT1/INT2 configuration + FIFO config", source: "Bosch BMI270 datasheet", blocking_reason: "the IMU bring-up depends on these" }
+        - { tbd: "TMP117 register addresses + ALERT encoding + conversion time", source: "TI TMP117 datasheet", blocking_reason: "the temperature sensor bring-up depends on these" }
+        - { tbd: "MAX17048 register addresses + ALERT encoding + model load", source: "ADI MAX17048 datasheet", blocking_reason: "the fuel gauge bring-up depends on these" }
+        - { tbd: "DRV2605L register addresses + waveform library + rated voltage + fault encoding", source: "TI DRV2605L datasheet", blocking_reason: "the haptic driver bring-up depends on these" }
+        - { tbd: "Johanson 2450AT18B100 actual VSWR + 5 mm keepout sufficiency", source: "Johanson 2450AT18B100 datasheet + vendor reference design", blocking_reason: "the RF performance depends on this" }
+
+    prototype_validation_tbds:
+      description: "TBDs that require prototype validation. These are engineering estimates that must be measured on a prototype."
+      tbds:
+        - { tbd: "lra_minimum_separation_from_imu (vibration attenuation)", source: "prototype vibration characterisation" }
+        - { tbd: "rotate_cw_ccw_threshold_dps", source: "prototype IMU characterisation" }
+        - { tbd: "wear_put_on_imu_motion_threshold_g", source: "prototype wear-state characterisation" }
+        - { tbd: "wear_taken_off_imu_stillness_threshold_g", source: "prototype wear-state characterisation" }
+        - { tbd: "swipe_min_ms_lower_bound", source: "prototype gesture characterisation" }
+        - { tbd: "temperature_sensor_skin_offset (thermal resistance)", source: "prototype thermal characterisation" }
+        - { tbd: "comfort (final comfort validation)", source: "wear test on a prototype" }
+
+    production_validation_tbds:
+      description: "TBDs that require production-environment validation. These are certification + manufacturing concerns."
+      tbds:
+        - { tbd: "biocompatibility (all skin-contact materials)", source: "biocompatibility certification" }
+        - { tbd: "ip_rating (final waterproofing claim)", source: "IP certification testing" }
+        - { tbd: "durability (drop rating, temperature range, cycle life)", source: "production testing" }
+        - { tbd: "cradle_input_overvoltage_protection", source: "cradle design (external project)", blocking_reason: "this is an EXTERNAL SYSTEM DEPENDENCY; it is NOT solved by the ring" }
+        - { tbd: "emc_compliance (FCC, CE, etc.)", source: "EMC certification" }
+
+    total_tbd_count:
+      blocking_cad: 7
+      non_blocking_cad: 6
+      datasheet: 12
+      prototype_validation: 7
+      production_validation: 5
+      grand_total: 37
+
+  # =========================================================================
+  # 19. CAD readiness gate
+  # =========================================================================
+  cad_readiness_gate:
+    description: "Explicit readiness gates for CAD. Each gate is GREEN / YELLOW / RED. The overall CAD_ALLOWED determination is at the end."
+    gates:
+      - { gate: 1, name: "Electrical architecture", classification: "YELLOW", reason: "the architecture is complete (nRF54L15 + sensors + charger + pogo); every per-event current + register address + I2C address is TBD on the relevant datasheet; CAD does not require these TBDs" }
+      - { gate: 2, name: "Battery", classification: "YELLOW", reason: "the architecture is complete (50-60 mAh preferred; 45 mAh midpoint); the actual cell is TBD on the EEMB-class manufacturer; the charging current is the safe 22.5 mA; the max charge C-rate is TBD on the cell datasheet" }
+      - { gate: 3, name: "Charger", classification: "YELLOW", reason: "the architecture is complete (MCP73831 + magnetic pogo + 2 contacts); the RPROG, STAT encodings, NTC thresholds, thermal threshold are TBD on the MCP73831 datasheet" }
+      - { gate: 4, name: "RF (antenna)", classification: "YELLOW", reason: "the Johanson 2450AT18B100 is selected; the placement is at Z_FINGER_END; the 5 mm keepout baseline is documented; the actual VSWR is NOT yet validated" }
+      - { gate: 5, name: "Sensors (touch + IMU + temperature + fuel gauge)", classification: "YELLOW", reason: "the sensors are selected (IQS127D + BMI270 + TMP117 + MAX17048); the register addresses + bring-up details are TBD on the datasheets" }
+      - { gate: 6, name: "Haptic", classification: "YELLOW", reason: "the DRV2605L + Precision Microdrives 308-101 LRA are selected; the LRA minimum separation from IMU is TBD on prototype characterisation" }
+      - { gate: 7, name: "Ergonomics", classification: "YELLOW", reason: "the ring size range (US6-US13) is documented; the exact V1 size is a marketing decision; the final comfort must be validated on a prototype" }
+      - { gate: 8, name: "Manufacturing", classification: "YELLOW", reason: "the manufacturing strategy is documented (prototype: SLA 3D printing + 4-layer PCB; production: injection molding + automated PCB assembly); the manufacturing engineering artifact is not yet created; the V1 does NOT commit to a specific adhesive or welding method" }
+      - { gate: 9, name: "Component mechanical data", classification: "YELLOW", reason: "all components have documented packages (WLCSP, LGA, QFN); exact dimensions are TBD on the component datasheets; CAD uses parametric envelopes" }
+      - { gate: 10, name: "CAD parameter freeze", classification: "YELLOW", reason: "the CAD parameter master list is created with 30+ parameters; 7 are BLOCKING CAD (the V1 must commit to specific values for these before CAD freeze); 6 are NON-BLOCKING CAD (engineering targets documented)" }
+
+    overall_cad_allowed:
+      decision: "CONDITIONAL YES"
+      rationale: "the architecture is complete; the major RED items have been resolved; the remaining concerns are YELLOW (TBD on datasheets + prototype validation); CAD can proceed with engineering targets for the NON-BLOCKING parameters; the BLOCKING parameters must be committed to before CAD freeze"
+      unresolved_before_cad_freeze:
+        blocking_parameters_must_be_committed:
+          - "ring_inner_diameter (specific V1 ring size)"
+          - "band_thickness (V1 final; may be 5-7 mm rather than < 3 mm)"
+          - "band_width (V1 final)"
+          - "pcb_length + pcb_width + pcb_height (V1 envelopes)"
+          - "battery_length + battery_width + battery_height + battery_radius (selected cell dimensions)"
+          - "crown_length + crown_width + crown_height"
+          - "electrode_spacing + electrode_width"
+        datasheet_consultations_recommended_before_freeze:
+          - "nRF54L15 PS v1.0 (per-event currents)"
+          - "EEMB-class LiPo cell datasheet (max charge C-rate; PCM thresholds; NTC type; internal resistance)"
+          - "MCP73831 datasheet (RPROG; STAT; NTC thresholds; thermal threshold)"
+          - "IQS127D datasheet (electrode-to-channel mapping; INT polarity)"
+          - "Johanson 2450AT18B100 datasheet + reference design (VSWR; 5 mm keepout sufficiency)"
+
+  # =========================================================================
+  # 20. Final engineering recommendation
+  # =========================================================================
+  final_engineering_recommendation:
+    recommended_battery_target:
+      capacity_mah: "50-60 mAh preferred if physically achievable"
+      rationale: "the corrected power-budget.yaml gives approximately 3-4 days realistic runtime at 50-60 mAh under idle BLE profile; at 45 mAh the runtime is 2-3 days; the higher capacity gives more headroom for the 3-5 day target (achievable only at 50-60 mAh with idle BLE)"
+      status: "the actual cell is TBD on the EEMB-class manufacturer datasheet"
+    recommended_ble_interval:
+      value: "30 ms"
+      rationale: "the corrected power-budget.yaml gives approximately 2.5-3.5 days realistic runtime at 30 ms BLE under typical mixed-use; this is the best practical trade-off between gesture latency (~30 ms is acceptable for a controller ring) and runtime"
+      alternative: "7.5 ms if lower gesture latency is required (1.5-2.5 days runtime); 100 ms if maximum runtime is required (4-5 days runtime)"
+    expected_runtime:
+      typical_mixed_use_30ms_ble_50_mah: "approximately 2.8 days realistic; approximately 2.0 days conservative"
+      idle_ble_30ms_50_mah: "approximately 4.4 days realistic; approximately 3.1 days conservative"
+      heavy_use_7.5ms_ble_45_mah: "approximately 0.8 days realistic; approximately 0.5 days conservative"
+      note: "the runtime is realistic at 2-3 days under typical mixed-use at 30 ms BLE; the original 3-5 day claim is achievable only at 50-60 mAh with idle BLE profile OR with relaxed BLE interval"
+    charging_strategy:
+      provisional_charging_current_ma: 22.5
+      rprog_resistor_kohm: 44
+      charge_time_to_80pct_h: "approximately 1.6 hours"
+      charge_time_to_100pct_h: "approximately 2.75 hours (including CV phase)"
+      provisional_status: "the 22.5 mA charging current is the SAFE CONSERVATIVE choice pending cell datasheet confirmation of the max charge C-rate; 500 mA (the previous proposal) is UNSAFE at 11.1C for a 45 mAh cell"
+      final_charging_current: "TBD on EEMB-class cell datasheet"
+    pcb_architecture: "single rigid PCB in V1 (no flex); segmented rigid PCB if the bend radius exceeds the PCB manufacturer's minimum"
+    antenna_location: "Johanson 2450AT18B100 at Z_FINGER_END (Z+) on the inner band (Y = -R_inner); 5 mm keepout baseline"
+    haptic_location: "Precision Microdrives 308-101 LRA at Z_PALM_END (Z-) on the inner band; the LRA's flex PCB is mechanically decoupled from the main PCB by a foam gap"
+    sensor_architecture:
+      touch: "IQS127D at Z_CROWN (Y = +R_crown); 5 or 7 electrodes E0..E6"
+      imu: "BMI270 at Z_CENTRE; offset from nRF54L15 by >= 3 mm"
+      temperature: "TMP117 at Z_FINGER_END (Z+) on the inner band; thermal isolation from heat sources"
+      fuel_gauge: "MAX17048 at Z_INNER near the battery"
+    charging_location: "magnetic pogo at Z_PALM_END (Z-) on the inner band; 2 contacts (V+ + GND)"
+
+    most_important_remaining_risks:
+      - { risk: "EEMB-class cell max charge C-rate is TBD; the 22.5 mA safe default requires confirmation", severity: "HIGH", mitigation: "select a high-rate cell if faster charging is required; otherwise accept 1.6-2.75 hour charging time" }
+      - { risk: "Johanson 2450AT18B100 5 mm keepout may be insufficient; the actual VSWR is NOT yet validated", severity: "HIGH", mitigation: "validate the VSWR on a prototype with the actual battery + LRA in place; if VSWR is unacceptable, increase the keepout" }
+      - { risk: "LRA vibration coupling into BMI270 is mitigated by spatial separation + decoupling; effectiveness TBD", severity: "MEDIUM", mitigation: "prototype vibration characterisation; firmware notch filter at 175 Hz as backup" }
+      - { risk: "Battery + LRA thermal coupling to the finger; the foam padding mitigates but the thermal resistance is TBD", severity: "MEDIUM", mitigation: "prototype thermal characterisation; firmware may reduce haptic frequency if the die temperature rises" }
+      - { risk: "Crown overlay thickness affects capacitive-sensing range; thickness TBD on IQS127D datasheet", severity: "MEDIUM", mitigation: "validate the touch sensitivity on a prototype with the actual overlay material + thickness" }
+      - { risk: "Inner band thickness affects comfort + thermal comfort; engineering target < 3 mm but V1 stack-up estimated 5-7 mm", severity: "MEDIUM", mitigation: "wear test on a prototype; the V1 may require a thicker band than the Even R1's wedding-band target" }
+
+    begin_cad:
+      decision: "CONDITIONAL YES"
+      rationale: "the architecture is complete; the major RED items have been resolved; CAD can proceed with engineering targets for the NON-BLOCKING parameters; the BLOCKING parameters must be committed to before CAD freeze (see cad_readiness_gate section 19 unresolved_before_cad_freeze); the production engineering artifact + manufacturing engineering artifact are not yet created and will refine the design during production CAD"
+      required_before_freeze:
+        - "commit to the specific V1 ring size (one of US6-US13) or a size range"
+        - "commit to the V1 PCB envelope (length + width + height)"
+        - "commit to the specific EEMB-class cell (and accept the 22.5 mA safe charging current)"
+        - "commit to the crown dimensions + electrode spacing"
+        - "consult the IQS127D datasheet for the electrode-to-channel mapping"
+      not_required_to_begin_cad:
+        - "the non-blocking parameters (shell thicknesses, antenna zone, haptic zone, charger recess) can use engineering targets"
+        - "the production engineering + manufacturing engineering artifacts will refine the design during production CAD"
+        - "the cradle design is a separate project and does NOT block the ring's CAD"
+
+  references:
+    - { ref: "mechanical/crown-layout.yaml", url: "internal", note: "Coordinate system + electrode layout + IMU orientation" }
+    - { ref: "mechanical/inner-band-layout.yaml", url: "internal", note: "PCB zones + component placement + thermal context" }
+    - { ref: "mechanical/pogo-charger-layout.yaml", url: "internal", note: "MCP73831 + cell + safety audit" }
+    - { ref: "electrical/system-architecture.yaml", url: "internal", note: "V1 power rails + I2C bus + RR03 + RR04" }
+    - { ref: "electrical/power-tree.yaml", url: "internal", note: "LDO selection + power path" }
+    - { ref: "electrical/power-budget.yaml", url: "internal", note: "Corrected power budget (30 ms BLE interval, 22.5 mA charging, 2-3 days realistic runtime)" }
+    - { ref: "electrical/sensor-interface.yaml", url: "internal", note: "Authoritative wiring + I2C topology + GPIO allocation" }
+    - { ref: "electrical/sensor-interface_part2.yaml", url: "internal", note: "Per-sensor bring-up + placement assumptions + TBDs" }
+    - { ref: "electrical/ble-interface.yaml", url: "internal", note: "BLE architecture + connection parameters" }
+    - { ref: "components/mcu-selection.yaml", url: "internal", note: "nRF54L15 selection" }
+    - { ref: "components/battery-selection.yaml", url: "internal", note: "EEMB-class curved LiPo selection + safety" }
+    - { ref: "components/charger-selection.yaml", url: "internal", note: "MCP73831 selection + pogo architecture" }
+    - { ref: "components/antenna-selection.yaml", url: "internal", note: "Johanson 2450AT18B100 selection + 5 mm keepout" }
+    - { ref: "components/imu-selection.yaml", url: "internal", note: "BMI270 selection" }
+    - { ref: "components/touch-selection.yaml", url: "internal", note: "IQS127D selection + crown geometry" }
+    - { ref: "components/haptic-selection.yaml", url: "internal", note: "DRV2605L + LRA selection + mounting" }
+    - { ref: "components/temperature-selection.yaml", url: "internal", note: "TMP117 selection + inner-band placement" }
+    - { ref: "components/ppg-selection.yaml", url: "internal", note: "MAX86140 selection (V2 only; V1 excludes PPG)" }
+    - { ref: "firmware/architecture.md", url: "internal", note: "Power state machine + sensor manager + GATT service" }
+    - { ref: "protocol/gesture-vocabulary.yaml", url: "internal", note: "Gesture vocabulary + per-gesture TBDs" }
+    - { ref: "protocol/ring-gatt-spec.yaml", url: "internal", note: "GATT service definition + RR01-RR09 + haptic patterns" }
+    - { ref: "analysis/battery-life-analysis.yaml", url: "internal", note: "Corrected analysis (22.5 mA charging, 2-3 days runtime, 7 RED items resolved)" }

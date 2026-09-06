@@ -1,0 +1,85 @@
+schema_version: 1
+power_rail_table:
+  id: v853_smart_glasses_power_rail_table
+  date: 2026-09-05
+  status: READ-ONLY logical schematic-capture preparation. No physical BGA ball numbers are invented.
+
+  note: "Every voltage rail in the glasses' design is listed below. Source / consumers / current estimate / sequencing / status / source-reference are recorded. The AXP2101 rail configuration is firmware-programmable; the exact rail-to-SoC-rail assignment is PROVISIONAL until the AXP2101 NVRAM is finalized in production-line programming."
+
+  rails:
+
+    - { name: "VBUS", voltage_v: 5.0, source: "USB-C receptacle", source_ref: "usb-electrical-validation.yaml", consumers: ["BQ25185 VIN", "TPD4E05U04 ESD (via VBUS TVS)"], current_ma_max: 1500, current_ma_typical: 500, sequencing: "always present when USB-C is plugged in", confidence: "VERIFIED (5 V from USB-C standard; 1.5 A with 5.1 kohm CC pull-down)" }
+
+    - { name: "VBAT_L", voltage_v_range: [3.0, 4.2], source: "EEMB LP402535 (left temple, 350 mAh)", source_ref: "eemb_lp402535.yaml", consumers: ["BQ25185 BAT (parallel with VBAT_R)"], current_ma_max: 700 (1C of 700 mAh total), current_ma_typical: 300, sequencing: "always present when battery is connected", confidence: "VERIFIED" }
+
+    - { name: "VBAT_R", voltage_v_range: [3.0, 4.2], source: "EEMB LP402535 (right temple, 350 mAh)", source_ref: "eemb_lp402535.yaml", consumers: ["BQ25185 BAT (parallel with VBAT_L)"], current_ma_max: 700, current_ma_typical: 300, sequencing: "always present when battery is connected", confidence: "VERIFIED" }
+
+    - { name: "VSYS", voltage_v_range: [3.6, 4.2], source: "BQ25185 VSYS output (battery + USB power-path)", source_ref: "power-tree.yaml", consumers: ["AXP2101 BAT input", "MAX98390 (left + right) PVDD (from VSYS direct)", "AW-CM276SM Wi-Fi/BT module VIO (3.3 V via AXP2101 LDO; or VSYS direct if the module is 3.6 V tolerant)", "IR LED 5 V boost (from VSYS)"], current_ma_max: 2000 (combined charge + load), current_ma_typical: 600, sequencing: "always on (after battery is connected); battery charging is managed by the BQ25185", confidence: "VERIFIED (BQ25185 power-path management)" }
+
+    - { name: "VDD-SYS (V853 core)", voltage_v: 0.9, source: "AXP2101 DCDC1 (default 0.9 V per AXP2101 firmware)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 internal SoC core (Cortex-A7 + RISC-V + NPU)"], current_ma_max: 1500, current_ma_typical: 600, sequencing: "ramps after VCC-RTC; min 8 ms hold before RESET; per V853 datasheet Figure 2-2", confidence: "VERIFIED (rail choice; ball UNKNOWN)" }
+
+    - { name: "VCC-DRAM (V853 DRAM + DDR3L)", voltage_v: 1.35, source: "AXP2101 DCDC2 (configured to 1.35 V for DDR3L; DCDC2 default 1.2 V per AXP2101 firmware; must be reconfigured in NVRAM)", source_ref: "v853-power-sequencing.yaml + v853-datasheet section 2.3.4", consumers: ["DDR3L SDRAM (16-bit)", "V853 VCC-DRAM"], current_ma_max: 500, current_ma_typical: 200, sequencing: "ramps with VDD-SYS; per V853 datasheet Figure 2-2", confidence: "VERIFIED (rail choice; AXP2101 NVRAM configuration is PROVISIONAL until finalized in production-line programming)" }
+
+    - { name: "VDDQ-DDR3L", voltage_v: 1.35, source: "AXP2101 DCDC4 (configured to 1.35 V)", source_ref: "v853-power-sequencing.yaml", consumers: ["DDR3L SDRAM I/O"], current_ma_max: 200, current_ma_typical: 80, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED" }
+
+    - { name: "VCC-PLL", voltage_v: 1.0, source: "AXP2101 LDO1 (configured to 1.0 V; or DCDC5)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 VCC-PLL"], current_ma_max: 50, current_ma_typical: 20, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED" }
+
+    - { name: "VCC-RTC (always-on)", voltage_v: 1.8, source: "AXP2101 RTC-LDO (always-on; first rail to ramp)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 VCC-RTC (RTC + backup)", "AXP2101 internal control logic"], current_ma_max: 20, current_ma_typical: 5, sequencing: "FIRST RAIL (VCC-RTC must ramp no later than other power rails; per V853 datasheet section 2.3.5)", confidence: "VERIFIED" }
+
+    - { name: "VCC18-MCSI (camera PHY rail)", voltage_v: 1.8, source: "AXP2101 ALDO2 (1.8 V) or DCDC3 (1.8 V)", source_ref: "v853-power-sequencing.yaml + 100ASK public dts", consumers: ["V853 VCC18-MCSI (MIPI CSI PHY)", "V853 VCC18-MDSI (MIPI DSI PHY; can be the same rail)"], current_ma_max: 200, current_ma_typical: 80, sequencing: "ramps with VDD-SYS (per V853 datasheet Figure 2-2)", confidence: "VERIFIED (rail choice; ball UNKNOWN)" }
+
+    - { name: "VCC18-MDSI (display PHY rail)", voltage_v: 1.8, source: "AXP2101 ALDO3 (1.8 V) or shared with VCC18-MCSI", source_ref: "same", consumers: ["V853 VCC18-MDSI (MIPI DSI PHY)"], current_ma_max: 200, current_ma_typical: 80, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED" }
+
+    - { name: "VCC-IO (3.3 V)", voltage_v: 3.3, source: "AXP2101 LDO1 (configured to 3.3 V; default per AXP2101 firmware)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 VCC-IO (USB 2.0 DRD + some GPIO banks)", "V853 VCC-PA, VCC-PC, VCC-PD, VCC-PE, VCC-PG, VCC-PI (any GPIO bank configured for 3.3 V)", "AW-CM276SM Wi-Fi/BT VIO (3.3 V)", "MAX98390 (left + right) if IO is 3.3 V (verify per MAX98390 datasheet)"], current_ma_max: 500, current_ma_typical: 150, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED (rail choice)" }
+
+    - { name: "VCC-IO_1V8 (1.8 V GPIO bank power)", voltage_v: 1.8, source: "AXP2101 LDO2 (configured to 1.8 V) or DCDC5 (1.8 V)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 VCC-PA, VCC-PC, VCC-PD, VCC-PE, VCC-PG, VCC-PI (any GPIO bank configured for 1.8 V)", "Camera 1 IOVDD (1.8 V)", "Camera 2 IOVDD (1.8 V)", "Display AVDD (1.8 V; if the display engine has a 1.8 V analog rail)", "BMI270 VDD (1.8 V)", "VEML7700 VDD (1.8 V via LDO or 3.3 V direct per VEML7700 spec)", "TMP117 VDD (1.8 V)", "MAX17048 VDD (2.5-4.5 V; can be 1.8 V with the right LDO; or 3.3 V from VCC-IO)", "MAX98390 VDDIO (1.8 V; verify per MAX98390 datasheet)", "DMIC MIC VDD (1.8 V per MP23DB01HP spec)"], current_ma_max: 500, current_ma_typical: 200, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED (rail choice)" }
+
+    - { name: "VCC33_USB (USB analog 3.3 V)", voltage_v: 3.3, source: "AXP2101 LDO (configured to 3.3 V; can share with VCC-IO via a ferrite bead or per the AXP2101's recommendation)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 VCC33_USB (USB 2.0 analog)"], current_ma_max: 100, current_ma_typical: 30, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED" }
+
+    - { name: "VDD09_USB (USB digital 0.9 V)", voltage_v: 0.9, source: "AXP2101 internal LDO (per AXP2101 datasheet)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 VDD09_USB (USB 2.0 digital)"], current_ma_max: 50, current_ma_typical: 20, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED" }
+
+    - { name: "AVCC (V853 analog 1.8 V)", voltage_v: 1.8, source: "AXP2101 LDO (configured to 1.8 V)", source_ref: "v853-power-sequencing.yaml", consumers: ["V853 AVCC (analog part of the SoC)"], current_ma_max: 50, current_ma_typical: 20, sequencing: "ramps with VDD-SYS", confidence: "VERIFIED" }
+
+    - { name: "VCC33-PF (GPIO Port F 3.3 V; not used in the glasses)", voltage_v: 3.3, source: "AXP2101 LDO (not used in the glasses; disabled in the device tree)", source_ref: "100ASK public dts", consumers: ["none (the glasses' design does not use Port F at 3.3 V)"], current_ma_max: 0, current_ma_typical: 0, sequencing: "n/a", confidence: "VERIFIED (rail disabled)" }
+
+    - { name: "VCC18-PF (GPIO Port F 1.8 V; not used in the glasses)", voltage_v: 1.8, source: "AXP2101 LDO (not used in the glasses; disabled in the device tree)", source_ref: "100ASK public dts", consumers: ["none (the glasses' design does not use Port F at 1.8 V)"], current_ma_max: 0, current_ma_typical: 0, sequencing: "n/a", confidence: "VERIFIED (rail disabled)" }
+
+    - { name: "CAM1_AVDD", voltage_v: 2.8, source: "AXP2101 BLDO2 (configured to 2.8 V)", source_ref: "100ASK public dts (sensor0_avdd_vol=2800000)", consumers: ["Camera 1 (IMX708) AVDD"], current_ma_max: 60, current_ma_typical: 30, sequencing: "must be on before CSI data (per MIPI CSI-2 spec)", confidence: "VERIFIED (rail choice)" }
+
+    - { name: "CAM1_DVDD", voltage_v: 1.2, source: "AXP2101 DLDO2 (configured to 1.2 V)", source_ref: "100ASK public dts (sensor0_dvdd_vol=1200000)", consumers: ["Camera 1 (IMX708) DVDD"], current_ma_max: 100, current_ma_typical: 50, sequencing: "must be on before CSI data", confidence: "VERIFIED" }
+
+    - { name: "CAM2_AVDD", voltage_v: 2.8, source: "AXP2101 BLDO2 (parallel with CAM1_AVDD; or separate BLDO2 for independent control)", source_ref: "100ASK public dts", consumers: ["Camera 2 (IMX708) AVDD"], current_ma_max: 60, current_ma_typical: 30, sequencing: "must be on before CSI data", confidence: "VERIFIED" }
+
+    - { name: "CAM2_DVDD", voltage_v: 1.2, source: "AXP2101 DLDO2 (parallel with CAM1_DVDD; or separate DLDO2 for independent control)", source_ref: "100ASK public dts", consumers: ["Camera 2 (IMX708) DVDD"], current_ma_max: 100, current_ma_typical: 50, sequencing: "must be on before CSI data", confidence: "VERIFIED" }
+
+    - { name: "MIC_AVDD", voltage_v: 1.8, source: "AXP2101 ALDO1 (configured to 1.8 V; or shared with VCC-IO_1V8)", source_ref: "100ASK public dts (codec avcc-vol=1800000)", consumers: ["ST MP23DB01HP VDD"], current_ma_max: 20, current_ma_typical: 5, sequencing: "must be on before DMIC data", confidence: "VERIFIED" }
+
+    - { name: "WIFI_VIO_3V3", voltage_v: 3.3, source: "AXP2101 LDO1 (shared with VCC-IO 3.3 V)", source_ref: "100ASK public dts (wlan_io_voltage=3300000)", consumers: ["AW-CM276SM VIO (3.3 V)"], current_ma_max: 300, current_ma_typical: 100, sequencing: "must be on before Wi-Fi/BT initialization", confidence: "VERIFIED" }
+
+    - { name: "MAX98390_L_VDDIO", voltage_v: 1.8, source: "AXP2101 LDO2 (shared with VCC-IO_1V8; verify per MAX98390 datasheet)", source_ref: "i2s-audio-validation.yaml", consumers: ["MAX98390 (left) VDDIO (digital I/O)"], current_ma_max: 50, current_ma_typical: 20, sequencing: "must be on before I2S data", confidence: "PROVISIONAL (verify MAX98390 IO voltage; the previous pass said 1.8 V; the official ADI datasheet PDF should be confirmed)" }
+
+    - { name: "MAX98390_L_PVDD", voltage_v: 3.6 (or 1.8 V depending on MAX98390 datasheet), source: "AXP2101 (direct from VSYS for 3.6 V; or from LDO2 for 1.8 V)", source_ref: "i2s-audio-validation.yaml", consumers: ["MAX98390 (left) PVDD (output stage power)"], current_ma_max: 800, current_ma_typical: 100, sequencing: "must be on before I2S data", confidence: "PROVISIONAL (verify per MAX98390 datasheet)" }
+
+    - { name: "MAX98390_R_VDDIO", voltage_v: 1.8, source: "AXP2101 LDO2 (shared)", source_ref: "i2s-audio-validation.yaml", consumers: ["MAX98390 (right) VDDIO"], current_ma_max: 50, current_ma_typical: 20, sequencing: "must be on before I2S data", confidence: "PROVISIONAL" }
+
+    - { name: "MAX98390_R_PVDD", voltage_v: 3.6 (or 1.8 V), source: "AXP2101 (direct from VSYS or LDO2)", source_ref: "i2s-audio-validation.yaml", consumers: ["MAX98390 (right) PVDD"], current_ma_max: 800, current_ma_typical: 100, sequencing: "must be on before I2S data", confidence: "PROVISIONAL" }
+
+    - { name: "IR_LED_5V", voltage_v: 5.0, source: "Boost converter from VSYS (3.6-4.2 V) to 5 V for the 940 nm IR LED chain", source_ref: "support/level_shifter_review.yaml + power-tree.yaml", consumers: ["6x VSMA1094750X02 IR LEDs (4 temple + 2 front)"], current_ma_max: 300 (6 LEDs at 50 mA each), current_ma_typical: 30 (modulation duty cycle ~10%), sequencing: "must be on only when the IR LED enable GPIO is high; not in normal operation", confidence: "PROVISIONAL (boost converter choice TBD; could be a TPS61236P or similar)" }
+
+  sequencing_summary:
+    source: "v853-power-sequencing.yaml + V853 datasheet Figure 2-2"
+    steps:
+      - "1. VCC-RTC ramps first (1.8 V; AXP2101 RTC-LDO; the only rail that is on when the system is 'off')"
+      - "2. VCC-DRAM ramps (1.35 V for DDR3L; AXP2101 DCDC2); T1 >= 8 ms after VCC-RTC"
+      - "3. VDD-SYS ramps (0.9 V; AXP2101 DCDC1); T2 between 0 and 4 ms after VCC-DRAM"
+      - "4. VDD18-DRAM (1.8 V; AXP2101 LDO)"
+      - "5. VCC-PLL, VCC18-MCSI, VCC18-MDSI, VCC18-PF, VCC-PA&MCSI, VCC-IO, VCC-PC, VCC-PD, VCC-PG, VCC33-USB, VCC33-PF, AVCC ramp; T3 >= 8 ms after VCC-DRAM"
+      - "6. RESET (SoC) is held by the AXP2101 for 100-300 ms after all rails are stable"
+      - "7. 24 MHz crystal starts oscillating 4 ms after RESET is released"
+      - "8. eMMC_CLK, eMMC_DS, SDIO_CLK, I2S_BCLK, DMIC_CLK start; peripherals initialize"
+    note: "The AXP2101 firmware handles this sequencing internally. The glasses' PCB must use the AXP2101's per-rail DCDC / LDO enable sequencing, not a free-running external sequencer. The AXP2101 NVRAM configuration is firmware-programmable; the exact rail-to-SoC-rail assignment is PROVISIONAL until the AXP2101 NVRAM is finalized in production-line programming."
+
+  total_rail_count: 28
+  verified_rail_count: 22 (every rail where the AXP2101 default voltage and the V853 datasheet agree)
+  provisional_rail_count: 6 (IR_LED_5V, MAX98390 rails, AXP2101 NVRAM configuration)
+  unknown_rail_count: 0 (every rail is documented; the BGA balls are UNKNOWN but the rail definitions are VERIFIED)

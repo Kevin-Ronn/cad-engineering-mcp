@@ -1,0 +1,55 @@
+schema_version: 1
+ring_power_tree:
+  id: smart_ring_power_tree
+  date: 2026-09-05
+  status: READ-ONLY. No PCB / CAD / FreeCAD files were modified.
+
+  note: "The V1 ring uses a single-cell LiPo battery (40-50 mAh), magnetic pogo charging (MCP73831), 1.8 V and 3.3 V LDOs, and the nRF54L15 as the main SoC. The power tree is simpler than the glasses' because the ring is a single-temple device (no compute, no display, no audio amp)."
+
+  power_rails:
+    - { name: "VBAT", voltage_v_range: [3.0, 4.2], source: "Curved LiPo battery (40-50 mAh; 3.85 V nominal)", consumers: ["MCP73831 charger (charging path)", "VCC-3V3 LDO input", "DRV2605L PVDD (LRA supply; the LRA needs 2.0-3.5 V)"], source_ref: "components/battery-selection.yaml + components/charger-selection.yaml" }
+    - { name: "VCC-3V3 (system rail)", voltage_v: 3.3, source: "3.3 V LDO (TPS7A02-class; 200 mA max; Iq = 25 uA)", consumers: ["Johanson 2450AT18B100 chip antenna (via matching network; the antenna itself is 50 ohm, the matching network is 50 ohm; the LDO is the supply for the matching network bias)", "DRV2605L haptic driver (logic supply; the driver can run on 3.3 V logic)", "STATUS LED (via 1 kohm resistor)", "MAX86140 PPG LED anode (V2 only)"], source_ref: "this file" }
+    - { name: "VCC-1V8 (sensor rail)", voltage_v: 1.8, source: "1.8 V LDO (TPS7A02-class; 100 mA max; Iq = 25 uA)", consumers: ["IQS127D touch IC", "BMI270 IMU", "TMP117 temperature", "MAX17048 fuel gauge", "DRV2605L haptic driver (logic; the driver can run on 1.8 V logic)", "nRF54L15's GPIO domain (the nRF54L15's GPIO can run at 1.8 V or 3.3 V; we choose 1.8 V to match the sensor rail)"], source_ref: "this file" }
+
+  power_path:
+    description: "The pogo charging input goes through the MCP73831 charger IC. The MCP73831 has built-in power-path management: when the pogo is connected, the system runs from the pogo input and the battery charges; when the pogo is disconnected, the system runs from the battery."
+
+    topology:
+      - { node: "Pogo+ (5 V)", to: "MCP73831 VIN", via: "direct (no reverse-polarity protection needed; the pogo is a magnetic pogo with a defined orientation)" }
+      - { node: "MCP73831 BAT", to: "LiPo cell +", via: "direct (with PCM and NTC in the cell)" }
+      - { node: "MCP73831 VOUT (or directly VBAT)", to: "VCC-3V3 LDO input", via: "direct (the LDO is powered by the cell voltage or the pogo input, whichever is higher; the MCP73831's power-path management handles this)" }
+      - { node: "VCC-1V8 LDO input", to: "VCC-3V3 LDO output", via: "direct (cascaded LDOs; 3.3 V from 3.0-4.2 V battery; 1.8 V from 3.3 V)" }
+
+  ldo_selection:
+    recommended_3V3: "TI TPS7A02 (3.3 V; 200 mA; Iq = 25 uA; WCSP-0.9x0.9 mm)"
+    recommended_1V8: "TI TPS7A02 (1.8 V; 100 mA; Iq = 25 uA; WCSP-0.9x0.9 mm)"
+    package: "WCSP-0.9x0.9 mm (both LDOs)"
+    rationale: "Very small; very low quiescent current; sufficient current for the sensors and the nRF54L15's GPIO domain"
+
+  decoupling:
+    per_rail: ["100 nF X7R 0402 close to each rail pin", "10 uF X5R 0402 close to each IC's power pin", "1 uF X5R 0201 close to each IC's analog pin (where applicable)"]
+    total_decoupling_cap_count: 12  # 4 ICs x 3 caps each
+
+  power_budget_summary:
+    notes: "Detailed analysis in analysis/battery-life-analysis.yaml."
+
+    scenarios:
+      - { name: "Sleep (no events)", average_power_uw: 15, breakdown: ["nRF54L15 System OFF: 1.6 uA", "BMI270 sleep: 3 uA", "IQS127D sleep: 0.5 uA", "TMP117 sleep: 0.15 uA", "MAX17048 sleep: 0.5 uA", "DRV2605L shutdown: 1 uA", "LDO quiescent: 50 uA (3.3 V) + 25 uA (1.8 V)", "Leakage: 0 uA (negligible)"] }
+      - { name: "Idle (BLE connected, no events)", average_power_uw: 200, breakdown: ["nRF54L15 System ON, BLE idle: ~150 uW", "Other sensors in sleep: ~50 uW"] }
+      - { name: "Active (BLE + 1 gesture per minute)", average_power_uw: 500, breakdown: ["BLE connected: 150 uW", "Touch + IMU activity (1% duty cycle): ~50 uW", "Haptic pulse (1% duty cycle, 50 mA peak, 3.3 V, 100 ms): ~165 uW", "Sensor polling (1 Hz, ~5 uA peak): ~25 uW", "Other: ~110 uW"] }
+      - { name: "Continuous (BLE + 10 gestures per minute + haptic)", average_power_uw: 1500, breakdown: ["BLE connected: 150 uW", "Touch + IMU activity (5% duty cycle): ~250 uW", "Haptic pulse (2% duty cycle, 50 mA peak, 3.3 V, 100 ms): ~330 uW", "Sensor polling: ~50 uW", "Other: ~720 uW"] }
+
+  known_uncertainties:
+    - { item: "LRA drive current", status: "the DRV2605L datasheet will confirm; the V1 budget assumes 50 mA peak for 100 ms per pulse" }
+    - { item: "nRF54L15 actual System ON current at the connection interval", status: "verify per the nRF54L15 PS v1.0; the V1 budget assumes ~3 mA at 7.5 ms connection interval" }
+    - { item: "BMI270 FIFO + interrupt + I2C read current profile", status: "verify per the BMI270 datasheet; the V1 budget assumes the IMU is in sleep most of the time and wakes only on motion (BMI270 INT1)" }
+    - { item: "Touch IC wake-from-sleep latency", status: "the IQS127D's wake-from-sleep latency is typically <100 us; the V1 power budget assumes the touch IC is in sleep most of the time and wakes within 100 us" }
+
+  references:
+    - { ref: "components/battery-selection.yaml", url: "internal" }
+    - { ref: "components/charger-selection.yaml", url: "internal" }
+    - { ref: "TI TPS7A02 datasheet", url: "https://www.ti.com/product/TPS7A02", note: "Verify exact package and Iq before committing" }
+    - { ref: "nRF54L15 Product Specification v1.0", url: "https://infocenter.nordicsemi.com/topic/struct_nrf54l15/struct_nrf54l15.html" }
+    - { ref: "BMI270 datasheet", url: "https://www.bosch-sensortec.com/products/smart-sensors/bmi270.html" }
+    - { ref: "Azoteq IQS127D datasheet", url: "https://www.azoteq.com/products/iqs127d" }
+    - { ref: "DRV2605L datasheet", url: "https://www.ti.com/product/DRV2605L" }

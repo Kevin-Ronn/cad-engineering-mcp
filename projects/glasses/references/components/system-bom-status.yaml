@@ -1,0 +1,177 @@
+schema_version: 1
+system_bom_status:
+  id: v853_smart_glasses_bom_maturity
+  date: 2026-09-05
+  classification_scheme:
+    QUALIFIED_REFERENCE: "official datasheet + realistic integration path established (e.g. mainline Linux driver, distributor stock, documented mm-level dimensions)"
+    PROVISIONAL: "good candidate part selected; integration or physical validation remains (e.g. acoustic measurement, mm-level datasheet verification, NDA acquisition)"
+    REFERENCE_ONLY: "useful architecture reference but cannot currently be purchased or integrated directly (e.g. NDA-gated, no mainline driver, or only the bare silicon available)"
+    UNRESOLVED: "insufficient information to choose; need further research, sourcing, or stakeholder decision"
+
+  components:
+
+    - name: V853 SoC
+      classification: QUALIFIED_REFERENCE
+      part_number: Allwinner V853 (LFBGA-318 12x12x~1.4 mm)
+      source: v853-datasheet.pdf
+      notes: "Bare-die LFBGA-318 datasheet available. The glasses PCB must design a custom carrier; the SoM/module is a separate decision (see 'Compute module')."
+
+    - name: Compute module / SoM
+      classification: PROVISIONAL
+      primary_candidate: ProjectYosemite V853 SBC (open hardware, 65 x 56 x 1.55 mm)
+      secondary_candidate: 100ASK-V853-Pro SoM (NDA for drawing)
+      rejected: MangoPi MQ-V (not purchasable in 2026)
+      notes: "ProjectYosemite is a reference, not the final form factor. The glasses need a custom compact rigid-flex PCB."
+
+    - name: DDR3 SDRAM
+      classification: PROVISIONAL
+      notes: "16-bit DDR3 / DDR3L per V853 datasheet section 1.3.1. Capacity 512 MB to 1 GB. Vendor-specific part number to be selected when the compute PCB is designed."
+
+    - name: eMMC
+      classification: PROVISIONAL
+      notes: "eMMC 5.1, 8 GB to 32 GB. Vendor-specific part number to be selected."
+
+    - name: Cameras (x2)
+      classification: QUALIFIED_REFERENCE
+      primary_candidate: Raspberry Pi Camera Module 3 NoIR (IMX708, 25 x 24 x 11.5 mm, 2-lane MIPI CSI)
+      secondary_candidate: Arducam IMX462 STARVIS mini module (2 MP, 2.9 um pixel, low light)
+      notes: "RPi CM3 has fully documented official brief with mm-level dimensions. Arducam IMX462 is a strong low-light fallback. Both fit the upper-outer-corner of the Wayfarer with frame modifications."
+
+    - name: Display
+      classification: REFERENCE_ONLY
+      primary_candidate: Lumus DK-50 (0.23 640x400 reflective waveguide) - NDA required
+      secondary_candidate: DigiLens DesignLink v1.0 (SRG waveguide) - NDA required
+      notes: "No publicly downloadable mm-level mechanical drawings. NDA acquisition required. The Wayfarer 1.6 mm temple cannot host any waveguide-class engine; the front frame must be redesigned to 8-10 mm cross-section."
+
+    - name: Display bridge IC
+      classification: QUALIFIED_REFERENCE (for the typical case)
+      primary_candidate: NONE (V853 DSI directly drives the display if the display has a DSI input)
+      fallback: Lontium LT8912B (RGB/LVDS to MIPI DSI) if the display engine has RGB/LVDS input
+      rejected: Toshiba TC358870 (HDMI to DSI) - not useful because V853 has no HDMI output
+      notes: "Most 0.23 640x400 micro-OLEDs have MIPI DSI input directly. The V853 DSI is the natural output. No bridge needed in the typical case. See display_bridge_evaluation.yaml."
+
+    - name: Microphone
+      classification: QUALIFIED_REFERENCE
+      part_number: STMicro MP23DB01HP (3.0 x 4.0 x 1.0 mm LGA, digital PDM, bottom-port)
+      notes: "ST datasheet PDF available. Fits the V853 DMIC block natively. 4-wire FPC."
+
+    - name: Speakers (x2)
+      classification: QUALIFIED_REFERENCE
+      primary_candidate: CUI Devices CMS-151125-078S (15 x 11 x 2.5 mm, 8 ohm, ~0.6 g)
+      secondary_candidate: Soberton SP-1509L1 (15 x 11 x 3.0 mm, 8 ohm)
+      third: PUI Audio AS01508MR-2-R (15 x 11 x 3.0 mm, 8 ohm)
+      rejected: Generic 6 x 10 mm hearing-aid class (tuned for in-ear canal use, not for glasses temple pod)
+      notes: "All three are 8 ohm dynamic receivers, 0.5-0.6 g, 15 x 11 mm. The 0.5 mm thickness difference between CUI (2.5 mm) and Soberton/PUI (3.0 mm) is the only differentiator. Acoustic measurement in a Wayfarer-style back-volume required."
+
+    - name: Audio amplifier (x2)
+      classification: QUALIFIED_REFERENCE
+      primary_candidate: ADI MAX98390 (1.33 x 1.33 mm WLP, 2.5 W into 8 ohm, I2S, filterless)
+      secondary_candidate: TI TAS2770 (2.0 x 2.0 mm WCSP, 6.1 W into 4 ohm, integrated boost + DSP speaker protection)
+      third: ADI MAX98357A (3.0 x 3.0 mm TQFN, 3.2 W into 8 ohm, on breakout boards for prototyping)
+      alternative: Cirrus CS35L41 (QFN, 6.2 W into 4 ohm, integrated boost + DSP speaker protection)
+      notes: "MAX98390 is the smallest and the lowest power. I2S connects directly to V853 I2S0/I2S1 if the I/O voltage is 1.8 V (verify). The glasses only need speech and modest media playback (10-30 mW acoustic); 2.5 W is more than enough."
+
+    - name: Battery cells (x2)
+      classification: PROVISIONAL
+      primary_candidate: 2x EEMB LP402535 in parallel (4.0 x 25 x 35 mm, 350 mAh each, 700 mAh / 2.59 Wh total)
+      higher_capacity_candidate: 2x EEMB LP503562 in parallel (5.0 x 30 x 56 mm, 1100 mAh each, 2200 mAh / 8.14 Wh total)
+      notes: "EEMB datasheet summary; need the full datasheet PDF for exact discharge C-rate and cycle-life specs. 2 in parallel, one per temple."
+
+    - name: Charger IC
+      classification: QUALIFIED_REFERENCE
+      part_number: TI BQ25185 (WCSP, ~1.6 x 1.6 mm, 5.5 V max input, 1 A, I2C, power-path, thermal reg)
+      notes: "TI datasheet summary; Mouser / DigiKey stock."
+
+    - name: PMIC
+      classification: QUALIFIED_REFERENCE
+      part_number: X-Powers AXP2101 (QFN-32, ~5 x 5 mm)
+      notes: "Allwinner-ecosystem PMIC; proven with V853 in ProjectYosemite reference design. Datasheet available in ProjectYosemite/Datasheets/."
+
+    - name: Fuel gauge
+      classification: QUALIFIED_REFERENCE
+      part_number: ADI MAX17048 (TDFN-8, 2.5 x 2.5 mm, ModelGauge, no sense resistor)
+      notes: "DigiKey / Mouser stock; ModelGauge Linux driver."
+
+    - name: USB-C connector
+      classification: QUALIFIED_REFERENCE
+      part_number: Generic 16-pin USB Type-C mid-mount (8.94 x 7.35 x 2.56 mm typical)
+      notes: "5 V only, no USB-PD required. 5.1 kohm CC pull-down."
+
+    - name: IMU
+      classification: QUALIFIED_REFERENCE
+      primary_candidate: Bosch BMI270 (2.5 x 3.0 x 0.8 mm LGA, 6-axis, I2C/SPI, 685 uA active, 3 uA sleep)
+      secondary_candidate: ST LSM6DSO (2.5 x 3.0 x 0.83 mm LGA, 550 uA active, st_lsm6dsx driver)
+      alternative: TDK ICM-42688-P (32 kHz ODR, on-chip AP for advanced pipelines)
+      notes: "All three have mainline Linux IIO drivers. All three have stock at Mouser / DigiKey. Verify the exact Linux kernel support on the target kernel for the glasses design."
+
+    - name: Magnetometer
+      classification: NOT_INCLUDED
+      notes: "A 6-axis IMU is sufficient. The phone has its own 9-axis IMU + magnetometer that can provide heading over BT. A magnetometer is not useful for the glasses primary use case."
+
+    - name: Wi-Fi / Bluetooth module
+      classification: QUALIFIED_REFERENCE
+      primary_candidate: AzureWave AW-CM276SM (12 x 12 x 1.5 mm stamp module, Wi-Fi 5 + BT 5.1, SDIO + UART)
+      secondary_candidate: FN-LINK 6221C-UUB (12 x 12 x 1.5 mm, Realtek RTL8821CU, Wi-Fi 5 + BT 5.0, SDIO + UART)
+      third: Ampak AP6256 (10 x 10 x 1.2 mm, Broadcom BCM43456-class, BT 4.2/5.0)
+      alternative: Murata Type 1XK EARBEAT (7 x 7 x 1.1 mm, Infineon CYW43012, Wi-Fi 4 + BT 5.0, 2.4 GHz only)
+      rejected: Bare XR829 silicon (per the brief: no complete reference design + physical implementation available for the glasses form factor)
+      notes: "All four candidates are complete stamp modules with documented mm-level dimensions, regulatory cert, and mainline Linux drivers. The ProjectYosemite reference uses bare XR829 silicon, but this is not appropriate for the glasses form factor per the brief."
+
+    - name: Ambient light sensor
+      classification: QUALIFIED_REFERENCE
+      part_number: Vishay VEML7700 (3.0 x 2.0 x 0.5 mm OPLGA, I2C)
+      notes: "Vishay datasheet; mainline Linux driver (veml7700)."
+
+    - name: Temperature sensor
+      classification: QUALIFIED_REFERENCE
+      part_number: TI TMP117 (1.5 x 1.5 x 0.5 mm WCSP, I2C)
+      notes: "TI datasheet; mainline Linux driver (tmp117). Use 2x (one per temple)."
+
+    - name: Haptic actuator
+      classification: UNRESOLVED
+      notes: "8 mm LRA class is the right size; specific part not chosen. Optional. Skip if temple pod is too large."
+
+    - name: ESD protection (USB-C)
+      classification: QUALIFIED_REFERENCE
+      part_number: TI TPD4E05U04 (4-channel WCSP, 16 kV ESD)
+      notes: "TI datasheet summary."
+
+    - name: ESD / TVS (rails)
+      classification: QUALIFIED_REFERENCE
+      part_number: Generic 5V unidirectional TVS (SMAJ5.0CA-class, SMA package)
+      notes: "One per rail (VBAT, VBUS, 3V3, 1V8)."
+
+    - name: Level shifters
+      classification: NOT_NEEDED_AT_THIS_STAGE
+      notes: "All chosen components are 1.8 V I/O compatible except possibly the audio amplifier (verify per amp datasheet). No bulk purchase."
+
+  overall_maturity:
+    qualified_reference_components: [V853 SoC, cameras, display bridge (when used), microphone, speakers, audio amplifier, charger IC, PMIC, fuel gauge, USB-C connector, IMU, Wi-Fi/BT module, ambient light sensor, temperature sensor, ESD protection (USB-C and rail TVS)]
+    provisional_components: [compute module, DDR3, eMMC, battery cells]
+    reference_only_components: [display (NDA required)]
+    unresolved_components: [haptic actuator]
+    not_included_components: [magnetometer, level shifters]
+    confidence: "The electronics BOM is ~75% QUALIFIED_REFERENCE, ~15% PROVISIONAL, ~10% REFERENCE_ONLY or UNRESOLVED. The display requires an NDA acquisition; the battery cells require full datasheet PDF verification; the compute PCB requires a custom rigid-flex design that integrates the V853 + DDR3 + eMMC + AXP2101 + BQ25185 + MAX17048 + MAX98390 + BMI270 + VEML7700 + TMP117 + 2x camera + display + 6x IR LEDs + 2x speakers + 2x batteries + USB-C + Wi-Fi/BT module in a temple-mounted form factor."
+
+  research_before_cad:
+    - "Acquire the Lumus DK-50 / Maximus NDA drawings for the optical engine + waveguide + FPC (mm-level dimensions are required for placement)."
+    - "Acquire the full EEMB LP402535 / LP503562 datasheet PDF for exact discharge C-rate and cycle-life specs."
+    - "Acquire the specific AzureWave / FN-LINK module datasheet PDF for the chosen variant to confirm regulatory cert and mainline Linux driver status."
+    - "Acoustic measurement of a specific 6 x 10 mm or 15 x 11 mm micro-speaker in a Wayfarer-style temple back-volume."
+    - "Confirm the audio amplifier I/O voltage (1.8 V vs 3.3 V) for the final amplifier choice."
+    - "Confirm the XR829 / Wi-Fi module supply voltage (3.3 V vs 1.8 V) for the chosen module."
+
+  what_must_be_resolved_before_mechanical_cad:
+    - "Lumus or DigiLens NDA drawings (the single biggest blocker for display placement)."
+    - "Specific speaker back-volume test results."
+    - "Specific Wi-Fi/BT module datasheet PDF."
+    - "V853 SoC ball assignment for the chosen feature set (a new ball map, not the ProjectYosemite one)."
+
+  what_must_be_resolved_before_pcb_schematic_layout:
+    - "All of the above (mechanical CAD needs the same data)."
+    - "AXP2101 rail-by-rail configuration (per the glasses feature set, not the ProjectYosemite one)."
+    - "Specific camera FPC connector (RPi CM3 15-pin 1.0 mm FPC; verify per camera SKU)."
+    - "Specific display FPC connector (depends on the display engine)."
+    - "Specific Wi-Fi/BT antenna keepout (per the chosen module's app note)."
+    - "V853 USB 2.0 DRD reference design (the V853 datasheet has a USB chapter; verify DP/DN ball assignment, ESD, common-mode choke)."
+    - "V853 power-on reset and boot configuration (boot mode pins, eMMC boot, SD boot, SPI NOR boot)."

@@ -1,0 +1,46 @@
+schema_version: 1
+component:
+  id: bosch_bmm150
+  category: 3_axis_magnetometer
+  units: mm
+  role: optional_magnetometer_for_9axis
+
+source:
+  manufacturer: Bosch Sensortec
+  part_number: BMM150
+  source_type: manufacturer_datasheet_summary
+  source_docs:
+    - url: https://www.bosch-sensortec.com/products/smart-sensors/bmm150/
+      description: "Bosch BMM150 product page"
+
+mechanical:
+  package: 12-pin LGA or WLCSP
+  dimensions_mm: approximately 2.0 x 2.0 (verify per datasheet)
+  source_for_mechanical: Bosch datasheet summary
+
+electrical:
+  supply_voltage_v: { min: 1.62, typ: 1.8, max: 3.6 }
+  interfaces: [I2C, SPI up to 10 MHz]
+  current_active_uA: 0.5 (typical)
+  current_sleep_uA: UNKNOWN
+  source_for_electrical: Bosch datasheet
+
+environmental:
+  operating_temperature_c: { min: -40, max: 85 }
+
+purchase:
+  distributor: Bosch direct; Mouser; DigiKey; LCSC
+  unit_price_usd: 1.5 to 3 (single-piece retail)
+  moq: 1
+  lead_time: stock
+  availability: in production
+
+confidence:
+  overall: MEDIUM
+  sources: manufacturer_datasheet_summary
+  gaps:
+    - "Exact package dimensions not in summary"
+
+constraints:
+  status: OPTIONAL — magnetometer for 9-axis fusion. See IMU README for whether magnetometer is recommended for the glasses.
+  linux_support: "Mainline Linux IIO driver (bmm150); device-tree binding exists."

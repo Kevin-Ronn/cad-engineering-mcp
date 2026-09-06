@@ -1,0 +1,82 @@
+schema_version: 1
+i2s_audio_validation:
+  id: v853_i2s_to_max98390_amplifier_validation
+  date: 2026-09-05
+  source: V853 & V853S Datasheet Rev 1.1, 2022-03-23, section 1.3.7.2 (I2S/PCM) and 8.1 (Audio Codec); ADI MAX98390 datasheet
+
+  conclusion:
+    one_amp_per_temple: REQUIRED
+    one_amp_two_speakers: NOT_RECOMMENDED
+    lowest_complexity_viable_architecture: "V853 I2S0 -> MAX98390 left; V853 I2S1 -> MAX98390 right; one mono amplifier per temple"
+    confidence: HIGH_for_architecture; MEDIUM_for_amp_io_voltage (verify MAX98390 datasheet)
+
+  i2s_capability:
+    ip_block_count: 2 (I2S0, I2S1; per V853 datasheet section 1.3.7.2)
+    protocols_supported: "Philips I2S, left-justified, right-justified, PCM, TDM"
+    master_or_slave: "the I2S controller can be master (drives BCLK and LRCLK) or slave (receives BCLK and LRCLK from an external source). The MAX98390 requires BCLK and LRCLK from the SoC, so the V853 is the master."
+    sample_rates_khz: 8 to 384
+    word_length_bits: 16, 20, 24, 32
+    data_format: "I2S (MSB-first, 1-bit delay) or left-justified (no delay) or right-justified"
+    voltage_domain: 1.8 V (verify; the V853's I2S I/O is 1.8 V or 3.3 V per the GPIO bank config)
+
+  max98390_amplifier:
+    package: 16-bump WLP, 0.4 mm pitch
+    dimensions_mm: 1.33 x 1.33 x 0.5
+    output: MONO (1 channel)
+    output_power_w: 2.5 into 8 ohm at 10% THD+N
+    interface: I2S (3-wire: BCLK, LRCLK, DIN)
+    io_voltage_v: "1.8 V compatible per ADI datasheet (verify in the PDF)"
+    filterless: yes
+    source: ADI MAX98390 datasheet
+
+  one_amp_per_temple_architecture:
+    v853_i2s0: "drives the LEFT temple MAX98390"
+    v853_i2s1: "drives the RIGHT temple MAX98390"
+    per_temple_amp_io: "BCLK, LRCLK, DIN; 3 wires per amp; 6 wires total for 2 amps"
+    audio_routing: "V853 audio driver sends LEFT channel data on I2S0 time slot and RIGHT channel data on I2S1 time slot. Each MAX98390 receives its channel data and outputs mono audio to its speaker."
+    linux_sound: "Linux ASoC (ALSA System on Chip) with simple-audio-card, multi-amp, or similar machine driver. The I2S0 and I2S1 are configured as separate DAI links; each DAI link drives one MAX98390."
+    confidence: HIGH (the V853 has 2 independent I2S controllers; the MAX98390 is mono; this is the standard multi-amp topology)
+
+  why_not_one_amp_two_speakers:
+    reason_1: "The MAX98390 is MONO. It cannot drive two speakers from one amplifier. A stereo-capable class-D amplifier (e.g. MAX98306, MAX98360, or similar) would be needed if one amp is preferred. None of the candidate amps in the audio reference library are stereo + small + I2S + 1.8 V IO + filterless."
+    reason_2: "A single-amp / dual-speaker topology would require either (a) a BTL (bridge-tied load) configuration with one speaker in series with the other, or (b) a single-ended output with both speakers in parallel. Both are acoustic compromises. The glasses design benefits from per-temple acoustic tuning (left ear and right ear have slightly different acoustic loads). One amp per temple is the correct topology."
+    reason_3: "Two MAX98390s cost ~$5-6 total (vs. ~$3-4 for one stereo amp + 2 extra caps). The PCB area is comparable (two 1.33 x 1.33 mm WLPs vs. one 3 x 3 mm TQFN). The I2S routing is straightforward (6 wires from the SoC to the 2 amps)."
+
+  why_not_stereo_capable_amp:
+    option_a: "MAX98306 (3 x 3 mm TDFN, 2.5 W per channel BTL, I2S, filterless). Larger than MAX98390; not 1.8 V IO (typically 3.3 V); costs more."
+    option_b: "MAX98360 (QFN, 2 x 3.2 W BTL, I2S, filterless). Similar to MAX98306."
+    option_c: "TAS2770 (2 x 2 mm WCSP, 6.1 W into 4 ohm BTL, integrated boost, I2S, filterless). Has integrated boost; 4 ohm speaker is required (8 ohm gives 3 W). The 4 ohm speaker is harder to find than 8 ohm in the 15 x 11 mm class."
+    comparison: "The per-temple MAX98390 approach is simpler, smaller, and lower-power. The 1.8 V IO match is a real advantage. The two-amp topology is recommended."
+
+  i2s_clocking:
+    v853_bclk_frequency: "the V853's I2S controller generates BCLK from the audio PLL. For 48 kHz / 16-bit / stereo frame, BCLK = 48 kHz * 2 channels * 32 bits = 3.072 MHz (with the typical 32 bits per LRCLK frame, even though the data is 16-bit). The MAX98390 supports 32 to 96 bits per LRCLK frame."
+    v853_lrclk_frequency: 48 kHz
+    v853_bclk_to_lrclk_ratio: 64 (32 bits * 2 channels)
+    master_mode: "the V853 drives both BCLK and LRCLK. The MAX98390 receives both."
+    note: "The I2S0 and I2S1 can share the BCLK and LRCLK (both are outputs from the V853) or have independent BCLK / LRCLK. For per-amp simplicity, the same BCLK / LRCLK can be routed to both amps; only the data line is per-amp."
+
+  voltage_domain_check:
+    v853_i2s_io: 1.8 V (per the GPIO bank config; verify with the .sls file)
+    max98390_io: 1.8 V compatible (per ADI datasheet; verify)
+    level_shifter_needed: NO (if both are 1.8 V)
+    level_shifter_needed_if_3v3: YES (TXS0102-class on BCLK, LRCLK, DIN; 3 signals per amp; 6 signals total for 2 amps)
+
+  linux_driver:
+    v853_i2s_driver: "mainline ASoC sun4i-i2s (drivers/sound/soc/sunxi/)"
+    max98390_driver: "mainline ASoC max98390 (drivers/sound/soc/codecs/max98390.c)"
+    machine_driver: "simple-audio-card, multi-amp variant, or custom machine driver binding the V853's I2S0 + I2S1 to two MAX98390s"
+    confidence: HIGH (both drivers are mainline; the machine driver is a few hundred lines of device-tree + C code)
+
+  recommended_topology:
+    v853:
+      i2s0: "BCLK, LRCLK, DOUT -> MAX98390 left"
+      i2s1: "BCLK, LRCLK, DOUT -> MAX98390 right"
+    speakers:
+      left_temple: "MAX98390 -> 8 ohm speaker (CUI CMS-151125-078S)"
+      right_temple: "MAX98390 -> 8 ohm speaker (CUI CMS-151125-078S)"
+    pcb_routing: "6 wires from the V853 to the 2 amps: BCLK (shared), LRCLK (shared), I2S0_DOUT (left), I2S1_DOUT (right). 4 GPIO for each amp's enable / mute / fault lines (optional)."
+
+  risk:
+    - "The MAX98390's exact I/O voltage must be verified in the ADI datasheet PDF (the previous research pass said 1.8 V IO, but the official datasheet should be confirmed)."
+    - "The AXP2101's LDOs must provide a 1.8 V rail for the I2S I/O. If the MAX98390 needs 3.3 V, add a TXS0102-class level shifter on the 3 I2S signals per amp (6 signals total)."
+    - "The two amps will dissipate ~100 mW each at 25 mW acoustic output (typical 25% efficiency at low power). The temple must dissipate this heat; the AXP2101 is also in the same area; verify the combined thermal load."
